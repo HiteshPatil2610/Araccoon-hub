@@ -375,7 +375,7 @@ html.theme-transitioning * { transition: none !important; }
 .cd-story__col--r .cd-stills .cd-still-frame--a { left: auto; right: 40px; }
 .cd-story__col--r .cd-stills .cd-still-frame--b { left: auto; right: 0; }
 .cd-story__center { position: relative; display: flex; justify-content: center; padding-top: 22px; }
-.cd-story__raccoon { position: absolute; left: calc(100% - 64px); right: auto; bottom: 0; height: clamp(200px, 17vw, 250px); z-index: 3; justify-content: flex-start; }
+.cd-story__raccoon { position: absolute; left: calc(100% - 44px); right: auto; bottom: 0; height: clamp(200px, 17vw, 250px); z-index: 3; justify-content: flex-start; }
 .cd-story .sticker-wrap { display: inline-flex; align-items: center; }
 .cd-story .sticker-wrap .index-badge { margin-right: -10px; z-index: 1; background: var(--background); }
 @media (max-width: 1023px) {

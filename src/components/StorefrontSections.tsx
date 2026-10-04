@@ -12,9 +12,9 @@ import { CATEGORIES, type PublicProduct } from '../../shared/types';
 const pad = (n: number) => String(n).padStart(2, '0');
 const added = (iso: string) => new Date(iso).toLocaleDateString('en', { month: 'short', day: 'numeric' });
 
-/** Key-art cut-out from public/art/raccoon-<name>.webp. Decorative: the raccoon carries no information.
-    (side/turn/rear are the crimson streetwear Blender renders from art/araccoon/scripts/site_render.py.) */
-export function Cutout({ name, className, delay = 450, distance = 120 }: { name: 'hero' | 'boxes' | 'wave' | 'side' | 'turn' | 'rear'; className: string; delay?: number; distance?: number }) {
+/** Key-art cut-out from public/art/raccoon-<name>.webp: the crimson streetwear raccoon rendered by
+    art/araccoon/scripts/site_render.py (front, side, three-quarter, rear). Decorative: it carries no information. */
+export function Cutout({ name, className, delay = 450, distance = 120 }: { name: 'hero' | 'side' | 'turn' | 'rear'; className: string; delay?: number; distance?: number }) {
   return (
     <Reveal effect="rise" distance={distance} delay={delay} duration={1200} className={`cd-cutout ${className}`} morph="type">
       <img src={`/art/raccoon-${name}.webp`} alt="" decoding="async" draggable={false} />
@@ -105,7 +105,7 @@ export function PicksSection({ total, picks, index, onIndex, onQuick }: Carousel
           )}
         </Reveal>
       </div>
-      <Cutout name="boxes" className="cd-picks__raccoon" delay={450} />
+      <Cutout name="side" className="cd-picks__raccoon" delay={450} />
       {picks.length > 1 && (
         <>
           <button type="button" data-morph className="cd-picks__nav cd-picks__nav--prev" onClick={() => step(-1)} aria-label="Previous pick"><ChevronLeft className="w-6 h-6" /></button>
@@ -204,7 +204,7 @@ export function StorySection({ picks, index, onIndex, onQuick, onOpen, pending }
               <Swap id={pick.id} dir={dir} kind="deal" className="w-full flex justify-center"><FindCard pick={pick} n={index + 1} of={picks.length} onOpen={onOpen} onQuick={onQuick} pending={pending} /></Swap>
             </Reveal>
           )}
-          <Cutout name="wave" className="cd-story__raccoon" delay={600} distance={140} />
+          <Cutout name="turn" className="cd-story__raccoon" delay={600} distance={140} />
         </div>
         <Reveal effect="slide-right" distance={40} delay={300} className="cd-story__col cd-story__col--r" morph="move">
           <SectionLabel>Opening on Amazon</SectionLabel>
@@ -226,7 +226,7 @@ export function ClosingSection({ total }: { total: number | null }) {
         <span>{total == null ? '—' : <ScrambleText text={`${pad(total)} finds`} delay={500} />}</span>
         <span><ScrambleText text={String(new Date().getFullYear())} charset="0123456789" delay={600} /></span>
       </div>
-      <Cutout name="hero" className="cd-closing__raccoon" delay={300} distance={140} />
+      <Cutout name="rear" className="cd-closing__raccoon" delay={300} distance={140} />
     </section>
   );
 }

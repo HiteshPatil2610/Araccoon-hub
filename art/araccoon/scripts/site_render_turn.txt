@@ -1,0 +1,8 @@
+00:00.922  blend            | Read blend: "E:\Personal-Projects\Araccoon-hub\art\araccoon\araccoon_character.blend"
+07:36.610  render           | Saved: 'E:\Personal-Projects\Araccoon-hub\art\araccoon\renders\site_turn.png'
+BlenderMCP addon registered
+AR_DONE {"steps": [{"step": "lib", "sec": 0.0, "result": null}, {"step": "body_common", "sec": 0.0, "result": null}, {"step": "fur_deps", "sec": 0.0, "result": null}, {"step": "fur", "sec": 1.9, "result": {"strands": {"AR_Fur_Head": 146521, "AR_Fur_Tail": 170000, "AR_Fur_Forearm_L": 9000, "AR_Fur_Forearm_R": 9000}}}, {"step": "site_render", "sec": 453.7, "result": {"recoloured_vertex_colours": 7442, "lo": [-0.627, -0.265, -0.0], "hi": [0.417, 0.648, 1.504], "fov_deg": 16.07, "imgs": [["E:/Personal-Projects/Araccoon-hub/art/araccoon/renders/site_turn.png", 0.722, 1.136, 6.0, [2.712, -5.106, 1.136]]]}}], "ok": true}
+BlenderMCP addon unregistered
+Blender 5.2.0 LTS (hash fbe6228777e7 built 2026-07-14 01:35:40)
+
+Blender quit
