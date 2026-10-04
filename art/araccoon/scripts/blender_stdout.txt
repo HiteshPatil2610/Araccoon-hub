@@ -1,0 +1,86 @@
+00:00.625  blend            | Read blend: "E:\Personal-Projects\Araccoon-hub\art\araccoon\araccoon_character.blend"
+BlenderMCP addon registered
+Info: Circular dependency for image "AR_WebFur_color" from object "BAKED_Fur"
+Info: Baking map saved to internal image, save it externally or pack it
+Info: Circular dependency for image "AR_WebFur_normal" from object "BAKED_Fur"
+Info: Baking map saved to internal image, save it externally or pack it
+Info: Circular dependency for image "AR_WebHoodie_color" from object "BAKED_Hoodie"
+Info: Baking map saved to internal image, save it externally or pack it
+Info: Circular dependency for image "AR_WebHoodie_normal" from object "BAKED_Hoodie"
+Info: Baking map saved to internal image, save it externally or pack it
+Info: Circular dependency for image "AR_WebPants_color" from object "BAKED_Pants"
+Info: Baking map saved to internal image, save it externally or pack it
+Info: Circular dependency for image "AR_WebPants_normal" from object "BAKED_Pants"
+Info: Baking map saved to internal image, save it externally or pack it
+INFO Draco is available, use library at E:\5.2\scripts\addons_core\io_scene_gltf2\bf_intern_draco_bridge.dll
+INFO MeshOptimizer is available, use library at E:\5.2\scripts\addons_core\io_scene_gltf2\bf_intern_meshopt_bridge.dll
+17:10:48 | INFO: Starting glTF 2.0 export
+17:10:48 | INFO: Extracting primitive: AR_BlackTrim
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_Cushion
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_EyeSclera_EyeIris_EyePupil
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_HeadphonePlastic
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_Lace
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_MaskFur
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_Metal
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_Mouth.001
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_Nose.001
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_PantsFabric
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_PurpleGlow
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_PurpleStrap
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_Rubber
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_Shirt
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_ShoeLeather
+17:10:48 | INFO: Primitives created: 1
+17:10:48 | INFO: Extracting primitive: AR_WebFur
+17:10:49 | INFO: Primitives created: 1
+17:10:49 | INFO: Extracting primitive: AR_WebHoodie
+17:10:49 | INFO: Primitives created: 1
+17:10:49 | INFO: Extracting primitive: AR_WebPants
+17:10:49 | INFO: Primitives created: 1
+17:10:49 | INFO: Extracting primitive: AR_Whisker
+17:10:49 | INFO: Primitives created: 1
+17:10:49 | INFO: Finished glTF 2.0 export in 0.5459973812103271 s
+
+17:10:49 | INFO: Data are loaded, start creating Blender stuff
+17:10:49 | INFO: Blender create Mesh node AR_BlackTrim
+17:10:49 | INFO: Blender create Mesh node AR_Cushion
+17:10:49 | INFO: Blender create Mesh node AR_EyeSclera_EyeIris_EyePupil
+17:10:49 | INFO: Blender create Mesh node AR_HeadphonePlastic
+17:10:49 | INFO: Blender create Mesh node AR_Lace
+17:10:49 | INFO: Blender create Mesh node AR_MaskFur
+17:10:49 | INFO: Blender create Mesh node AR_Metal
+17:10:49 | INFO: Blender create Mesh node AR_Mouth.001
+17:10:49 | INFO: Blender create Mesh node AR_Nose.001
+17:10:49 | INFO: Blender create Mesh node AR_PantsFabric
+17:10:49 | INFO: Blender create Mesh node AR_PurpleGlow
+17:10:49 | INFO: Blender create Mesh node AR_PurpleStrap
+17:10:49 | INFO: Blender create Mesh node AR_Rubber
+17:10:49 | INFO: Blender create Mesh node AR_Shirt
+17:10:49 | INFO: Blender create Mesh node AR_ShoeLeather
+17:10:49 | INFO: Blender create Mesh node AR_WebFur
+17:10:49 | INFO: Blender create Mesh node AR_WebHoodie
+17:10:49 | INFO: Blender create Mesh node AR_WebPants
+17:10:49 | INFO: Blender create Mesh node AR_Whisker
+17:10:49 | INFO: glTF import finished in 0.13s
+01:57.985  render           | Saved: 'E:\Personal-Projects\Araccoon-hub\art\araccoon\renders\web_glb_check_front34.png'
+02:00.453  render           | Saved: 'E:\Personal-Projects\Araccoon-hub\art\araccoon\renders\web_glb_check_rear.png'
+Info: Saved as "araccoon_character.blend"
+AR_DONE {"steps": [{"step": "lib", "sec": 0.0, "result": null}, {"step": "body_common", "sec": 0.0, "result": null}, {"step": "web_bake", "sec": 112.3, "result": {"fur_web_tris": 19800, "baked": {"AR_Head": "BAKED_Fur", "AR_Tail": "BAKED_Fur", "AR_Forearm_L": "BAKED_Fur", "AR_Forearm_R": "BAKED_Fur", "AR_Hoodie": "BAKED_Hoodie", "AR_Pants": "BAKED_Pants"}, "textures": ["AR_WebFur_color.png", "AR_WebFur_normal.png", "AR_WebHoodie_color.png", "AR_WebHoodie_normal.png", "AR_WebPants_color.png", "AR_WebPants_normal.png"]}}, {"step": "web_export", "sec": 1.2, "result": {"glb": "E:/Personal-Projects/Araccoon-hub/art/araccoon/araccoon_web.glb", "size_kb": 3022.0, "web_meshes": 19, "web_tris": 66477, "reimport_meshes": 19, "reimport_tris": 66477, "materials": ["AR_BlackTrim.001", "AR_Cushion.001", "AR_EyeSclera.001", "AR_HeadphonePlastic.001", "AR_Lace.001", "AR_MaskFur.001", "AR_Metal.001", "AR_Mouth.001", "AR_Nose.001", "AR_PantsFabric.001", "AR_PurpleGlow.001", "AR_PurpleStrap.001", "AR_Rubber.001", "AR_Shirt.001", "AR_ShoeLeather.001", "AR_WebFur.002", "AR_WebHoodie.002", "AR_WebPants.002", "AR_Whisker.001"], "vcols": {"AR_BlackTrim.001": [], "AR_Cushion.001": [], "AR_EyeSclera_EyeIris_EyePupil.001": [], "AR_HeadphonePlastic.001": [], "AR_Lace.001": [], "AR_MaskFur.001": [], "AR_Metal.001": [], "AR_Mouth.002": [], "AR_Nose.002": [], "AR_PantsFabric.001": ["Color"], "AR_PurpleGlow.001": [], "AR_PurpleStrap.001": [], "AR_Rubber.001": [], "AR_Shirt.002": [], "AR_ShoeLeather.001": ["Color"], "AR_WebFur.001": [], "AR_WebHoodie.001": [], "AR_WebPants.001": [], "AR_Whisker.001": []}, "textures": [["AR_WebFur_color.002", [2048, 2048]], ["AR_WebFur_normal.002", [2048, 2048]], ["AR_WebHoodie_color.002", [1024, 1024]], ["AR_WebHoodie_normal.002", [1024, 1024]], ["AR_WebPants_color.002", [1024, 1024]], ["AR_WebPants_normal.002", [1024, 1024]]], "bbox_min": [-0.563, -0.272, -0.0], "bbox_max": [0.417, 0.586, 1.58]}}, {"step": "render_web_check", "sec": 6.1, "result": {"imgs": ["E:/Personal-Projects/Araccoon-hub/art/araccoon/renders/web_glb_check_front34.png", "E:/Personal-Projects/Araccoon-hub/art/araccoon/renders/web_glb_check_rear.png"]}}], "saved": "E:/Personal-Projects/Araccoon-hub/art/araccoon/araccoon_character.blend", "ok": true}
+BlenderMCP addon unregistered
+Blender 5.2.0 LTS (hash fbe6228777e7 built 2026-07-14 01:35:40)
+
+Blender quit

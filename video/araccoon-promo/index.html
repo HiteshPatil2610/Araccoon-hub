@@ -1,0 +1,364 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Araccoon Hub — CineDaily promo</title>
+<link rel="stylesheet" href="design-system/cine-daily-design-system/project/styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<script src="design-system/cine-daily-design-system/project/_ds_bundle.js"></script>
+<style>
+  /* The timeline clock drives every move; CSS transitions would lag behind seeks. */
+  *, *::before, *::after { box-sizing: border-box; transition: none !important; animation: none !important; }
+  html, body { margin: 0; width: 720px; height: 1170px; overflow: hidden; background: #000; font-family: var(--font-sans); }
+  #desk { position: absolute; left: 0; right: 0; top: 315px; height: 540px; background: var(--surface-desk); }
+  #frame { position: absolute; left: 36px; top: 383px; width: 1280px; height: 800px; transform: scale(.50625); transform-origin: 0 0; border-radius: 36px; overflow: hidden; box-shadow: var(--shadow-frame); background: #fff; }
+  #viewport { position: absolute; inset: 0; overflow: hidden; }
+  .cut { display: block; width: 100%; height: 100%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 30px 50px rgba(0,0,0,.45)); }
+</style>
+</head>
+<body>
+<div id="desk"></div>
+<div id="frame"><div id="viewport"><div id="root"></div></div></div>
+
+<script type="text/babel" data-presets="react">
+const { Tag, Headline, Button, SectionLabel, FilmStrip, StickerBadge, IndexBadge, StatDisc, PullQuote,
+        IconButton, SlideIndex, AvatarStack, ArrowPair, MediaFrame, Icon } = window.CineDailyDesignSystem_53d08c;
+
+/* ---------- Araccoon Hub content, written in the CineDaily voice ---------- */
+const HUB = {
+  title: 'Araccoon', numeral: 'Hub', year: '2026', open: 'Oct 3, 2026',
+  tags: ['Home', 'Desk', 'Gadgets'],
+  cast: ['Small finds', 'Big upgrades', 'Hand-picked', 'Amazon finds'],
+  curator: 'Araccoon',
+};
+const A = 'assets/';
+
+/* ---------- timeline ---------- */
+const FPS = 25, DURATION = 9.2;
+const H = { hero: 800, production: 660, story: 1080, theaters: 800 };
+const TOP = { hero: 0, production: 800 };
+TOP.story = TOP.production + H.production - 48;       // --curtain-overlap
+TOP.theaters = TOP.story + H.story;
+const VIEW = 800;
+
+// scroll keyframes [time s, scrollY px, ease] — paced like the source recording
+const SCROLL = [
+  [0, 0], [1.75, 0], [2.65, 430, 'cine'], [3.55, 520, 'out'],
+  [4.45, TOP.story + 48, 'cine'], [5.25, TOP.story + 60, 'out'],
+  [6.05, TOP.story + 170, 'cine'], [6.75, TOP.story + 185, 'out'],
+  [7.35, TOP.theaters, 'curtain'], [DURATION, TOP.theaters],
+];
+
+function bezier(x1, y1, x2, y2) {
+  const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+  const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+  const X = s => ((ax * s + bx) * s + cx) * s, Y = s => ((ay * s + by) * s + cy) * s;
+  const dX = s => (3 * ax * s + 2 * bx) * s + cx;
+  return x => {
+    if (x <= 0) return 0; if (x >= 1) return 1;
+    let s = x;
+    for (let i = 0; i < 8; i++) { const d = dX(s); if (Math.abs(d) < 1e-6) break; s -= (X(s) - x) / d; }
+    s = Math.min(1, Math.max(0, s));
+    return Y(s);
+  };
+}
+const EASE = {
+  cine: bezier(.7, 0, .2, 1), pop: bezier(.34, 1.45, .55, 1), curtain: bezier(.83, 0, .17, 1),
+  out: bezier(.2, .8, .2, 1), linear: x => x,
+};
+const clamp01 = x => Math.min(1, Math.max(0, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+
+function scrollAt(t) {
+  for (let i = 1; i < SCROLL.length; i++) {
+    const [t0, y0] = SCROLL[i - 1], [t1, y1, e = 'linear'] = SCROLL[i];
+    if (t <= t1) return lerp(y0, y1, EASE[e](clamp01((t - t0) / (t1 - t0))));
+  }
+  return SCROLL[SCROLL.length - 1][1];
+}
+// Time a section enters view (Reveal threshold .2), like the kit's IntersectionObserver.
+const START = {};
+for (const id of Object.keys(H)) {
+  START[id] = id === 'hero' ? 0 : Infinity;
+  for (let t = 0; t <= DURATION; t += .01) {
+    if (scrollAt(t) + VIEW >= TOP[id] + Math.min(H[id], VIEW) * .2) { START[id] = t; break; }
+  }
+}
+// Fraction of the last `win` seconds a condition held: a linear cross-fade driven by the scroll.
+const held = (t, win, cond) => { let n = 0, k = 0; for (let s = t - win; s <= t + 1e-9; s += .01, k++) if (s >= 0 && cond(scrollAt(s))) n++; return n / k; };
+
+/* ---------- timeline-driven motion (same effects, easings and cues as DS Reveal) ---------- */
+const Clock = React.createContext({ t: 0, start: 0, frame: 0 });
+const useP = (delay, duration, ease) => { const { t, start } = React.useContext(Clock); return EASE[ease](clamp01((t - start - delay / 1000) / (duration / 1000))); };
+
+function Reveal({ effect = 'rise', delay = 0, duration = 900, distance = 60, rotate = 0, restRotate = 0, style, children }) {
+  const ease = effect === 'pop' || effect === 'spin' ? 'pop' : 'cine';
+  const e = useP(delay, duration, ease);
+  const o = clamp01(useP(delay, duration, 'cine') * 1.0);
+  const r = 1 - e;
+  let tf = '', op = o, filter = 'none', clip;
+  if (effect === 'rise') tf = `translateY(${distance * r}px)`;
+  if (effect === 'drop') tf = `translateY(${-distance * r}px)`;
+  if (effect === 'slide-left') tf = `translateX(${-distance * r}px)`;
+  if (effect === 'slide-right') tf = `translateX(${distance * r}px)`;
+  if (effect === 'pop') tf = `scale(${lerp(.6, 1, e)})`;
+  if (effect === 'spin') tf = `rotate(${-120 * r}deg) scale(${lerp(.6, 1, e)})`;
+  if (effect === 'blur') { tf = `scale(${lerp(1.04, 1, e)})`; filter = `blur(${12 * r}px)`; }
+  if (effect === 'mask') { op = 1; clip = `inset(${100 * r}% 0 0 0)`; }
+  if (effect === 'wipe-x') { op = 1; clip = `inset(0 ${100 * r}% 0 0)`; }
+  tf += ` rotate(${restRotate + rotate * r}deg)`;
+  return <div style={{ ...style, opacity: op, transform: tf, filter, clipPath: clip }}>{children}</div>;
+}
+function TrackingReveal({ from = .45, fromOpacity = .3, delay = 0, duration = 1300, style, children }) {
+  const e = useP(delay, duration, 'cine');
+  const ls = lerp(from, -.005, e) + 'em';
+  return <div style={{ ...style, letterSpacing: ls, '--reveal-track': ls, opacity: lerp(fromOpacity, 1, e) }}>{children}</div>;
+}
+function ScrambleText({ text, delay = 0, duration = 900, charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' }) {
+  const { frame } = React.useContext(Clock);
+  const p = useP(delay, duration, 'linear');
+  const tick = Math.floor(frame / 1.1);   // glyphs re-roll about every 45ms, as in the DS
+  const out = p >= 1 ? text : text.split('').map((c, i) => (c === ' ' || i < Math.floor(p * text.length)) ? c
+    : charset[Math.abs(Math.sin((i + 1) * 91.7 + tick * 13.3) * 10000 | 0) % charset.length]).join('');
+  return <span style={{ fontVariantNumeric: 'tabular-nums' }}>{out}</span>;
+}
+const Section = ({ id, children }) => { const c = React.useContext(Clock); return <Clock.Provider value={{ ...c, start: START[id] }}>{children}</Clock.Provider>; };
+
+/* ---------- kit helpers (from ui_kits/website/Shared.jsx) ---------- */
+const CUE = {
+  hero: { nav: 0, meta: 200, disc: 150, numeral: 250, cast: 0, title: 100, year: 700, strip: 400, cutout: 450, story: 800, cta: 900, sticker: 1000 },
+  production: { studio: 0, discs: 150, still: 450, quote: 300, social: 700 },
+  story: { directed: 0, by: 300, director: 150, release: 500, pager: 200, headline: 0, side: 300, stills: 400, card: 250, cutout: 600 },
+  theaters: { label: 0, title: 100, dates: 500, cutout: 300 },
+};
+const Viewfinder = ({ tone = 'dark', circle = 640, top = '50%' }) => {
+  const line = tone === 'dark' ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.07)';
+  return <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+    <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, borderLeft: '1px solid ' + line }} />
+    <div style={{ position: 'absolute', left: 0, right: 0, top, borderTop: '1px solid ' + line }} />
+    <div style={{ position: 'absolute', left: '50%', top, width: circle, height: circle, transform: 'translate(-50%,-50%)', borderRadius: '50%', border: '1px solid ' + line }} />
+  </div>;
+};
+const Blurb = ({ part, children, tone = 'light', width = 280 }) => <p style={{ margin: 0, maxWidth: width, display: 'grid', gridTemplateColumns: '66px 1fr', fontFamily: 'var(--font-sans)', fontSize: 11, lineHeight: 1.45, color: tone === 'dark' ? '#fff' : '#0a0a0a' }}><span>PART {part} .</span><span>{children}</span></p>;
+const Float = ({ amp = 4, speed = 1.6, children }) => { const { t } = React.useContext(Clock); return <div style={{ width: '100%', height: '100%', transform: `translateY(${Math.sin(t * speed) * amp}px)` }}>{children}</div>; };
+
+/* ---------- brand: ARACCOON ✚ HUB in the CINE ✚ DAILY lockup ---------- */
+function Wordmark({ tone = 'dark', size = 32 }) {
+  const fg = tone === 'dark' ? '#fff' : '#0a0a0a';
+  const bar = size * .2;
+  return <span style={{ display: 'inline-flex', alignItems: 'center', fontFamily: 'var(--font-display)', fontSize: size, lineHeight: 1, letterSpacing: '-.01em', color: fg, whiteSpace: 'nowrap' }}>
+    ARACCOON
+    <span aria-hidden="true" style={{ position: 'relative', width: size * .62, height: size * .62, margin: `0 ${size * .04}px`, transform: 'rotate(-14deg) translateY(-1px)' }}>
+      <span style={{ position: 'absolute', left: 0, right: 0, top: '50%', height: bar, marginTop: -bar / 2, background: 'var(--accent)', borderRadius: 2 }} />
+      <span style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: bar, marginLeft: -bar / 2, background: 'var(--accent)', borderRadius: 2 }} />
+    </span>
+    HUB
+  </span>;
+}
+// DS NavBar with the hub wordmark and storefront destinations.
+function NavBar({ tone = 'dark', active = 0, items = ['Browse', 'Categories', 'Bento · Classic', 'Owner hub'] }) {
+  const fg = tone === 'dark' ? '#fff' : '#0a0a0a';
+  return <nav style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', height: 'var(--nav-height)', padding: '0 var(--page-gutter)', color: fg }}>
+    <Wordmark tone={tone} size={32} />
+    <ul style={{ display: 'flex', gap: 22, listStyle: 'none', margin: 0, padding: 0, alignItems: 'center' }}>
+      {items.map((it, i) => <React.Fragment key={it}>
+        {i > 0 && <li aria-hidden="true" style={{ width: 3, height: 3, borderRadius: '50%', background: fg, opacity: .8 }} />}
+        <li style={{ position: 'relative', fontFamily: 'var(--font-sans)', fontSize: 11, fontWeight: 500, letterSpacing: 'var(--ls-label)', textTransform: 'uppercase', whiteSpace: 'nowrap', opacity: i === active ? 1 : .82 }}>
+          {it}<span style={{ position: 'absolute', left: '50%', top: 22, width: 7, height: 7, background: 'var(--accent)', transform: 'translateX(-50%) rotate(45deg) scale(' + (i === active ? 1 : 0) + ')', borderRadius: 1 }} />
+        </li>
+      </React.Fragment>)}
+    </ul>
+    <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }}>
+      <IconButton icon="search" tone={tone} /><IconButton icon="user" tone={tone} /><IconButton variant="menu" tone={tone} style={{ marginLeft: 10 }} />
+    </div>
+  </nav>;
+}
+// BookingCard layout and styling, relabelled for a storefront find.
+function FindCard({ kicker = 'Find', title, tiles }) {
+  const tile = { background: 'var(--cd-ink-800)', borderRadius: 'var(--radius-m)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, padding: 10, color: '#fff' };
+  const cap = { fontFamily: 'var(--font-sans)', fontSize: 8, letterSpacing: '.32em', textTransform: 'uppercase', opacity: .8 };
+  const val = { fontFamily: 'var(--font-display)', fontSize: 16, lineHeight: 1, textAlign: 'center' };
+  return <div style={{ width: 240, background: 'var(--surface-card-dark)', borderRadius: 'var(--radius-l)', padding: '28px 14px 14px', position: 'relative', boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <span style={{ position: 'absolute', top: -18, left: '50%', transform: 'translateX(-50%)', width: 36, height: 36, borderRadius: '50%', background: 'var(--accent)', border: '3px solid var(--surface-card-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><Icon name="shopping-bag" size={15} /></span>
+    <div style={{ textAlign: 'center', color: '#fff', display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 6 }}>
+      <span style={{ ...cap, fontSize: 9 }}>{kicker}</span>
+      <span style={{ fontFamily: 'var(--font-display)', fontSize: 32, lineHeight: .9 }}>{title}</span>
+    </div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+      <div style={{ ...tile, aspectRatio: '1', background: `center/cover url(${A}still2.jpg)`, justifyContent: 'flex-end', position: 'relative', overflow: 'hidden' }}>
+        <span style={{ position: 'absolute', inset: 0, background: 'var(--accent)', mixBlendMode: 'multiply', opacity: .45 }} />
+        <Icon name="eye" size={18} style={{ marginBottom: 'auto', marginTop: 18, position: 'relative' }} /><span style={{ ...cap, position: 'relative' }}>Quick view</span>
+      </div>
+      {tiles.map(([c, v], i) => <div key={c} style={{ ...tile, aspectRatio: i === 0 ? '1' : undefined }}>{i === 0 && <span style={{ color: 'var(--accent)', fontSize: 8 }}>▼</span>}<span style={cap}>{c}</span><span style={val}>{v}</span></div>)}
+    </div>
+    <Button variant="bar" icon="arrow-up-right" style={{ marginTop: 4 }}>View on Amazon</Button>
+  </div>;
+}
+
+/* ---------- screens (structure from ui_kits/website, content for Araccoon Hub) ---------- */
+function Hero() {
+  const c = CUE.hero, { t } = React.useContext(Clock);
+  const red = EASE.cine(held(t, .7, y => y > 80));
+  const tilt = lerp(-1, -2.4, red);
+  return <section style={{ position: 'relative', height: H.hero, background: 'var(--cd-black)', color: '#fff', overflow: 'hidden' }}>
+    <Viewfinder circle={700} top="56%" />
+    <div style={{ height: 'var(--nav-height)' }} />
+    <Reveal effect="fade" delay={c.meta} style={{ position: 'relative', zIndex: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 var(--page-gutter)' }}>
+      <div style={{ display: 'flex', gap: 6 }}>{HUB.tags.map((g, i) => <Tag key={g} active={i === 0}>{g}</Tag>)}</div>
+      <span style={{ fontFamily: 'var(--font-display)', fontSize: 14 }}>OPEN [{HUB.open.toUpperCase()}]</span>
+    </Reveal>
+    <Reveal effect="pop" delay={c.disc} duration={1000} style={{ position: 'absolute', left: '50%', top: 196, width: 440, height: 440, marginLeft: -220, borderRadius: '50%', background: 'var(--accent)' }} />
+    <Reveal effect="drop" distance={40} delay={c.numeral} style={{ position: 'absolute', left: 0, right: 0, top: 150, display: 'flex', justifyContent: 'center', zIndex: 2 }}><Headline size={84} tone="dark" as="div">{HUB.numeral}</Headline></Reveal>
+    <div style={{ position: 'absolute', left: 'var(--page-gutter)', right: 'var(--page-gutter)', top: 214, display: 'grid', gridTemplateColumns: '1fr 1fr 360px 1fr 1fr', zIndex: 2 }}>
+      {HUB.cast.slice(0, 2).map((n, i) => <TrackingReveal key={n} from={.5} delay={c.cast + i * 80}><Headline size={34} tone="dark" as="div">{n}</Headline></TrackingReveal>)}<span />
+      {HUB.cast.slice(2).map((n, i) => <TrackingReveal key={n} from={.5} delay={c.cast + (i + 2) * 80}><Headline size={34} tone="dark" as="div" align={i ? 'right' : 'left'}>{n}</Headline></TrackingReveal>)}
+    </div>
+    <TrackingReveal from={.32} fromOpacity={.25} delay={c.title} duration={1500} style={{ position: 'absolute', left: 40, right: 70, top: 266, zIndex: 2, display: 'flex', justifyContent: 'center', whiteSpace: 'nowrap' }}>
+      <Headline size={318} tone="dark" as="h1" align="center" style={{ lineHeight: .8, textWrap: 'nowrap' }}>{HUB.title}</Headline>
+    </TrackingReveal>
+    <Reveal effect="fade" delay={c.year} style={{ position: 'absolute', right: 30, top: 440, zIndex: 2 }}><span style={{ display: 'block', transform: 'rotate(90deg)', fontFamily: 'var(--font-display)', fontSize: 28 }}>[{HUB.year}]</span></Reveal>
+    <Reveal effect="wipe-x" delay={c.strip} duration={1100} style={{ position: 'absolute', left: 0, right: 0, top: 590, zIndex: 2 }}>
+      <FilmStrip tone="dark" tilt={tilt} holes={52} />
+      <FilmStrip tone="red" tilt={tilt} holes={52} style={{ position: 'absolute', inset: 0, opacity: red }} />
+    </Reveal>
+    <Reveal effect="rise" distance={120} delay={c.cutout} duration={1200} style={{ position: 'absolute', left: '50%', bottom: 0, width: 560, height: 560, marginLeft: -280, zIndex: 4 }}>
+      <Float amp={3}><img className="cut" src={A + 'raccoon_hero.png'} alt="" /></Float>
+    </Reveal>
+    <Reveal effect="rise" distance={30} delay={c.story} style={{ position: 'absolute', left: 'var(--page-gutter)', bottom: 44, zIndex: 5, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <SectionLabel tone="dark" trail={false}>{HUB.title} {HUB.numeral} story</SectionLabel>
+      <Blurb part="A" tone="dark" width={280}>A curated Amazon storefront where a raccoon with taste digs up small finds that make big everyday upgrades…</Blurb>
+    </Reveal>
+    <div style={{ position: 'absolute', right: 'var(--page-gutter)', bottom: 40, zIndex: 5, display: 'flex', alignItems: 'center', gap: 36 }}>
+      <Reveal effect="rise" distance={30} delay={c.cta}><Button tone="dark">Browse now</Button></Reveal>
+      <Reveal effect="spin" delay={c.sticker} duration={1000}><StickerBadge index={1} src={A + 'sticker_face.jpg'} size={84} /></Reveal>
+    </div>
+  </section>;
+}
+
+function Production() {
+  const c = CUE.production;
+  return <section style={{ position: 'relative', zIndex: 2, height: H.production, background: 'var(--cd-black)', color: '#fff', overflow: 'hidden', borderRadius: '0 0 var(--radius-frame) var(--radius-frame)', boxShadow: '0 3px 0 var(--cd-pink-500)' }}>
+    <Viewfinder circle={620} top="58%" />
+    <Reveal effect="slide-left" distance={50} delay={c.studio} style={{ position: 'absolute', left: 'var(--page-gutter)', top: 90, display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <SectionLabel tone="dark" trail={false}>Curated by</SectionLabel>
+      <span style={{ display: 'flex', fontFamily: 'var(--font-display)', fontSize: 34, lineHeight: 1 }}><span style={{ background: 'var(--accent)', padding: '2px 6px 0' }}>ARACCOON</span><span style={{ padding: '2px 6px 0', border: '1px solid rgba(255,255,255,.6)' }}>PICKS</span></span>
+      <div style={{ marginTop: 60, display: 'flex', flexDirection: 'column', gap: 16 }}><IndexBadge n={2} /><span style={{ fontSize: 9, letterSpacing: '.42em', textTransform: 'uppercase', opacity: .8 }}>Bento · Classic</span></div>
+    </Reveal>
+    <div style={{ position: 'absolute', left: 0, right: 0, top: 110, display: 'flex', justifyContent: 'center', gap: 14 }}>
+      <Reveal effect="pop" delay={c.discs}><StatDisc label="Layouts" value="2" /></Reveal>
+      <Reveal effect="pop" delay={c.discs + 120}><StatDisc tone="accent" label="Featured" value="3" /></Reveal>
+      <Reveal effect="pop" delay={c.discs + 240}><StatDisc tone="dark" label="Themes" value="2" /></Reveal>
+    </div>
+    <Reveal effect="rise" distance={140} rotate={10} restRotate={-4} delay={c.still} duration={1200} style={{ position: 'absolute', left: '50%', top: 250, width: 380, height: 430, marginLeft: -190 }}>
+      <Float amp={3} speed={2}><img className="cut" src={A + 'raccoon_cards.png'} alt="" style={{ objectPosition: 'top center' }} /></Float>
+    </Reveal>
+    <div style={{ position: 'absolute', right: 'var(--page-gutter)', top: 120, width: 220, display: 'flex', flexDirection: 'column', gap: 70 }}>
+      <Reveal effect="mask" delay={c.quote} duration={1000}><PullQuote highlight="surprises.">Every find opens in a quick view first. No raw affiliate links, no</PullQuote></Reveal>
+      <Reveal effect="fade" delay={c.social} style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}><IconButton variant="muted" icon="instagram" size={22} /><IconButton variant="muted" icon="facebook" size={22} /><IconButton variant="muted" icon="youtube" size={22} /></Reveal>
+    </div>
+  </section>;
+}
+
+function Story() {
+  const c = CUE.story;
+  return <section style={{ position: 'relative', zIndex: 1, height: H.story, marginTop: 'calc(-1 * var(--curtain-overlap))', paddingTop: 'var(--curtain-overlap)', background: '#fff', overflow: 'hidden' }}>
+    <Viewfinder tone="light" circle={680} top="62%" />
+    <div style={{ position: 'relative', padding: '40px var(--page-gutter) 0', display: 'grid', gridTemplateColumns: 'auto auto 1fr', alignItems: 'end', gap: 28 }}>
+      <div><TrackingReveal from={.3} delay={c.directed}><Headline size={128} as="h2">Curated</Headline></TrackingReveal><Reveal effect="fade" delay={c.release}><span style={{ display: 'block', marginTop: 18, fontSize: 9, letterSpacing: '.42em', textTransform: 'uppercase' }}>Finds 01/03</span></Reveal></div>
+      <Reveal effect="pop" delay={c.by} style={{ marginBottom: 80 }}><Headline size={40} as="div">by</Headline></Reveal>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 18, minWidth: 0 }}>
+        <Reveal effect="rise" distance={24} delay={c.release} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginLeft: 120 }}><SectionLabel>Owner hub</SectionLabel><Blurb part="B" width={420}>Every pick is added from a private owner hub signed in with passkeys, not passwords, and every change lands in an activity log.</Blurb></Reveal>
+        <TrackingReveal from={.3} delay={c.director} style={{ textAlign: 'right', whiteSpace: 'nowrap' }}><Headline size={128} as="div" align="right" style={{ textWrap: 'nowrap' }}>{HUB.curator}</Headline></TrackingReveal>
+      </div>
+    </div>
+    <Reveal effect="wipe-x" duration={1200} delay={c.pager} style={{ borderTop: 'var(--hairline)', margin: '28px 0 0' }} />
+    <Reveal effect="fade" delay={c.pager} style={{ position: 'relative', padding: '18px var(--page-gutter)', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+      <SlideIndex count={2} active={0} style={{ width: 210 }} spread />
+      <SlideIndex count={2} active={-1} style={{ width: 210, marginLeft: 'auto' }} spread />
+    </Reveal>
+    <div style={{ position: 'relative', textAlign: 'center', marginTop: 10 }}>
+      <Reveal effect="blur" duration={800} delay={c.headline}>
+        <Headline size={48} align="center">Araccoon Hub: small finds, big upgrades, and</Headline>
+        <Headline size={48} align="center" muted>everything worth a click!</Headline>
+      </Reveal>
+      <Reveal effect="fade" delay={c.side}><ArrowPair style={{ marginTop: 22 }} /></Reveal>
+    </div>
+    <div style={{ position: 'absolute', left: 90, top: 520, display: 'flex', gap: 6 }}>
+      {[{ color: '#3a3a3a' }, { color: '#6a6a6a' }, { color: 'var(--accent)' }, { color: '#8c7a70' }].map((it, i) => <Reveal key={i} effect="pop" delay={c.side + i * 90}><AvatarStack items={[it]} /></Reveal>)}
+    </div>
+    <Reveal effect="spin" delay={c.side} duration={1000} style={{ position: 'absolute', right: 70, top: 490 }}><StickerBadge index={3} src={A + 'sticker_face.jpg'} /></Reveal>
+    <Reveal effect="slide-left" distance={40} delay={c.side} style={{ position: 'absolute', left: 90, top: 640, display: 'flex', flexDirection: 'column', gap: 12 }}><SectionLabel>Bento</SectionLabel><Blurb part="C">Browse in Bento or Classic layouts, filter by category and sort without ever losing your place.</Blurb></Reveal>
+    <Reveal effect="slide-right" distance={40} delay={c.side} style={{ position: 'absolute', right: 90, top: 640, display: 'flex', flexDirection: 'column', gap: 12 }}><SectionLabel>Quick view</SectionLabel><Blurb part="D">Each find opens with a clear description before it sends you on to Amazon, in light or dark mode…</Blurb></Reveal>
+    <div style={{ position: 'absolute', left: 150, top: 830 }}>
+      <Reveal effect="slide-left" distance={80} delay={c.stills} style={{ position: 'absolute', left: 70, top: 0 }}><MediaFrame shape="chamfer" width={114} height={160} src={A + 'still1.jpg'} tint /></Reveal>
+      <Reveal effect="slide-left" distance={80} delay={c.stills + 120} style={{ position: 'absolute', left: 0, top: 120 }}><MediaFrame shape="chamfer" width={114} height={140} src={A + 'still4.jpg'} tint /></Reveal>
+    </div>
+    <div style={{ position: 'absolute', right: 330, top: 830 }}>
+      <Reveal effect="slide-right" distance={80} delay={c.stills} style={{ position: 'absolute', left: 0, top: 0 }}><MediaFrame shape="chamfer" width={114} height={160} src={A + 'still3.jpg'} tint /></Reveal>
+      <Reveal effect="slide-right" distance={80} delay={c.stills + 120} style={{ position: 'absolute', left: 70, top: 120 }}><MediaFrame shape="chamfer" width={114} height={140} src={A + 'still2.jpg'} tint /></Reveal>
+    </div>
+    <Reveal effect="rise" distance={100} delay={c.card} duration={1100} style={{ position: 'absolute', left: '50%', top: 740, marginLeft: -120, zIndex: 3 }}>
+      <FindCard title="Araccoon Hub" tiles={[['Store', 'Amazon'], ['Picks', 'Featured'], ['Layout', 'Bento']]} />
+    </Reveal>
+    <Reveal effect="rise" distance={80} delay={c.cutout} style={{ position: 'absolute', left: '50%', bottom: 0, width: 230, height: 240, marginLeft: 120, zIndex: 4 }}>
+      <img className="cut" src={A + 'raccoon_hero.png'} alt="" />
+    </Reveal>
+  </section>;
+}
+
+function InTheaters() {
+  const c = CUE.theaters;
+  return <section style={{ position: 'relative', height: H.theaters, background: '#fff', overflow: 'hidden', borderTop: 'var(--hairline)' }}>
+    <Viewfinder tone="light" circle={680} top="56%" />
+    <div style={{ height: 'var(--nav-height)', borderBottom: 'var(--hairline)' }} />
+    <div style={{ position: 'relative', textAlign: 'center', marginTop: 70 }}>
+      <Reveal effect="fade" delay={c.label}><span style={{ fontSize: 10, letterSpacing: '.42em', textTransform: 'uppercase' }}>Now online</span></Reveal>
+      <TrackingReveal from={.3} delay={c.title} style={{ marginTop: 14, whiteSpace: 'nowrap' }}><Headline size={170} align="center" as="h2" style={{ textWrap: 'nowrap' }}>{HUB.title} {HUB.numeral}</Headline></TrackingReveal>
+      <div style={{ width: 640, margin: '20px auto 0', display: 'flex', justifyContent: 'space-between' }}>
+        <Headline size={36} as="div"><ScrambleText text="OCT 3" delay={c.dates} /></Headline>
+        <Headline size={36} as="div"><ScrambleText text={HUB.year} delay={c.dates + 100} charset="0123456789" /></Headline>
+      </div>
+    </div>
+    <Reveal effect="rise" distance={140} delay={c.cutout} duration={1200} style={{ position: 'absolute', left: '50%', bottom: 0, width: 520, height: 470, marginLeft: -260 }}>
+      <Float amp={3}><img className="cut" src={A + 'raccoon_heart.png'} alt="" /></Float>
+    </Reveal>
+  </section>;
+}
+
+function App({ t }) {
+  const frame = Math.round(t * FPS);
+  const y = scrollAt(t);
+  const light = held(t, .32, s => s + 48 >= TOP.story + 48);           // fixed nav cross-fades tone
+  const active = y + 48 >= TOP.theaters ? 3 : y + 48 >= TOP.story + 48 ? 2 : y + 48 >= TOP.production ? 1 : 0;
+  return <Clock.Provider value={{ t, start: 0, frame }}>
+    <div style={{ position: 'absolute', left: 0, top: 0, width: 1280, transform: `translateY(${-y}px)` }}>
+      <Section id="hero"><Hero /></Section>
+      <Section id="production"><Production /></Section>
+      <Section id="story"><Story /></Section>
+      <Section id="theaters"><InTheaters /></Section>
+    </div>
+    <Reveal effect="drop" distance={30} delay={CUE.hero.nav} style={{ position: 'absolute', left: 0, top: 0, width: 1280, zIndex: 50 }}>
+      <div style={{ position: 'absolute', inset: 0, opacity: 1 - light }}><NavBar tone="dark" active={active} /></div>
+      <div style={{ position: 'relative', opacity: light }}><NavBar tone="light" active={active} /></div>
+    </Reveal>
+  </Clock.Provider>;
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+const raf2 = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+window.seek = async t => { ReactDOM.flushSync(() => root.render(<App t={t} />)); await raf2(); return true; };
+window.ready = (async () => {
+  await window.seek(0);
+  const icons = ['search', 'user', 'shopping-bag', 'eye', 'arrow-up-right', 'instagram', 'facebook', 'youtube'];
+  await Promise.all([document.fonts.ready, ...icons.map(n => fetch(`https://unpkg.com/lucide-static@0.452.0/icons/${n}.svg`).catch(() => {})),
+    ...[...document.images].map(i => i.decode().catch(() => {}))]);
+  for (const t of [1, 3, 5, 6.5, 8.5]) await window.seek(t);   // warm every image and mask once
+  await new Promise(r => setTimeout(r, 1500));
+  await window.seek(+(new URLSearchParams(location.search).get('t') || 0));
+  return { DURATION, FPS, START };
+})();
+</script>
+</body>
+</html>

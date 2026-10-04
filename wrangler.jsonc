@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "araccoon-hub",
+  "main": "./worker/index.ts",
+  "compatibility_date": "2026-10-02",
+  // pg (node-postgres) needs Node.js APIs; Hyperdrive gives it pooled Neon connections.
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    // React routes are served as static assets (free, never invoke the Worker)…
+    "not_found_handling": "single-page-application",
+    // …except the API and the short outbound redirect links.
+    "run_worker_first": ["/api/*", "/r/*"]
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      // Replaced after `npx wrangler hyperdrive create araccoon-hub-db --connection-string=<Neon URL>`.
+      // Local dev uses CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE from .env instead.
+      "id": "00000000000000000000000000000000"
+    }
+  ],
+  "triggers": {
+    // Daily maintenance (retention purge, expired sessions/challenges). Free plan: max once per day.
+    "crons": ["30 20 * * *"]
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "REPORT_TIMEZONE": "Asia/Kolkata",
+    "AFFILIATE_ALLOWED_HOSTS": "amazon.com,amazon.in,amzn.to,amzn.in",
+    "CLICK_RETENTION_DAYS": "90"
+  },
+  "observability": { "enabled": true }
+}

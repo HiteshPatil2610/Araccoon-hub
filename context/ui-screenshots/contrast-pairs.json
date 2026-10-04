@@ -1,0 +1,96 @@
+[
+  {
+    "theme": "light",
+    "pairs": [
+      {
+        "background": "rgb(41, 72, 255)",
+        "color": "rgb(255, 255, 255)",
+        "label": "Browse the finds ",
+        "ratio": 6.06
+      },
+      {
+        "background": "rgb(255, 255, 255)",
+        "color": "rgb(23, 23, 23)",
+        "label": "Search field",
+        "ratio": 17.93
+      },
+      {
+        "background": "rgb(217, 249, 67)",
+        "color": "rgb(17, 17, 17)",
+        "label": "Bento",
+        "ratio": 15.81
+      },
+      {
+        "background": "rgb(41, 72, 255)",
+        "color": "rgb(255, 255, 255)",
+        "label": "View on Amazon.in ",
+        "ratio": 6.06
+      },
+      {
+        "background": "rgb(41, 72, 255)",
+        "color": "rgb(255, 255, 255)",
+        "label": "View on Amazon.in ",
+        "ratio": 6.06
+      },
+      {
+        "background": "#f7f5ee",
+        "color": "#171717",
+        "label": "Main text",
+        "ratio": 16.43
+      },
+      {
+        "background": "#fff",
+        "color": "#57534e",
+        "label": "Secondary text on card",
+        "ratio": 7.63
+      }
+    ]
+  },
+  {
+    "theme": "dark",
+    "pairs": [
+      {
+        "background": "rgb(41, 72, 255)",
+        "color": "rgb(255, 255, 255)",
+        "label": "Browse the finds ",
+        "ratio": 6.06
+      },
+      {
+        "background": "rgb(31, 31, 31)",
+        "color": "rgb(246, 243, 233)",
+        "label": "Search field",
+        "ratio": 14.85
+      },
+      {
+        "background": "rgb(217, 249, 67)",
+        "color": "rgb(17, 17, 17)",
+        "label": "Bento",
+        "ratio": 15.81
+      },
+      {
+        "background": "rgb(41, 72, 255)",
+        "color": "rgb(255, 255, 255)",
+        "label": "View on Amazon.in ",
+        "ratio": 6.06
+      },
+      {
+        "background": "rgb(41, 72, 255)",
+        "color": "rgb(255, 255, 255)",
+        "label": "View on Amazon.in ",
+        "ratio": 6.06
+      },
+      {
+        "background": "#121212",
+        "color": "#f6f3e9",
+        "label": "Main text",
+        "ratio": 16.87
+      },
+      {
+        "background": "#1f1f1f",
+        "color": "#bdb8ae",
+        "label": "Secondary text on card",
+        "ratio": 8.34
+      }
+    ]
+  }
+]

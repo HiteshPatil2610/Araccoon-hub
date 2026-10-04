@@ -1,0 +1,254 @@
+[
+  {
+    "page": "storefront",
+    "layout": "Bento",
+    "client": 366,
+    "scroll": 366,
+    "scrollY": 0,
+    "selected": [
+      "All finds",
+      "Bento"
+    ],
+    "theme": "light",
+    "width": 375
+  },
+  {
+    "page": "storefront",
+    "layout": "Classic",
+    "client": 366,
+    "scroll": 366,
+    "scrollY": 0,
+    "selected": [
+      "All finds",
+      "Classic"
+    ],
+    "theme": "light",
+    "width": 375
+  },
+  {
+    "page": "storefront",
+    "layout": "Bento",
+    "client": 759,
+    "scroll": 759,
+    "scrollY": 0,
+    "selected": [
+      "All finds",
+      "Bento"
+    ],
+    "theme": "light",
+    "width": 768
+  },
+  {
+    "page": "storefront",
+    "layout": "Classic",
+    "client": 759,
+    "scroll": 759,
+    "scrollY": 0,
+    "selected": [
+      "All finds",
+      "Classic"
+    ],
+    "theme": "light",
+    "width": 768
+  },
+  {
+    "page": "storefront",
+    "layout": "Bento",
+    "client": 1431,
+    "scroll": 1431,
+    "scrollY": 0,
+    "selected": [
+      "All finds",
+      "Bento"
+    ],
+    "theme": "light",
+    "width": 1440
+  },
+  {
+    "page": "storefront",
+    "layout": "Classic",
+    "client": 1431,
+    "scroll": 1431,
+    "scrollY": 0,
+    "selected": [
+      "All finds",
+      "Classic"
+    ],
+    "theme": "light",
+    "width": 1440
+  },
+  {
+    "page": "storefront",
+    "layout": "Bento",
+    "client": 366,
+    "scroll": 366,
+    "scrollY": 0,
+    "selected": [
+      "All finds",
+      "Bento"
+    ],
+    "theme": "dark",
+    "width": 375
+  },
+  {
+    "page": "storefront",
+    "layout": "Classic",
+    "client": 366,
+    "scroll": 366,
+    "scrollY": 0,
+    "selected": [
+      "All finds",
+      "Classic"
+    ],
+    "theme": "dark",
+    "width": 375
+  },
+  {
+    "page": "storefront",
+    "layout": "Bento",
+    "client": 759,
+    "scroll": 759,
+    "scrollY": 0,
+    "selected": [
+      "All finds",
+      "Bento"
+    ],
+    "theme": "dark",
+    "width": 768
+  },
+  {
+    "page": "storefront",
+    "layout": "Classic",
+    "client": 759,
+    "scroll": 759,
+    "scrollY": 0,
+    "selected": [
+      "All finds",
+      "Classic"
+    ],
+    "theme": "dark",
+    "width": 768
+  },
+  {
+    "page": "storefront",
+    "layout": "Bento",
+    "client": 1431,
+    "scroll": 1431,
+    "scrollY": 0,
+    "selected": [
+      "All finds",
+      "Bento"
+    ],
+    "theme": "dark",
+    "width": 1440
+  },
+  {
+    "page": "storefront",
+    "layout": "Classic",
+    "client": 1431,
+    "scroll": 1431,
+    "scrollY": 0,
+    "selected": [
+      "All finds",
+      "Classic"
+    ],
+    "theme": "dark",
+    "width": 1440
+  },
+  {
+    "page": "products",
+    "client": 366,
+    "scroll": 366,
+    "scrollY": 0,
+    "theme": "dark",
+    "width": 375
+  },
+  {
+    "page": "products",
+    "client": 759,
+    "scroll": 759,
+    "scrollY": 0,
+    "theme": "dark",
+    "width": 768
+  },
+  {
+    "page": "products",
+    "client": 1440,
+    "scroll": 1440,
+    "scrollY": 0,
+    "theme": "dark",
+    "width": 1440
+  },
+  {
+    "page": "products",
+    "client": 366,
+    "scroll": 366,
+    "scrollY": 0,
+    "theme": "light",
+    "width": 375
+  },
+  {
+    "page": "products",
+    "client": 759,
+    "scroll": 759,
+    "scrollY": 0,
+    "theme": "light",
+    "width": 768
+  },
+  {
+    "page": "products",
+    "client": 1440,
+    "scroll": 1440,
+    "scrollY": 0,
+    "theme": "light",
+    "width": 1440
+  },
+  {
+    "page": "analytics",
+    "client": 366,
+    "scroll": 366,
+    "scrollY": 0,
+    "theme": "dark",
+    "width": 375
+  },
+  {
+    "page": "analytics",
+    "client": 759,
+    "scroll": 759,
+    "scrollY": 0,
+    "theme": "dark",
+    "width": 768
+  },
+  {
+    "page": "analytics",
+    "client": 1431,
+    "scroll": 1431,
+    "scrollY": 0,
+    "theme": "dark",
+    "width": 1440
+  },
+  {
+    "page": "analytics",
+    "client": 366,
+    "scroll": 366,
+    "scrollY": 0,
+    "theme": "light",
+    "width": 375
+  },
+  {
+    "page": "analytics",
+    "client": 759,
+    "scroll": 759,
+    "scrollY": 0,
+    "theme": "light",
+    "width": 768
+  },
+  {
+    "page": "analytics",
+    "client": 1431,
+    "scroll": 1431,
+    "scrollY": 0,
+    "theme": "light",
+    "width": 1440
+  }
+]

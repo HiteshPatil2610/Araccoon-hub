@@ -1,0 +1,16 @@
+node_modules/
+.npm-cache/
+dist/
+.wrangler/
+.dev.vars*
+!.dev.vars.example
+.env
+.env.*
+!.env.example
+*.log
+coverage/
+.localdb/
+.env
+
+# Blender auto-backups
+*.blend1

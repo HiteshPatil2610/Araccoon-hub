@@ -1,0 +1,14 @@
+:root{
+--shadow-frame:0 20px 60px rgba(0,0,0,.18);
+--shadow-card:0 18px 40px rgba(0,0,0,.35);
+--shadow-cutout:0 30px 50px rgba(0,0,0,.45);
+--hairline:1px solid var(--line-on-light);--hairline-dark:1px solid var(--line-on-dark);
+--ease-cine:cubic-bezier(.7,0,.2,1); /* @kind other */
+--ease-out:cubic-bezier(.2,.8,.2,1); /* @kind other */
+--dur-fast:160ms; /* @kind other */
+--dur-base:320ms; /* @kind other */
+--dur-slow:700ms; /* @kind other */
+--dur-reveal:1100ms; /* @kind other */
+--gradient-section-edge:linear-gradient(90deg,var(--cd-red-500),var(--cd-pink-500));
+--gradient-strip:linear-gradient(180deg,var(--cd-red-600),var(--cd-red-500));
+}

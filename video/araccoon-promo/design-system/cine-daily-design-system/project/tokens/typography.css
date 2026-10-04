@@ -1,0 +1,13 @@
+:root{
+--font-display:"Bebas Neue","Oswald","Arial Narrow",sans-serif;
+--font-sans:"Archivo","Helvetica Neue",Arial,sans-serif;
+/* display scale (Bebas, all caps, tight) */
+--type-mega:clamp(120px,18vw,300px);--type-display-xl:120px;--type-display-l:88px;--type-display-m:48px;--type-display-s:32px;--type-display-xs:24px;--type-display-2xs:18px;
+--lh-display:.86; /* @kind other */--ls-display:-.005em;
+/* sans scale */
+--type-label:11px;--type-body-s:12px;--type-body:14px;--type-body-l:16px;
+--ls-label:.32em;--ls-label-wide:.42em;--lh-body:1.45; /* @kind other */
+--weight-regular:400;--weight-medium:500;--weight-semibold:600;--weight-bold:700;
+/* semantic */
+--text-headline-family:var(--font-display);--text-nav-family:var(--font-sans);--text-body-family:var(--font-sans);
+}

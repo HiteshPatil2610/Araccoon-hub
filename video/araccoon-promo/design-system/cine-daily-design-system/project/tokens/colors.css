@@ -1,0 +1,18 @@
+:root{
+/* ink (dark scale) */
+--cd-black:#0A0A0A;--cd-ink-900:#121212;--cd-ink-800:#1C1C1C;--cd-ink-700:#2A2A2A;--cd-ink-600:#3A3A3A;--cd-ink-500:#5A5A5A;
+/* neutrals (light scale) */
+--cd-gray-400:#8C8C8C;--cd-gray-300:#B5B5B5;--cd-gray-200:#DADADA;--cd-gray-100:#EDEDED;--cd-white:#FFFFFF;
+/* frame / desk */
+--cd-frame:#CEC7C4;
+/* signature red */
+--cd-red-700:#8E1520;--cd-red-600:#A81A28;--cd-red-500:#C8202F;--cd-red-400:#DE3A48;--cd-red-300:#EE7C86;
+/* section transition accent */
+--cd-pink-500:#E2457E;
+/* semantic: dark theme (default hero) */
+--surface-page:var(--cd-white);--surface-dark:var(--cd-black);--surface-dark-raised:var(--cd-ink-800);--surface-card-dark:var(--cd-ink-700);--surface-desk:var(--cd-frame);
+--text-on-dark:var(--cd-white);--text-on-dark-muted:var(--cd-gray-300);--text-on-light:var(--cd-black);--text-on-light-muted:var(--cd-ink-500);
+--accent:var(--cd-red-500);--accent-hover:var(--cd-red-400);--accent-press:var(--cd-red-600);--on-accent:var(--cd-white);
+--line-on-dark:rgba(255,255,255,.10);--line-on-light:rgba(0,0,0,.08);--outline-on-dark:rgba(255,255,255,.85);--outline-on-light:var(--cd-black);
+--rating-on:var(--cd-red-500);--rating-off:var(--cd-white);
+}

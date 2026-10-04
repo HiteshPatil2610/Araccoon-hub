@@ -1,0 +1,31 @@
+<!-- @dsCard group="Components" viewport="700x340" name="Motion — reveal, tracking, scramble" -->
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>body{margin:0;background:#0a0a0a;font-family:var(--font-sans);overflow:hidden}*{box-sizing:border-box}</style></head><body><div id="root"></div>
+<script type="text/babel">
+const { Reveal, TrackingReveal, ScrambleText, Headline, StatDisc, Button, StickerBadge } = window.CineDailyDesignSystem_53d08c;
+function Demo() {
+  const [k, setK] = React.useState(0);
+  React.useEffect(() => { const id = setInterval(() => setK(x => x + 1), 3600); return () => clearInterval(id); }, []);
+  const cap = { fontSize: 9, letterSpacing: '.32em', textTransform: 'uppercase', color: '#8c8c8c' };
+  return <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18, color: '#fff' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 20, height: 92, overflow: 'hidden' }}>
+      <TrackingReveal replayKey={k} from="0.4em"><Headline size={92} tone="dark" as="div">Deadpool</Headline></TrackingReveal>
+      <div style={{ marginLeft: 'auto', textAlign: 'right' }}><span style={cap}>ScrambleText</span><Headline size={40} tone="dark" as="div"><ScrambleText replayKey={k} text="MAY 3 2024" delay={300} /></Headline></div>
+    </div>
+    <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+      {[['rise', 0], ['pop', 120], ['spin', 240], ['blur', 360], ['mask', 480]].map(([e, d]) => <div key={e} style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+        <Reveal effect={e} delay={d} replayKey={k}><StatDisc tone={e === 'pop' ? 'accent' : e === 'mask' ? 'light' : 'dark'} label={e} value={d / 120 + 1} size={86} /></Reveal>
+        <span style={cap}>{e}</span></div>)}
+      <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'flex-end' }}>
+        <Reveal effect="rise" delay={700} distance={30} replayKey={k}><Button>Book now</Button></Reveal>
+        <Reveal effect="spin" delay={850} replayKey={k}><StickerBadge text="MERC" size={64} /></Reveal>
+      </div>
+    </div>
+  </div>;
+}
+ReactDOM.createRoot(root).render(<Demo />);
+</script></body></html>

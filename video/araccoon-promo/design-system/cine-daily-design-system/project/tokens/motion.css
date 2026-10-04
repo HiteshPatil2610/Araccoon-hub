@@ -1,0 +1,10 @@
+:root{
+--ease-pop:cubic-bezier(.34,1.45,.55,1); /* @kind other */
+--ease-curtain:cubic-bezier(.83,0,.17,1); /* @kind other */
+--dur-tracking:1300ms; /* @kind other */
+--dur-scramble:900ms; /* @kind other */
+--stagger-step:120ms; /* @kind other */
+--track-reveal-from:.45em; /* @kind other */
+--rise-distance:60px;
+--curtain-overlap:48px;
+}
