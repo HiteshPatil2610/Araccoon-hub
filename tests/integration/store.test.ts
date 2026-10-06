@@ -40,7 +40,23 @@ describe('store: products, outbound links, analytics, exports, conversions', { s
     return res.body;
   };
 
-  it('accepts .com and .in Amazon links (incl. short links) and normalizes to https', async () => {
+  it('publishing and editing one field preserve omitted copy, ratings, tags and catalog settings', async () => {
+    const product = await create({description:'Material: Steel',rating:4.2,reviewCount:27,badge:'Useful',featured:true,status:'draft',sortOrder:42,affiliateTag:'custom-21',subId:'desk'});
+    const published = await owner.patch(`/api/admin/products/${product.id}`, {status:'published'});
+    assert.equal(published.status, 200, published.text);
+    for (const key of ['description', 'rating', 'reviewCount', 'badge', 'featured', 'sortOrder', 'affiliateTag', 'subId', 'imageUrl', 'imagePublicId', 'affiliateUrl']) {
+      assert.equal(published.body[key], product[key], key);
+    }
+    const edited = await owner.patch(`/api/admin/products/${product.id}`, {description:'Material: Alloy steel'});
+    assert.equal(edited.status, 200, edited.text);
+    assert.equal(edited.body.description, 'Material: Alloy steel');
+    for (const key of ['status', 'rating', 'reviewCount', 'badge', 'featured', 'sortOrder', 'affiliateTag', 'subId', 'imageUrl', 'imagePublicId', 'affiliateUrl']) {
+      assert.equal(edited.body[key], published.body[key], key);
+    }
+  });
+
+  it('accepts .com and .in Amazon links (incl. short links) and normalizes to https', async test => {
+    test.mock.method(globalThis, 'fetch', async () => new Response(null, {status:302,headers:{location:'https://www.amazon.in/dp/B0TEST0001'}}));
     for (const url of ['https://www.amazon.in/dp/B0X1', 'amazon.com/dp/B0X2', 'http://www.amazon.in/gp/product/B0X3', 'https://amzn.to/3abc', 'https://amzn.in/d/abc']) {
       const p = await create({ affiliateUrl: url });
       assert.match(p.affiliateUrl, /^https:\/\//);
@@ -92,6 +108,37 @@ describe('store: products, outbound links, analytics, exports, conversions', { s
     await owner.get(`/r/${p.id}`);
     const { rows } = await t.db.query<{ is_owner: boolean }>('SELECT is_owner FROM clicks ORDER BY occurred_at');
     assert.deepEqual(rows.map(r => r.is_owner), [false, false, true]);
+  });
+
+  it('replaces other affiliate tags on saves and on legacy visitor links', async test => {
+    const p = await create({ affiliateUrl: 'https://www.amazon.in/dp/B0TEST0001?tag=someone-21&ascsubtag=old&th=1' });
+    assert.equal(new URL(p.affiliateUrl).searchParams.get('tag'), 'test-21');
+    await t.db.query('UPDATE products SET affiliate_url = $1 WHERE id = $2', ['https://amzn.to/legacy', p.id]);
+    const network = test.mock.method(globalThis, 'fetch', async () => new Response(null, {status:302,headers:{location:'https://www.amazon.in/dp/B0TEST0001?tag=someone-21&th=1'}}));
+    const visitor = t.browser();
+    const beacon = await visitor.post('/api/track', { productId: p.id, clickKey: crypto.randomUUID() });
+    assert.equal(beacon.status, 200, beacon.text);
+    assert.equal(new URL(beacon.body.destinationUrl).searchParams.get('tag'), 'test-21');
+    const redirect = await visitor.get(`/r/${p.id}`);
+    assert.equal(redirect.status, 302);
+    assert.equal(new URL(redirect.headers.get('location')!).searchParams.get('tag'), 'test-21');
+    assert.equal(network.mock.callCount(), 2);
+  });
+
+  it('expands short links on manual save and honors the owner tag override', async test => {
+    test.mock.method(globalThis, 'fetch', async () => new Response(null, {status:302,headers:{location:'https://www.amazon.in/dp/B0TEST0001?tag=someone-21'}}));
+    const p = await create({ affiliateUrl: 'https://amzn.to/example', affiliateTag: 'campaign-21', subId: 'my-campaign' });
+    const saved = new URL(p.affiliateUrl);
+    assert.equal(saved.hostname, 'www.amazon.in');
+    assert.equal(saved.searchParams.get('tag'), 'campaign-21');
+    assert.equal(saved.searchParams.get('ascsubtag'), 'my-campaign');
+    const edited = await owner.patch(`/api/admin/products/${p.id}`, { affiliateUrl: 'https://www.amazon.in/dp/B0TEST0001?tag=other-21', affiliateTag: 'second-21' });
+    assert.equal(edited.status, 200);
+    assert.equal(new URL(edited.body.affiliateUrl).searchParams.get('tag'), 'second-21');
+    const tagOnly = await owner.patch(`/api/admin/products/${p.id}`, { affiliateTag: null, subId: null });
+    assert.equal(tagOnly.status, 200);
+    assert.equal(new URL(tagOnly.body.affiliateUrl).searchParams.get('tag'), 'test-21');
+    assert.equal(new URL(tagOnly.body.affiliateUrl).searchParams.has('ascsubtag'), false);
   });
 
   it('never redirects to a stored destination that fails the current policy', async () => {

@@ -8,12 +8,14 @@ import type { HumanCheck } from './lib/turnstile';
 import type { ImageStore } from './lib/cloudinary';
 import type { OwnerSession } from './auth/sessions';
 import { clientIp } from './lib/request';
+import type { ProductImportProvider } from './lib/productImport/contracts';
 
 export interface AppDeps {
   config: Config;
   limiter: RateLimiter;
   human: HumanCheck;
   images: ImageStore;
+  productImporter?: ProductImportProvider;
   /** Opens the database for one request; close() runs after the response. */
   openDb: () => Db & { close?: () => Promise<void> };
 }

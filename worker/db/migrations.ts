@@ -153,6 +153,27 @@ CREATE INDEX audit_events_time_idx ON audit_events(occurred_at DESC);
 -- Existing registration attempts cannot be safely assigned an authority.
 UPDATE auth_challenges SET used_at = now() WHERE purpose = 'register' AND used_at IS NULL;`,
   },
+  {
+    version: 3,
+    name: 'owner_content_sources',
+    sql: `CREATE TABLE product_content_sources (
+      product_id uuid PRIMARY KEY REFERENCES products(id) ON DELETE CASCADE,
+      marketplace text NOT NULL CHECK (marketplace IN ('amazon.in', 'amazon.com')),
+      asin text NOT NULL CHECK (asin ~ '^[A-Z0-9]{10}$'),
+      provider text NOT NULL CHECK (provider = 'owner-content'),
+      source_url text CHECK (source_url LIKE 'https://%' AND char_length(source_url) <= 2048),
+      asserted_by uuid REFERENCES owners(id) ON DELETE SET NULL,
+      content_authorized boolean NOT NULL CHECK (content_authorized),
+      created_at timestamptz NOT NULL DEFAULT now()
+    );`,
+  },
+  {
+    version: 4,
+    name: 'product_page_sources',
+    sql: `ALTER TABLE product_content_sources DROP CONSTRAINT product_content_sources_provider_check;
+ALTER TABLE product_content_sources ADD CONSTRAINT product_content_sources_provider_check
+  CHECK (provider IN ('owner-content', 'amazon-page'));`,
+  },
 ];
 
 const LOCK_KEY = 4_204_201_337;

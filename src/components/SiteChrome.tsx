@@ -1,10 +1,10 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { Moon, Sun, X } from 'lucide-react';
 import { useTheme } from '../lib/theme';
 import { useDialog } from '../lib/useDialog';
-import { SectionLabel, TrackingReveal } from './cine';
+import { HERO_CUES, Reveal, SectionLabel, TrackingReveal, useHeroEntrance, usePrefersReducedMotion } from './cine';
 import { CATEGORIES } from '../../shared/types';
 
 const LINKS = [
@@ -19,19 +19,32 @@ const LINKS = [
  * nav with white type; everything else gets the solid page tone. The link for the section under the nav is current.
  */
 export function Navbar() {
+  const introReady = useHeroEntrance();
+  const reducedMotion = usePrefersReducedMotion();
+  const [introDone, setIntroDone] = useState(false);
+  const introEnabled = introReady !== null && !introDone;
   const { dark, toggle } = useTheme();
   const [overDark, setOverDark] = useState(true);
+  const [overEditorial, setOverEditorial] = useState(false);
   const [current, setCurrent] = useState<string>('top');
+
+  useEffect(() => { if (reducedMotion) setIntroDone(true); }, [reducedMotion]);
 
   useEffect(() => {
     const onScroll = () => {
+      if (window.scrollY > 96) setIntroDone(true);
       const y = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-height')) || 96) / 2;
       let tone = false;
+      let editorial = false;
       for (const el of document.querySelectorAll<HTMLElement>('[data-nav-tone]')) {
         const r = el.getBoundingClientRect();
-        if (r.top <= y && r.bottom > y) tone = el.dataset.navTone === 'dark';
+        if (r.top <= y && r.bottom > y) {
+          tone = el.dataset.navTone === 'dark';
+          editorial = el.dataset.navTone === 'editorial';
+        }
       }
       setOverDark(tone);
+      setOverEditorial(editorial);
       let at = '';
       for (const l of LINKS) {
         const r = document.getElementById(l.id)?.getBoundingClientRect();
@@ -46,7 +59,8 @@ export function Navbar() {
   }, []);
 
   return (
-    <header className={`cd-nav ${overDark ? 'cd-nav--over-dark' : ''}`} data-morph-root>
+    <header className={`cd-nav ${overDark ? 'cd-nav--over-dark' : ''} ${overEditorial ? 'cd-editorial' : ''} ${introEnabled ? 'cd-nav--intro' : ''} ${introEnabled && introReady ? 'cd-nav--intro-shown' : ''}`} style={{ '--nav-entry-delay': `${HERO_CUES.nav}ms` } as CSSProperties}
+      onFocusCapture={() => setIntroDone(true)} onAnimationEnd={e => { if (e.animationName === 'hero-nav-arrive') setIntroDone(true); }} data-morph-root>
       <a href="#main" className="skip-link">Skip to content</a>
       <div className="cd-nav__inner">
         <Link to="/" className="font-display text-[26px] sm:text-[32px] leading-none pt-1 justify-self-start" aria-label="Raccoon Hub home" data-morph="type">
@@ -137,11 +151,11 @@ export function Footer() {
   return (
     <footer className="mt-auto bg-ink text-white relative" data-morph-root>
       <div className="h-[3px]" style={{ background: 'var(--gradient-section-edge)' }} aria-hidden="true" />
-      <div className="max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)] pt-14 pb-8">
+      <div className="max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)] pt-14">
         <TrackingReveal from="0.3em" once className="overflow-hidden" morph="type">
-          <p className="font-display text-[clamp(64px,15vw,220px)] leading-[.8] whitespace-nowrap">Raccoon<span className="text-red"> Hub</span></p>
+          <p className="font-display text-[clamp(64px,15vw,220px)] leading-[.8] whitespace-nowrap text-center">Raccoon<span className="text-red"> Hub</span></p>
         </TrackingReveal>
-        <div className="grid gap-10 md:grid-cols-3 mt-12 border-t border-white/10 pt-10">
+        <div className="cd-footer__details mt-12 border-t border-white/10">
           <div data-morph="move">
             <SectionLabel>The idea</SectionLabel>
             <p className="mt-4 text-sm text-[var(--cd-gray-300)] max-w-xs">A small internet treasure map of clever objects and useful oddities.</p>
@@ -157,6 +171,9 @@ export function Footer() {
             <p className="mt-4">Prices and availability are shown on Amazon and may change.</p>
             <Link to="/admin" className="inline-flex min-h-11 items-center mt-1 eyebrow text-white/60 hover:text-white">Owner sign-in ↗</Link>
           </div>
+          <Reveal effect="rise" distance={24} once className="cd-footer__mascot" morph="move">
+            <img src="/art/video-concept/raccoon-closing-heart.webp" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} />
+          </Reveal>
         </div>
       </div>
       <div className="border-t border-white/10">

@@ -4,6 +4,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 const root = path.resolve('dist/client');
+const port = Number(process.env.PORT || 5174);
 const names = ['Fixture desk object', 'Fixture keyboard accessory', 'Fixture home object with a deliberately long title for responsive checks', 'Fixture missing photo'];
 const products = names.map((title,i) => ({ id:`00000000-0000-4000-8000-00000000000${i}`, title, description:'Browser QA fixture only. This is not a real product listing or a business metric.', category: i%2 ? 'Tech & Gadgets':'Desk & Office', rating:0, reviewCount:0, imageUrl:i===3?'/missing-fixture.png':'/favicon.svg', badge:null, featured:i<3, store:'amazon.in', createdAt:'2026-10-03T00:00:00Z', updatedAt:'2026-10-03T00:00:00Z', imagePublicId:null, affiliateUrl:'https://www.amazon.in/dp/B000000000', affiliateTag:null, subId:null, status:'published', sortOrder:i, linkHealthy:true }));
 let mode='normal'; let saves=0;
@@ -15,6 +16,7 @@ http.createServer(async(req,res)=>{
   if(u.pathname==='/api/auth/state') return json({owner:mode==='signed-out'?null:{id:'fixture-owner',email:'fixture@example.test',displayName:'QA fixture owner',needsPasskey:false},setupOpen:false,turnstileSiteKey:null,devLogin:false});
   if(u.pathname==='/api/products') return mode==='catalog-failed'?json({error:'QA fixture request failure.'},503):json(mode==='empty'?[]:products.map(p=>({...p,featured:mode==='no-featured'?false:mode==='one-featured'?p.sortOrder===0:p.featured})));
   if(u.pathname==='/api/admin/products' && req.method==='GET') return json(products);
+  if(u.pathname.startsWith('/api/admin/product-imports/')) return json({error:'Product imports are unavailable in this UI preview. Run the full development server to use product imports.'},503);
   if(u.pathname.startsWith('/api/admin/products') && req.method!=='GET'){ saves++; return json({error:'QA fixture save failed; values should remain.'},503); }
   if(u.pathname==='/api/admin/analytics/conversions') return mode==='conversion-failed'?json({error:'QA conversion request failure.'},503):json([]);
   if(u.pathname==='/api/admin/analytics'){
@@ -32,4 +34,4 @@ http.createServer(async(req,res)=>{
  const file=fs.existsSync(candidate)&&fs.statSync(candidate).isFile()?candidate:path.join(root,'index.html');
  const mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml','.woff2':'font/woff2','.jpg':'image/jpeg'}[path.extname(file)]||'application/octet-stream';
  res.writeHead(200,{'Content-Type':mime});res.end(fs.readFileSync(file));
-}).listen(5174,'127.0.0.1',()=>console.log('Isolated QA fixtures: http://127.0.0.1:5174 (no database; writes fail deliberately)'));
+}).listen(port,'127.0.0.1',()=>console.log(`Isolated QA fixtures: http://127.0.0.1:${port} (no database; writes fail deliberately)`));

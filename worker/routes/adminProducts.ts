@@ -1,11 +1,11 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { body, fail, limit, type AppEnv, type Ctx } from '../app';
+import { ApiError, body, fail, limit, type AppEnv, type Ctx } from '../app';
 import { requireOwner } from '../auth/sessions';
 import { audit } from '../lib/audit';
 import { countImageRefs, getProduct, insertProduct, listProducts, toProduct, updateProduct } from '../repo/products';
 import { bulkActionSchema, productInputSchema, productPatchSchema, type ProductPatch } from '../../shared/schemas';
-import { normalizeAffiliateUrl } from '../../shared/urlPolicy';
+import { prepareAffiliateLink } from '../lib/affiliateLinks';
 
 export const adminProductRoutes = new Hono<AppEnv>();
 adminProductRoutes.use('*', requireOwner());
@@ -13,11 +13,19 @@ adminProductRoutes.use('*', requireOwner());
 const ownerKey = (c: Ctx) => c.get('session')!.ownerId;
 
 /** Server-only checks on top of the shared schema: trusted link + image origin. */
-function checkProduct(c: Ctx, input: ProductPatch): ProductPatch {
+async function checkProduct(c: Ctx, input: ProductPatch, current?: NonNullable<Awaited<ReturnType<typeof getProduct>>>): Promise<ProductPatch> {
   const { config, images } = c.get('deps');
   const out = { ...input };
-  if (input.affiliateUrl !== undefined) {
-    const url = normalizeAffiliateUrl(input.affiliateUrl, config.allowedHosts);
+  if (input.affiliateUrl !== undefined || (current && (input.affiliateTag !== undefined || input.subId !== undefined))) {
+    const tag = input.affiliateTag !== undefined ? input.affiliateTag : current?.affiliate_tag;
+    const subId = input.subId !== undefined ? input.subId : current?.sub_id;
+    let url: string | null;
+    try {
+      url = await prepareAffiliateLink(input.affiliateUrl ?? current!.affiliate_url, config, tag, subId);
+    } catch (error) {
+      if (error instanceof ApiError) throw new ApiError(error.status, error.message, { affiliateUrl: error.fields?.url || error.message });
+      throw error;
+    }
     if (!url) {
       fail(400, 'Please check the highlighted fields.', {
         affiliateUrl: `Use an https link on: ${config.allowedHosts.join(', ')}.`,
@@ -63,7 +71,7 @@ adminProductRoutes.get('/', async (c) => {
 
 adminProductRoutes.post('/', async (c) => {
   await limit(c, 'owner-write', ownerKey(c), 60, 60);
-  const input = productInputSchema.parse(checkProduct(c, productInputSchema.parse(await body(c, z.unknown()))));
+  const input = productInputSchema.parse(await checkProduct(c, productInputSchema.parse(await body(c, z.unknown()))));
   const row = await insertProduct(c.get('db'), input);
   await audit(c, 'product.create', 'success', row.id);
   return c.json(toProduct(row, c.get('deps').config.allowedHosts), 201);
@@ -71,9 +79,9 @@ adminProductRoutes.post('/', async (c) => {
 
 adminProductRoutes.patch('/:id', async (c) => {
   await limit(c, 'owner-write', ownerKey(c), 60, 60);
-  const patch = checkProduct(c, await body(c, productPatchSchema));
   const before = await getProduct(c.get('db'), c.req.param('id'));
   if (!before) fail(404, 'Product not found.');
+  const patch = await checkProduct(c, await body(c, productPatchSchema), before);
   const row = await updateProduct(c.get('db'), before.id, patch);
   if (before.image_public_id && before.image_public_id !== row!.image_public_id) await releaseImage(c, before.image_public_id);
   await audit(c, 'product.update', 'success', before.id);

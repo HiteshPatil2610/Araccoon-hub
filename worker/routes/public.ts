@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { body, fail, ipKey, limit, type AppEnv, type Ctx } from '../app';
 import { getProduct, listProducts, toPublic } from '../repo/products';
 import { trackClickSchema } from '../../shared/schemas';
-import { isShortLink, normalizeAffiliateUrl } from '../../shared/urlPolicy';
+import { prepareAffiliateLink } from '../lib/affiliateLinks';
 import { clientCountry, normalizeReferrer, parseDevice, reportDate, visitorHash } from '../lib/request';
 import { readSession } from '../auth/sessions';
 import type { Config } from '../config';
@@ -11,18 +11,10 @@ import type { Config } from '../config';
 type ProductRow = NonNullable<Awaited<ReturnType<typeof getProduct>>>;
 
 /** Final outbound URL, or null if the stored destination fails the trusted-host policy. */
-export function buildDestination(product: ProductRow, config: Config, utm: { source?: string; medium?: string; campaign?: string }): string | null {
-  const normalized = normalizeAffiliateUrl(product.affiliate_url, config.allowedHosts);
+export async function buildDestination(product: ProductRow, config: Config, utm: { source?: string; medium?: string; campaign?: string }): Promise<string | null> {
+  const normalized = await prepareAffiliateLink(product.affiliate_url, config, product.affiliate_tag, product.sub_id);
   if (!normalized) return null;
   const url = new URL(normalized);
-  if (isShortLink(url.hostname)) return normalized; // short links already carry the tag
-  if (!url.searchParams.has('tag')) {
-    const host = url.hostname.replace(/^www\./, '');
-    const base = Object.keys(config.associateTags).find(h => h !== '*' && (host === h || host.endsWith(`.${h}`)));
-    const tag = product.affiliate_tag ?? (base ? config.associateTags[base] : config.associateTags['*']);
-    if (tag) url.searchParams.set('tag', tag);
-  }
-  if (product.sub_id) url.searchParams.set('ascsubtag', product.sub_id);
   if (utm.source) url.searchParams.set('utm_source', utm.source);
   if (utm.medium) url.searchParams.set('utm_medium', utm.medium);
   if (utm.campaign) url.searchParams.set('utm_campaign', utm.campaign);
@@ -92,7 +84,7 @@ publicRoutes.get('/r/:id', async (c) => {
   const row = await getProduct(c.get('db'), c.req.param('id'));
   const { config } = c.get('deps');
   const destination = row && row.status === 'published'
-    ? buildDestination(row, config, { source: utmParam.parse(c.req.query('utm_source')), medium: utmParam.parse(c.req.query('utm_medium')), campaign: utmParam.parse(c.req.query('utm_campaign')) })
+    ? await buildDestination(row, config, { source: utmParam.parse(c.req.query('utm_source')), medium: utmParam.parse(c.req.query('utm_medium')), campaign: utmParam.parse(c.req.query('utm_campaign')) })
     : null;
   if (!row || !destination) fail(404, 'This link is not available.');
   const ck = z.uuid().safeParse(c.req.query('ck'));
@@ -115,7 +107,7 @@ publicRoutes.post('/api/track', async (c) => {
   const row = await getProduct(c.get('db'), input.productId);
   const { config } = c.get('deps');
   const utm = { source: input.utmSource || 'storefront', medium: input.utmMedium || 'product_card', campaign: input.utmCampaign || undefined };
-  const destination = row && row.status === 'published' ? buildDestination(row, config, utm) : null;
+  const destination = row && row.status === 'published' ? await buildDestination(row, config, utm) : null;
   if (!row || !destination) fail(404, 'This link is not available.');
   const clickId = await recordClick(c, row, destination, {
     referrer: normalizeReferrer(input.referrer), utmSource: utm.source, utmMedium: utm.medium, utmCampaign: utm.campaign, clickKey: input.clickKey,

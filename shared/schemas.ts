@@ -28,7 +28,12 @@ export const productInputSchema = z.strictObject({
 });
 export type ProductInput = z.infer<typeof productInputSchema>;
 
-export const productPatchSchema = productInputSchema.partial().strict();
+// Zod defaults inside .partial() still run for omitted fields. PATCH must only
+// touch supplied keys; create-time defaults would otherwise erase saved copy.
+const productPatchFields = Object.fromEntries(Object.entries(productInputSchema.shape).map(([key, schema]) => [
+  key, (schema instanceof z.ZodDefault ? schema.removeDefault() : schema).optional(),
+])) as unknown as { [K in keyof ProductInput]: z.ZodOptional<z.ZodType<ProductInput[K]>> };
+export const productPatchSchema = z.strictObject(productPatchFields);
 export type ProductPatch = z.infer<typeof productPatchSchema>;
 
 const trackingToken = z.string().trim().max(100).regex(/^[A-Za-z0-9._~ -]*$/);

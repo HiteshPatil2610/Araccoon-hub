@@ -8,13 +8,14 @@ import { useOutbound } from '../lib/outbound';
 import { useLayoutMorph } from '../lib/useLayoutMorph';
 import { Navbar, Footer } from '../components/SiteChrome';
 import { ProductImage } from '../components/ProductImage';
-import { ProductCard, storeLabel, type BentoVariant } from '../components/ProductCard';
+import { ProductCard, storeLabel } from '../components/ProductCard';
 import { Dialog } from '../components/Dialog';
-import { Blurb, FilmStrip, Reveal, ScrambleText, SectionLabel, Sticker, TrackingReveal, Viewfinder } from '../components/cine';
-import { ClosingSection, Cutout, PicksSection, StorySection } from '../components/StorefrontSections';
+import { Blurb, CharacterStagger, FilmStrip, HERO_CUES, HeroDisc, HeroEntrance, HeroMetadata, PosterTitle, Reveal, SectionLabel, Sticker, TrackingReveal, Viewfinder } from '../components/cine';
+import { Cutout, PicksSection, StorySection } from '../components/StorefrontSections';
 import { CATEGORIES, type PublicProduct } from '../../shared/types';
+import { formatProductCopy } from '../../shared/productCopy';
+import { ProductDescription } from '../components/ProductDescription';
 
-const PATTERN: BentoVariant[] = ['hero', 'standard', 'tall', 'standard', 'wide', 'standard', 'standard', 'wide', 'tall', 'standard'];
 type Sort = 'curated' | 'popular' | 'recent' | 'title';
 
 export function Storefront() {
@@ -22,7 +23,6 @@ export function Storefront() {
   const category = params.get('category') ?? 'All';
   const [search, setSearch] = useState(params.get('q') ?? '');
   const [sort, setSort] = useState<Sort>('curated');
-  const [layout, setLayout] = useState<'bento' | 'classic'>('bento');
   const [products, setProducts] = useState<PublicProduct[] | null>(null);
   const [error, setError] = useState('');
   const [quick, setQuick] = useState<PublicProduct | null>(null);
@@ -34,19 +34,23 @@ export function Storefront() {
   const load = useCallback(async () => {
     setError('');
     try {
-      setProducts(await api.products());
+      setProducts((await api.products()).map(p => ({ ...p, ...formatProductCopy(p.title, p.description) })));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load products.');
     }
   }, []);
   useEffect(() => { void load(); }, [load]);
 
-  // On first scroll the hero film strip turns red and tilts further.
+  // Coordinate the divider with the stage exiting, rather than a fixed page offset.
   useEffect(() => {
-    const onScroll = () => setStripRed(window.scrollY > 80);
+    const onScroll = () => {
+      const stage = document.querySelector('.cd-hero__stage');
+      if (stage) setStripRed(stage.getBoundingClientRect().top < -stage.clientHeight * 0.18);
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener('resize', onScroll);
+    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); };
   }, []);
 
   const setCategory = (c: string) => {
@@ -81,11 +85,9 @@ export function Storefront() {
   const [pickIndex, setPickIndex] = useState(0);
   useEffect(() => { if (pickIndex >= picks.length) setPickIndex(0); }, [picks.length, pickIndex]);
 
-  const variant = (p: PublicProduct, i: number): BentoVariant =>
-    layout === 'classic' ? 'standard' : p.featured ? 'hero' : PATTERN[i % PATTERN.length]!;
-
   return (
-    <div className="relative min-h-screen flex flex-col">
+    <HeroEntrance>
+    <div className="cd-storefront relative min-h-screen flex flex-col">
       <Navbar />
 
       <main className="relative flex-1" id="main" tabIndex={-1}>
@@ -94,55 +96,57 @@ export function Storefront() {
         <div className="cd-dark">
           <div className="cd-dark__inner">
             <section id="top" className="cd-hero" data-nav-tone="dark" data-morph-root aria-labelledby="hero-title">
-              <Viewfinder size="min(700px, 90vw)" top="58%" />
-              <Reveal effect="fade" delay={200} className="cd-hero__meta">
+              <HeroMetadata>
                 <div className="cd-hero__tags" role="group" aria-label="Jump to a category" data-morph="move">
                   {CATEGORIES.map(c => (
-                    <button key={c} type="button" className="cd-tag" aria-pressed={category === c}
+                    <button key={c} type="button" className="cd-tag" aria-label={c} aria-pressed={category === c}
                       onClick={() => { setCategory(category === c ? 'All' : c); toCatalog(); }}>{c}</button>
                   ))}
                 </div>
                 <span className="font-display text-[15px] leading-none pt-1" data-morph="move">
-                  Catalog [{error ? 'offline' : products ? <ScrambleText text={`${products.length} finds`} delay={300} /> : 'loading'}]
+                  Catalog [{error ? 'offline' : products ? `${products.length} finds` : 'loading'}]
                 </span>
-              </Reveal>
+              </HeroMetadata>
 
-              <div className="cd-hero__stage">
-                <Reveal effect="pop" delay={150} duration={1000} className="cd-hero__disc" morph />
-                <Reveal effect="drop" distance={40} delay={250} className="cd-hero__numeral" morph="type"><span aria-hidden="true">Hub</span></Reveal>
-                <TrackingReveal from="0.5em" className="cd-hero__flank cd-hero__flank--l" morph="type"><span aria-hidden="true">Small finds.</span></TrackingReveal>
-                <TrackingReveal from="0.5em" delay={160} className="cd-hero__flank cd-hero__flank--r" morph="type"><span aria-hidden="true">Big everyday upgrades.</span></TrackingReveal>
-                <TrackingReveal from="0.32em" fromOpacity={0.25} delay={100} duration={1500} className="cd-hero__title" morph="type">
-                  <h1 id="hero-title">Raccoon<span className="sr-only"> Hub: small finds, big everyday upgrades.</span></h1>
-                </TrackingReveal>
-                <Reveal effect="fade" delay={700} className="cd-hero__year" morph="move"><span aria-hidden="true">[{new Date().getFullYear()}]</span></Reveal>
-                <Reveal effect="wipe-x" delay={400} duration={1100} className="cd-hero__strip" morph="move">
-                  <FilmStrip red={stripRed} tilt={stripRed ? -2.4 : -1} />
-                </Reveal>
-                <Cutout name="hero" className="cd-hero__raccoon" />
-              </div>
-
-              <div className="cd-hero__foot">
-                <Reveal effect="rise" distance={30} delay={800} className="flex flex-col gap-4 max-w-[320px]" morph="move">
-                  <SectionLabel trail={false}>The Raccoon story</SectionLabel>
-                  <Blurb part="A">Desk essentials, clever gadgets and unexpected home finds, hand-picked. Find your next favourite, then view it on Amazon.</Blurb>
-                </Reveal>
-                <div className="flex items-center gap-6 sm:gap-9">
-                  <Reveal effect="rise" distance={30} delay={900} morph="move">
-                    <button type="button" className="btn !px-6" onClick={toCatalog}>Browse the finds <ArrowDown className="w-4 h-4" aria-hidden="true" /></button>
-                  </Reveal>
-                  <Reveal effect="spin" delay={1000} duration={1000} className="hidden sm:block" morph><Sticker text="New" spin /></Reveal>
+              <div className="cd-hero__composition">
+                <div className="cd-hero__stage">
+                  <HeroDisc />
+                  <div className="cd-hero__numeral" data-morph="type" aria-hidden="true"><CharacterStagger text="Hub" delay={HERO_CUES.hub} stagger={100} /></div>
+                  <div className="cd-hero__flank cd-hero__flank--l" data-morph="move"><CharacterStagger text="Small finds." delay={HERO_CUES.captions} stagger={48} /><CharacterStagger text="Hand-picked." delay={HERO_CUES.captions + 80} stagger={48} /></div>
+                  <div className="cd-hero__flank cd-hero__flank--r" data-morph="move"><CharacterStagger text="Clever objects." delay={HERO_CUES.captions + 160} stagger={48} /><CharacterStagger text="Everyday upgrades." delay={HERO_CUES.captions + 240} stagger={48} /></div>
+                  <div className="cd-hero__title" data-morph="type">
+                    <PosterTitle id="hero-title" text="Raccoon" label="Raccoon Hub: small finds, big everyday upgrades." />
+                  </div>
+                  <Reveal hero effect="fade" delay={HERO_CUES.strip} duration={1000} once className="cd-hero__year" morph="move"><span aria-hidden="true">[{new Date().getFullYear()}]</span></Reveal>
+                  <div className="cd-hero__strip">
+                    <FilmStrip red={stripRed} tilt={stripRed ? -2.4 : -1} entrance />
+                  </div>
                 </div>
+
+                <div className="cd-hero__foot">
+                  <Reveal hero effect="rise" distance={18} delay={HERO_CUES.story} duration={900} once className="flex flex-col gap-4 max-w-[320px]" morph="move">
+                    <SectionLabel trail={false}>The Raccoon story</SectionLabel>
+                    <Blurb part="A">Desk essentials, clever gadgets and unexpected home finds, hand-picked. Find your next favourite, then view it on Amazon.</Blurb>
+                  </Reveal>
+                  <div className="flex items-center gap-6 sm:gap-9">
+                    <Reveal hero effect="grow-rise" distance={12} delay={HERO_CUES.cta} duration={1000} once className="cd-hero__action" style={{ transformOrigin: 'center bottom' }} morph="move">
+                      <button type="button" className="btn !px-6" onClick={toCatalog}>Browse the finds <ArrowDown className="w-4 h-4" aria-hidden="true" /></button>
+                    </Reveal>
+                    <Reveal hero effect="grow-rise" distance={12} delay={HERO_CUES.badge} duration={950} once className="hidden sm:block" style={{ transformOrigin: 'center bottom' }} morph><Sticker text="New" /></Reveal>
+                  </div>
+                </div>
+                <Cutout name="hero" className="cd-hero__raccoon" />
               </div>
             </section>
 
             <PicksSection total={products ? products.length : null} picks={picks} index={pickIndex} onIndex={setPickIndex} onQuick={setQuick} />
+            <Cutout name="box" className="cd-picks__raccoon" delay={150} />
           </div>
         </div>
 
         <StorySection picks={picks} index={pickIndex} onIndex={setPickIndex} onQuick={setQuick} onOpen={outbound.open} pending={outbound.state?.status === 'opening'} />
 
-        <section id="finds" data-nav-tone="light" data-morph-root className="relative max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)] pt-16 sm:pt-24 pb-20 scroll-mt-20">
+        <section id="finds" data-nav-tone="light" data-morph-root className="cd-catalog relative max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)] pt-16 sm:pt-24 pb-20 scroll-mt-20">
           <Reveal effect="rise" distance={24} once morph="move"><SectionLabel>The current stash</SectionLabel></Reveal>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-line pb-6 mt-5">
             <TrackingReveal from="0.3em" once morph="type">
@@ -153,26 +157,25 @@ export function Storefront() {
             </span>
           </div>
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-            <div className="max-w-2xl" data-morph="move">
+          <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div className="min-w-0 max-w-2xl" data-morph="move">
               <label htmlFor="catalog-search" className="field-label">Search products</label>
-              <div className="flex gap-2">
-                <input id="catalog-search" type="search" className="field !rounded-full !px-5" value={search} maxLength={100} placeholder="Search title, description, or category…" onChange={e => setSearch(e.target.value)} />
+              <div className="flex flex-wrap gap-2">
+                <input id="catalog-search" type="search" className="field min-w-0 flex-1 basis-48 !rounded-full !px-5" value={search} maxLength={100} placeholder="Search title, description, or category…" onChange={e => setSearch(e.target.value)} />
                 {search && <button type="button" className="btn" onClick={() => setSearch('')}>Clear search</button>}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2" data-morph="move">
-              <label className="flex items-center gap-2 pl-4 pr-3 min-h-11 rounded-full border border-[var(--field-border)]">
+            <div className="min-w-0 flex flex-wrap items-center gap-2" data-morph="move">
+              <label className="flex max-w-full items-center gap-2 pl-4 pr-3 min-h-11 rounded-full border border-[var(--field-border)]">
                 <ArrowUpDown className="w-4 h-4" aria-hidden="true" />
                 <span className="sr-only">Sort</span>
-                <select value={sort} onChange={e => setSort(e.target.value as Sort)} className="bg-transparent eyebrow !tracking-[.16em] focus:outline-none min-h-11">
+                <select value={sort} onChange={e => setSort(e.target.value as Sort)} className="min-w-0 max-w-full bg-transparent eyebrow !tracking-[.16em] focus:outline-none min-h-11">
                   <option value="curated">Curated</option>
                   <option value="popular">Most reviewed (owner supplied)</option>
                   <option value="recent">Recently added</option>
                   <option value="title">Title A–Z</option>
                 </select>
               </label>
-              <div role="group" aria-label="Catalog layout" className="flex gap-2">{(['bento', 'classic'] as const).map(l => <button key={l} type="button" className={`btn ${layout === l ? 'btn-sun' : ''}`} aria-pressed={layout === l} onClick={() => setLayout(l)}>{l === 'bento' ? 'Bento' : 'Classic'}</button>)}</div>
             </div>
           </div>
 
@@ -212,25 +215,24 @@ export function Storefront() {
             <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
               <AnimatePresence mode="popLayout">
                 {visible.map((p, i) => (
-                  <ProductCard key={p.id} product={p} index={i} variant={variant(p, i)} onOpen={outbound.open} onQuickView={setQuick} pending={outbound.state?.status === 'opening'} />
+                  <ProductCard key={p.id} product={p} index={i} onOpen={outbound.open} onQuickView={setQuick} pending={outbound.state?.status === 'opening'} />
                 ))}
               </AnimatePresence>
             </motion.div>
           )}
         </section>
 
-        <ClosingSection total={products ? products.length : null} />
       </main>
 
       <Footer />
 
-      <Dialog open={quick !== null} onClose={() => setQuick(null)} title={quick?.title ?? ''} wide>
+      <Dialog open={quick !== null} onClose={() => setQuick(null)} title={quick?.title ?? ''} wide animated>
         {quick && (
-          <div className="grid sm:grid-cols-2 gap-6">
+          <div className="grid sm:grid-cols-2 gap-6 min-w-0">
             <div className="cd-still aspect-square"><ProductImage src={quick.imageUrl} title={quick.title} className="w-full h-full object-contain p-[8%]" /></div>
-            <div className="flex flex-col">
+            <div className="flex flex-col min-w-0">
               <SectionLabel className="text-muted-fg">{quick.category}</SectionLabel>
-              <p className="mt-4 mb-6 text-sm leading-relaxed">{quick.description}</p>
+              <ProductDescription text={quick.description} className="mt-4 mb-6" />
               <button type="button" disabled={outbound.state?.status === 'opening'} className="btn btn-primary btn-bar mt-auto" onClick={() => { void outbound.open(quick); setQuick(null); }}>
                 View on {storeLabel(quick.store)} <ArrowUpRight className="w-4 h-4" />
               </button>
@@ -264,5 +266,6 @@ export function Storefront() {
         )}
       </AnimatePresence>
     </div>
+    </HeroEntrance>
   );
 }

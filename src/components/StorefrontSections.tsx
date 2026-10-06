@@ -1,7 +1,8 @@
-import { useRef, type ReactNode } from 'react';
+import { useRef, type CSSProperties, type ReactNode } from 'react';
+import { descriptionSummary } from '../../shared/productCopy';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, Ticket } from 'lucide-react';
-import { Blurb, IndexBadge, Reveal, ScrambleText, SectionLabel, StatDisc, Sticker, TrackingReveal, Viewfinder } from './cine';
+import { Blurb, HERO_CUES, IndexBadge, Reveal, ScrambleText, SectionLabel, StatDisc, Sticker, TrackingReveal, Viewfinder, useHeroEntrance, usePrefersReducedMotion } from './cine';
 import { ProductImage } from './ProductImage';
 import { storeLabel } from './ProductCard';
 import { CATEGORIES, type PublicProduct } from '../../shared/types';
@@ -12,12 +13,31 @@ import { CATEGORIES, type PublicProduct } from '../../shared/types';
 const pad = (n: number) => String(n).padStart(2, '0');
 const added = (iso: string) => new Date(iso).toLocaleDateString('en', { month: 'short', day: 'numeric' });
 
-/** Key-art cut-out from public/art/raccoon-<name>.webp: the crimson streetwear raccoon rendered by
-    art/araccoon/scripts/site_render.py (front, side, three-quarter, rear). Decorative: it carries no information. */
-export function Cutout({ name, className, delay = 450, distance = 120 }: { name: 'hero' | 'side' | 'turn' | 'rear'; className: string; delay?: number; distance?: number }) {
+const MASCOT_ART = {
+  hero: 'raccoon-hero-crossed-arms',
+  box: 'raccoon-picks-box',
+  presenter: 'raccoon-story-card-presenter',
+  heart: 'raccoon-closing-heart',
+} as const;
+
+/** Keep the placement fixed while the artwork grows upward from its bottom anchor. */
+function HeroArt({ children }: { children: ReactNode }) {
+  const ready = useHeroEntrance();
+  return <div className={`cd-hero__art ${ready !== false ? 'cd-hero__art--shown' : ''}`}
+    style={{ '--mascot-delay': `${HERO_CUES.mascot}ms` } as CSSProperties}>{children}</div>;
+}
+
+/** Pose-specific decorative cutouts; the live product card remains a separate interactive layer. */
+export function Cutout({ name, className, delay = 200, distance = 56 }: { name: keyof typeof MASCOT_ART; className: string; delay?: number; distance?: number }) {
+  const art = <img src={`/art/video-concept/${MASCOT_ART[name]}.webp`} alt="" decoding="async" loading={name === 'hero' ? 'eager' : 'lazy'} fetchPriority={name === 'hero' ? 'high' : 'auto'} draggable={false} />;
+  if (name === 'hero') return (
+    <div className={`cd-cutout ${className}`} data-morph="type">
+      <HeroArt>{art}</HeroArt>
+    </div>
+  );
   return (
-    <Reveal effect="rise" distance={distance} delay={delay} duration={1200} className={`cd-cutout ${className}`} morph="type">
-      <img src={`/art/raccoon-${name}.webp`} alt="" decoding="async" draggable={false} />
+    <Reveal effect="rise" distance={distance} delay={delay} duration={850} once className={`cd-cutout ${className}`} morph="type">
+      {art}
     </Reveal>
   );
 }
@@ -46,12 +66,18 @@ const deal = {
   center: { opacity: 1, x: 0, rotate: 0, scale: 1, transition: { duration: 0.65, ease: CINE } },
   exit: (d: number) => ({ opacity: 0, x: d * -90, rotate: d * -6, scale: 0.96, transition: { duration: 0.3, ease: CINE } }),
 };
+const instantSwap = {
+  enter: { opacity: 1, x: 0, rotate: 0, scale: 1, filter: 'none' },
+  center: { opacity: 1, x: 0, rotate: 0, scale: 1, filter: 'none', transition: { duration: 0 } },
+  exit: { opacity: 0, transition: { duration: 0 } },
+};
 
 /** Swaps its child when `id` changes: the old one leaves against the direction of travel, the new one arrives with it. */
 function Swap({ id, dir, kind = 'swap', className, children }: { id: string; dir: number; kind?: 'swap' | 'deal'; className?: string; children: ReactNode }) {
+  const reducedMotion = usePrefersReducedMotion();
   return (
     <AnimatePresence mode="wait" custom={dir} initial={false}>
-      <motion.div key={id} custom={dir} variants={kind === 'deal' ? deal : swap} initial="enter" animate="center" exit="exit" className={className}>
+      <motion.div key={id} custom={dir} variants={reducedMotion ? instantSwap : kind === 'deal' ? deal : swap} initial="enter" animate="center" exit="exit" className={className}>
         {children}
       </motion.div>
     </AnimatePresence>
@@ -89,7 +115,7 @@ export function PicksSection({ total, picks, index, onIndex, onQuick }: Carousel
             <>
               <Swap id={pick.id} dir={dir}>
                 <p className="cd-quote__text">{pick.title}</p>
-                <p className="mt-3 text-xs text-[var(--cd-gray-300)] line-clamp-3">{pick.description}</p>
+                <p className="mt-3 text-xs text-[var(--cd-gray-300)] line-clamp-3">{descriptionSummary(pick.description)}</p>
               </Swap>
               <button type="button" className="mt-3 inline-flex items-center gap-1 min-h-11 eyebrow text-white hover:text-[var(--cd-red-300)]" onClick={() => onQuick(pick)}>
                 View details <ArrowUpRight className="w-4 h-4" aria-hidden="true" /><span className="sr-only">: {pick.title}</span>
@@ -105,7 +131,6 @@ export function PicksSection({ total, picks, index, onIndex, onQuick }: Carousel
           )}
         </Reveal>
       </div>
-      <Cutout name="side" className="cd-picks__raccoon" delay={450} />
       {picks.length > 1 && (
         <>
           <button type="button" data-morph className="cd-picks__nav cd-picks__nav--prev" onClick={() => step(-1)} aria-label="Previous pick"><ChevronLeft className="w-6 h-6" /></button>
@@ -158,13 +183,13 @@ export function StorySection({ picks, index, onIndex, onQuick, onOpen, pending }
   const others = picks.filter((_, i) => i !== index);
   const step = (d: number) => picks.length && onIndex((index + d + picks.length) % picks.length);
   return (
-    <section id="story" className="cd-story" data-nav-tone="light" data-morph-root aria-labelledby="story-title">
+    <section id="story" className="cd-story cd-editorial" data-nav-tone="editorial" data-morph-root aria-labelledby="story-title">
       <Viewfinder size="min(760px, 96vw)" top="62%" light />
       <div className="cd-story__directed">
         <h2 id="story-title">
-          <TrackingReveal from="0.4em" className="cd-story__big" morph="type">Curated</TrackingReveal>
-          <Reveal effect="fade" delay={300} className="cd-story__by" morph="move">by</Reveal>
-          <TrackingReveal from="0.4em" delay={150} className="cd-story__big" morph="type">The Raccoon</TrackingReveal>
+          <TrackingReveal from="0.08em" duration={800} once className="cd-story__big" morph="type">Curated</TrackingReveal>
+          <Reveal effect="fade" duration={500} delay={150} once className="cd-story__by" morph="move">by</Reveal>
+          <TrackingReveal from="0.08em" duration={800} delay={100} once className="cd-story__big" morph="type">The Raccoon</TrackingReveal>
         </h2>
       </div>
       <div className="cd-story__index" aria-hidden="true"><span>01</span><span>02</span><span>03</span><span>04</span></div>
@@ -189,13 +214,13 @@ export function StorySection({ picks, index, onIndex, onQuick, onOpen, pending }
             {picks.map((p, i) => <button key={p.id} type="button" aria-current={i === index} aria-label={`Pick ${i + 1}: ${p.title}`} onClick={() => onIndex(i)}><ProductImage src={p.imageUrl} title={p.title} compact /></button>)}
           </div>
         ) : <span />}
-        <Reveal effect="spin" delay={300} className="sticker-wrap hidden sm:inline-flex" morph><IndexBadge n={3} /><Sticker text="Pick" spin /></Reveal>
+        <Reveal effect="fade" delay={200} once className="sticker-wrap hidden sm:inline-flex" morph><IndexBadge n={3} /><Sticker text="Pick" /></Reveal>
       </div>
 
       <div className="cd-story__grid">
         <Reveal effect="slide-left" distance={40} delay={300} className="cd-story__col" morph="move">
           <SectionLabel>{pick?.category ?? 'The idea'}</SectionLabel>
-          <Blurb part="C">{pick ? pick.description : 'Desk essentials, clever gadgets and unexpected home finds, picked one at a time.'}</Blurb>
+          <Blurb part="C">{pick ? descriptionSummary(pick.description) : 'Desk essentials, clever gadgets and unexpected home finds, picked one at a time.'}</Blurb>
           <Stills items={[others[0], others[1]].filter((p): p is PublicProduct => !!p)} onQuick={onQuick} />
         </Reveal>
         <div className="cd-story__center">
@@ -204,7 +229,7 @@ export function StorySection({ picks, index, onIndex, onQuick, onOpen, pending }
               <Swap id={pick.id} dir={dir} kind="deal" className="w-full flex justify-center"><FindCard pick={pick} n={index + 1} of={picks.length} onOpen={onOpen} onQuick={onQuick} pending={pending} /></Swap>
             </Reveal>
           )}
-          <Cutout name="turn" className="cd-story__raccoon" delay={600} distance={140} />
+          <Cutout name="presenter" className="cd-story__raccoon" delay={300} distance={48} />
         </div>
         <Reveal effect="slide-right" distance={40} delay={300} className="cd-story__col cd-story__col--r" morph="move">
           <SectionLabel>Opening on Amazon</SectionLabel>
@@ -212,21 +237,6 @@ export function StorySection({ picks, index, onIndex, onQuick, onOpen, pending }
           <Stills items={[others[1], others[0]].filter((p): p is PublicProduct => !!p)} onQuick={onQuick} />
         </Reveal>
       </div>
-    </section>
-  );
-}
-
-export function ClosingSection({ total }: { total: number | null }) {
-  return (
-    <section className="cd-closing" data-nav-tone="light" data-morph-root aria-labelledby="closing-title">
-      <Viewfinder size="min(680px, 92vw)" top="58%" light />
-      <Reveal effect="fade" className="relative z-[1]"><span className="eyebrow !tracking-[.42em]">Now on Amazon</span></Reveal>
-      <TrackingReveal from="0.3em" delay={100} morph="type"><h2 id="closing-title">Raccoon Hub</h2></TrackingReveal>
-      <div className="cd-closing__dates" aria-hidden="true" data-morph="move">
-        <span>{total == null ? '—' : <ScrambleText text={`${pad(total)} finds`} delay={500} />}</span>
-        <span><ScrambleText text={String(new Date().getFullYear())} charset="0123456789" delay={600} /></span>
-      </div>
-      <Cutout name="rear" className="cd-closing__raccoon" delay={300} distance={140} />
     </section>
   );
 }

@@ -2,6 +2,7 @@
 // (sent automatically, unreadable from JS); nothing secret lives in storage.
 import type { AnalyticsSummary, AuditEntry, OwnerProfile, PasskeyInfo, Product, PublicProduct } from '../../shared/types';
 import type { ProductInput, ProductPatch } from '../../shared/schemas';
+import { productImportPreviewSchema, type ProductImportRequest, type ProductImportPreview, type OwnerContentSource } from '../../shared/productImport';
 
 export class HttpError extends Error {
   constructor(public status: number, message: string, public fields: Record<string, string> = {}, public correlationId?: string) {
@@ -81,6 +82,13 @@ export const api = {
     return request<Product[]>('GET', `/api/admin/products${p.size ? `?${p}` : ''}`);
   },
   createProduct: (b: ProductInput) => request<Product>('POST', '/api/admin/products', b),
+  previewProductImport: async (b: ProductImportRequest, signal: AbortSignal): Promise<ProductImportPreview> => {
+    const response = await request<unknown>('POST', '/api/admin/product-imports/preview', b, { signal });
+    const parsed = productImportPreviewSchema.safeParse(response);
+    if (!parsed.success) throw new HttpError(502, 'The server returned an incomplete product preview. Please try again.');
+    return parsed.data;
+  },
+  createAssistedDraft: (product: ProductInput, source: OwnerContentSource) => request<Product>('POST', '/api/admin/product-imports/draft', { product, source }),
   updateProduct: (id: string, b: ProductPatch) => request<Product>('PATCH', `/api/admin/products/${id}`, b),
   deleteProduct: (id: string) => request<{ ok: true }>('DELETE', `/api/admin/products/${id}`, {}),
   duplicateProduct: (id: string) => request<Product>('POST', `/api/admin/products/${id}/duplicate`, {}),

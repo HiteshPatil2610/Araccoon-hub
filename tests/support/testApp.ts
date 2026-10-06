@@ -11,6 +11,8 @@ import { migrate } from '../../worker/db/migrations';
 import { memoryLimiter } from '../../worker/lib/ratelimit';
 import type { ImageStore } from '../../worker/lib/cloudinary';
 import { VirtualAuthenticator } from './virtualAuthenticator';
+import type { ProductImportProvider } from '../../worker/lib/productImport/contracts';
+import { createOwnerContentProvider } from '../../worker/lib/productImport/providers/ownerContent';
 
 export const integrationSkipReason = process.env.TEST_DATABASE_ADMIN_URL
   ? false
@@ -89,7 +91,7 @@ export interface TestContext {
   close(): Promise<void>;
 }
 
-export async function createTestContext(env: Partial<RawEnv> = {}): Promise<TestContext> {
+export async function createTestContext(env: Partial<RawEnv> = {}, productImporter: ProductImportProvider = createOwnerContentProvider()): Promise<TestContext> {
   const admin = assertDisposableUrl(process.env.TEST_DATABASE_ADMIN_URL!, false);
   const name = `araccoon_test_${crypto.randomBytes(6).toString('hex')}`;
   const adminClient = new pg.Client({ connectionString: admin.toString() });
@@ -115,6 +117,7 @@ export async function createTestContext(env: Partial<RawEnv> = {}): Promise<Test
   });
   const app = buildApp({
     config,
+    productImporter,
     limiter: memoryLimiter(),
     human: { verify: async (token) => token === TURNSTILE_PASS },
     images,

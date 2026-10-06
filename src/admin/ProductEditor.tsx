@@ -6,6 +6,9 @@ import { api, HttpError } from '../lib/api';
 import { productInputSchema, type ProductInput } from '../../shared/schemas';
 import { normalizeAffiliateUrl, parseHostList } from '../../shared/urlPolicy';
 import { CATEGORIES, type Product } from '../../shared/types';
+import { ProductImportPanel, emptyImportDraft } from './ProductImportPanel';
+import { applyImportFields, type OwnerContentSource } from '../../shared/productImport';
+import { descriptionSummary } from '../../shared/productCopy';
 
 const HOSTS = parseHostList(undefined); // UI hint only; the server enforces its configured list
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -87,7 +90,10 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
   const previewRef = useRef<string | null>(null);
   const [stored, setStored] = useState(false);
   const [discard, setDiscard] = useState(false);
-  const dirty = JSON.stringify(form) !== JSON.stringify(product ? fromProduct(product) : empty);
+  const [importDraft, setImportDraft] = useState(emptyImportDraft);
+  const [assistance, setAssistance] = useState<Omit<OwnerContentSource, 'contentAuthorized'> | null>(null);
+  const [contentAuthorized, setContentAuthorized] = useState(false);
+  const dirty = Object.values(importDraft).some(Boolean) || assistance !== null || JSON.stringify(form) !== JSON.stringify(product ? fromProduct(product) : empty);
   const requestClose = () => { if (savingRef.current || uploadRef.current) return; if (dirty) setDiscard(true); else onClose(); };
   const showErrors = (next: Record<string, string>) => {
     if (next.imageUrl || next.imagePublicId) setManualImage(true);
@@ -105,14 +111,21 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
       setManualImage(false);
       setStored(false);
       setDiscard(false);
+      setImportDraft(emptyImportDraft);
+      setAssistance(null);
+      setContentAuthorized(false);
     }
   }, [open, product]);
 
-  const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm(f => ({ ...f, [k]: v }));
+  const set = <K extends keyof Form>(k: K, v: Form[K]) => {
+    if (k === 'title' || k === 'description' || k === 'affiliateUrl') setContentAuthorized(false);
+    setForm(f => ({ ...f, [k]: v }));
+  };
   const linkOk = form.affiliateUrl ? normalizeAffiliateUrl(form.affiliateUrl, HOSTS) !== null : null;
 
   const pickFile = async (file: File | undefined) => {
     if (!file || uploadRef.current || savingRef.current) return;
+    setContentAuthorized(false);
     setStored(false);
     setUploadError('');
     if (!TYPES.includes(file.type)) return setUploadError('Use a JPG, PNG, WEBP or GIF image.');
@@ -140,6 +153,10 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (savingRef.current || uploadRef.current) return;
+    if (assistance && !contentAuthorized) {
+      showErrors({ contentAuthorized: 'Confirm that you may use this product content and image.' });
+      return;
+    }
     const parsed = productInputSchema.safeParse(toInput(form));
     if (!parsed.success) {
       const next: Record<string, string> = {};
@@ -156,7 +173,8 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
     setErrors({});
     try {
       const input: ProductInput = parsed.data;
-      onSaved(product ? await api.updateProduct(product.id, input) : await api.createProduct(input));
+      onSaved(product ? await api.updateProduct(product.id, input) : assistance
+        ? await api.createAssistedDraft(input, { ...assistance, contentAuthorized: true }) : await api.createProduct(input));
       onClose();
     } catch (err) {
       if (err instanceof HttpError) showErrors({ ...err.fields, _: Object.keys(err.fields).length ? '' : err.message });
@@ -174,8 +192,8 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
 
   return (
     <><Dialog open={open && !discard} busy={saving || (upload !== null && upload.pct >= 0)} onClose={requestClose} title={product ? 'Edit product' : 'Add a product'} wide>
-      <form ref={formRef} onSubmit={submit} noValidate className="grid md:grid-cols-[220px_1fr] gap-6" aria-busy={saving}>
-        <div>
+      <form ref={formRef} onSubmit={submit} noValidate className="grid min-w-0 md:grid-cols-[220px_minmax(0,1fr)] gap-6" aria-busy={saving}>
+        <div className="min-w-0">
           <h3 className="text-lg font-bold mb-3">Product image</h3>
           <div className="relative aspect-square rounded-[var(--radius-m)] border border-dashed border-line bg-muted overflow-hidden flex items-center justify-center">
             {upload?.preview || form.imageUrl ? (
@@ -187,7 +205,7 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
               </div>
             )}
           </div>
-          <p className="text-sm text-muted-fg mt-3">JPG, PNG, WEBP or GIF. Maximum 8 MB. Use a photo of this product.</p>
+          <p className="text-sm text-muted-fg mt-3">JPG, PNG, WEBP or GIF. Maximum 8 MB. Use your own photo or an image you have permission to use.</p>
           <p role="status" className="text-sm mt-2">{stored ? 'Image uploaded. Save the product to apply it.' : upload ? 'Preview — not applied to the product yet.' : ''}</p>
           <input ref={fileRef} disabled={saving || (upload !== null && upload.pct >= 0)} aria-label="Choose product image" type="file" accept={TYPES.join(',')} className="field mt-3" id="f-file" onChange={e => pickFile(e.target.files?.[0])} />
           <div className="flex gap-2 mt-2">
@@ -198,13 +216,27 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
           </button>
           {manualImage && (
             <input {...fieldProps('imageUrl')} aria-label="Image URL" className="field mt-2" placeholder="https://…" value={form.imageUrl}
-              onChange={e => { setStored(false); setUpload(null); setUploadError(''); setForm(f => ({ ...f, imageUrl: e.target.value.trim(), imagePublicId: null })); }} />
+              onChange={e => { setContentAuthorized(false); setStored(false); setUpload(null); setUploadError(''); setForm(f => ({ ...f, imageUrl: e.target.value.trim(), imagePublicId: null })); }} />
           )}
           {uploadError && <p role="alert" className="field-error">{uploadError}</p>}
           {err('imageUrl')}{err('imagePublicId')}
+          <div className="panel p-3 mt-4 space-y-2" aria-label="Live product card preview">
+            <p className="eyebrow">Card preview</p>
+            <p className="text-sm text-muted-fg">{form.category}</p>
+            <h4 className="text-lg font-bold line-clamp-2">{form.title || 'Product title'}</h4>
+            <p className="text-sm text-muted-fg line-clamp-2">{descriptionSummary(form.description) || 'Your description will appear here.'}</p>
+            <span className="btn btn-primary btn-bar">View on Amazon</span>
+          </div>
         </div>
 
         <div className="space-y-4 min-w-0">
+          {open && !product && <ProductImportPanel current={form} disabled={saving || (upload !== null && upload.pct >= 0)} draft={importDraft} setDraft={setImportDraft}
+            onApply={(preview, selected) => {
+              setForm(f => applyImportFields(f, preview, selected));
+              setAssistance({ provider: preview.provider === 'amazon-page' ? 'amazon-page' : 'owner-content', sourceUrl: preview.sourceUrl });
+              setContentAuthorized(false);
+              setErrors({});
+            }} />}
           <h3 className="text-lg font-bold">Product details</h3>
           {Object.values(errors).filter(Boolean).length > 0 && <p role="alert" tabIndex={-1} className="field-error">Please review the errors below. Your entered values are still here.</p>}
           <div>
@@ -215,6 +247,7 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
           <div>
             <label htmlFor="f-description" className="field-label">Why it's a good find</label>
             <textarea {...fieldProps('description')} rows={3} className="field" maxLength={2000} value={form.description} onChange={e => set('description', e.target.value)} />
+            <p className="mt-1 text-sm text-muted-fg">Use one spec per line, such as “Refresh rate: 200Hz”. Spec labels appear bold in Quick View.</p>
             {err('description')}
           </div>
             <div className="col-span-2">
@@ -234,10 +267,10 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
             </div>
             {linkOk === false && !errors.affiliateUrl && <p className="field-error">That doesn't look like an Amazon.com / Amazon.in link.</p>}
             {err('affiliateUrl')}
-            <p className="text-sm text-muted-fg mt-1">Your Associates tag is added automatically unless the link already has one.</p>
+            <p className="text-sm text-muted-fg mt-1">Your configured Associates tag replaces any existing tag automatically. Short links are expanded before saving. Use the optional tag field below for another tracking ID from your own account.</p>
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
-            <div><label htmlFor="f-affiliateTag" className="field-label">Associates tag (optional)</label><input {...fieldProps('affiliateTag')} className="field" maxLength={64} value={form.affiliateTag} onChange={e => set('affiliateTag', e.target.value)} />{err('affiliateTag')}</div>
+            <div><label htmlFor="f-affiliateTag" className="field-label">Your Associates tag override (optional)</label><input {...fieldProps('affiliateTag')} className="field" maxLength={64} value={form.affiliateTag} onChange={e => set('affiliateTag', e.target.value)} />{err('affiliateTag')}</div>
             <div><label htmlFor="f-subId" className="field-label">Tracking sub-ID (optional)</label><input {...fieldProps('subId')} className="field" maxLength={64} value={form.subId} onChange={e => set('subId', e.target.value)} />{err('subId')}</div>
           </div>
           <p className="text-sm text-muted-fg">Leave the tag empty to use the configured store tag. Overrides apply to full Amazon URLs; short links retain their own tracking. Optional values accept letters, numbers, dots, dashes and underscores.</p>
@@ -264,7 +297,7 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
             <div>
               <label htmlFor="f-status" className="field-label">Status</label>
               <select {...fieldProps('status')} className="field" value={form.status} onChange={e => set('status', e.target.value as Form['status'])}>
-                <option value="published">Published</option>
+                <option value="published" disabled={assistance !== null}>Published</option>
                 <option value="draft">Draft (hidden)</option>
                 <option value="archived">Archived</option>
               </select>
@@ -281,10 +314,18 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
             Feature in the curiosity board and catalog
           </label>
           {errors._ && <p role="alert" className="field-error">{errors._}</p>}
+          {assistance && <div className="space-y-2">
+            <p className="text-sm text-muted-fg">This assisted product will be saved as a draft. Open the saved draft to review and publish it.</p>
+            <label className="flex items-start gap-2 text-sm" htmlFor="f-contentAuthorized">
+              <input id="f-contentAuthorized" type="checkbox" checked={contentAuthorized} aria-invalid={errors.contentAuthorized ? true : undefined}
+                aria-describedby={errors.contentAuthorized ? 'e-contentAuthorized' : undefined} onChange={e => setContentAuthorized(e.target.checked)} />
+              I wrote this content or have permission to reuse it, and may use the selected image on this affiliate website.
+            </label>{err('contentAuthorized')}
+          </div>}
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
             <button type="button" className="btn" disabled={saving || uploadRef.current} onClick={requestClose}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={saving || (upload !== null && upload.pct >= 0)}>
-              {saving ? 'Saving…' : 'Save product'}
+              {saving ? 'Saving…' : assistance ? 'Save draft' : 'Save product'}
             </button>
           </div>
         </div>
