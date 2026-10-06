@@ -61,7 +61,7 @@ export async function listProducts(db: Db, f: { statuses: ProductStatus[]; categ
 }
 
 export async function getProduct(db: Db, id: string): Promise<Row | undefined> {
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return undefined;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return undefined;
   const { rows } = await db.query<Row>('SELECT * FROM products WHERE id = $1', [id]);
   return rows[0];
 }

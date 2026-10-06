@@ -146,6 +146,13 @@ CREATE TABLE audit_events (
 CREATE INDEX audit_events_time_idx ON audit_events(occurred_at DESC);
 `,
   },
+  {
+    version: 2,
+    name: 'bind_registration_authority',
+    sql: `ALTER TABLE auth_challenges ADD COLUMN registration_context text;
+-- Existing registration attempts cannot be safely assigned an authority.
+UPDATE auth_challenges SET used_at = now() WHERE purpose = 'register' AND used_at IS NULL;`,
+  },
 ];
 
 const LOCK_KEY = 4_204_201_337;

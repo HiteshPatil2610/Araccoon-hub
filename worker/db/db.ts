@@ -40,7 +40,7 @@ export function createRequestDb(connectionString: string): Db & { close(): Promi
   let connecting: Promise<pg.Client> | null = null;
   const conn = () => {
     connecting ??= (async () => {
-      client = new pg.Client({ connectionString, statement_timeout: 10_000, query_timeout: 15_000 });
+      client = new pg.Client({ connectionString, connectionTimeoutMillis: 5000, statement_timeout: 10_000, query_timeout: 15_000 });
       await client.connect();
       return client;
     })();

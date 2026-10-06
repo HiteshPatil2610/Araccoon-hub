@@ -23,22 +23,23 @@ const responseJson = z.record(z.string(), z.unknown());
 
 // ---------------------------------------------------------------- helpers
 
-async function storeChallenge(db: Db, challenge: string, purpose: 'register' | 'authenticate', ownerId: string | null): Promise<string> {
+async function storeChallenge(db: Db, challenge: string, purpose: 'register' | 'authenticate', ownerId: string | null, context: string | null = null): Promise<string> {
   const { rows } = await db.query<{ id: string }>(
-    `INSERT INTO auth_challenges (challenge, purpose, owner_id, expires_at)
-     VALUES ($1, $2, $3, now() + make_interval(mins => $4)) RETURNING id`,
-    [challenge, purpose, ownerId, CHALLENGE_MINUTES]
+    `INSERT INTO auth_challenges (challenge, purpose, owner_id, expires_at, registration_context)
+     VALUES ($1, $2, $3, now() + make_interval(mins => $4), $5) RETURNING id`,
+    [challenge, purpose, ownerId, CHALLENGE_MINUTES, context]
   );
   return rows[0]!.id;
 }
 
 /** Single use: the UPDATE succeeds for exactly one caller. */
-async function consumeChallenge(db: Db, id: string, purpose: 'register' | 'authenticate') {
+async function consumeChallenge(db: Db, id: string, purpose: 'register' | 'authenticate', context: string | null = null) {
   const { rows } = await db.query<{ challenge: string; owner_id: string | null }>(
     `UPDATE auth_challenges SET used_at = now()
       WHERE id = $1 AND purpose = $2 AND used_at IS NULL AND expires_at > now()
+        AND registration_context IS NOT DISTINCT FROM $3
       RETURNING challenge, owner_id`,
-    [id, purpose]
+    [id, purpose, context]
   );
   if (!rows[0]) fail(400, 'This sign-in attempt expired. Please try again.');
   return rows[0];
@@ -49,7 +50,7 @@ async function humanCheck(c: Ctx, token: unknown) {
   if (!ok) fail(400, 'Please complete the security check and try again.');
 }
 
-export async function registrationOptions(c: Ctx, owner: { id: string; email: string; display_name: string }) {
+export async function registrationOptions(c: Ctx, owner: { id: string; email: string; display_name: string }, context: string) {
   const { config } = c.get('deps');
   const db = c.get('db');
   const { rows: existing } = await db.query<{ id: string; transports: string[] }>(
@@ -65,37 +66,57 @@ export async function registrationOptions(c: Ctx, owner: { id: string; email: st
     excludeCredentials: existing.map(p => ({ id: p.id, transports: p.transports })),
     authenticatorSelection: { residentKey: 'required', userVerification: 'required' },
   });
-  const challengeId = await storeChallenge(db, options.challenge, 'register', owner.id);
+  const challengeId = await storeChallenge(db, options.challenge, 'register', owner.id, context);
   return { challengeId, options };
 }
 
 /** Verifies a registration and stores the passkey. Returns the owner id. */
-export async function finishRegistration(c: Ctx, challengeId: string, response: unknown, name: string): Promise<string> {
+export async function finishRegistration(c: Ctx, challengeId: string, response: unknown, name: string, context: string): Promise<string> {
   const { config } = c.get('deps');
-  const db = c.get('db');
-  const challenge = await consumeChallenge(db, challengeId, 'register');
-  if (!challenge.owner_id) fail(400, 'Invalid registration.');
-  let verification;
-  try {
-    verification = await verifyRegistrationResponse({
-      response: response as RegistrationResponseJSON,
-      expectedChallenge: challenge.challenge,
-      expectedOrigin: config.passkey.origin,
-      expectedRPID: config.passkey.rpId,
-      requireUserVerification: true,
-    });
-  } catch {
-    fail(400, 'The passkey could not be verified.');
-  }
-  if (!verification.verified) fail(400, 'The passkey could not be verified.');
-  const { credential, credentialDeviceType, credentialBackedUp } = verification.registrationInfo;
-  await db.query(
-    `INSERT INTO passkeys (id, owner_id, public_key, counter, transports, device_type, backed_up, name)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-    [credential.id, challenge.owner_id, Buffer.from(credential.publicKey), credential.counter,
-      credential.transports ?? [], credentialDeviceType, credentialBackedUp, name || 'Passkey']
-  );
-  return challenge.owner_id;
+  return c.get('db').tx(async (db) => {
+    if (context === 'setup') {
+      // Serialize first-owner completion, including attempts created before setup closed.
+      await db.query('SELECT pg_advisory_xact_lock($1)', [4204201338]);
+      if (!config.ownerEmail || !config.ownerSetupToken || await passkeyCount(db) > 0) fail(403, 'Setup is closed.');
+    }
+    const challenge = await consumeChallenge(db, challengeId, 'register', context);
+    if (!challenge.owner_id) fail(400, 'Invalid registration.');
+    const { rows: owners } = await db.query<{ email: string; disabled_at: Date | null }>(
+      'SELECT email, disabled_at FROM owners WHERE id = $1 FOR UPDATE', [challenge.owner_id]
+    );
+    const owner = owners[0];
+    if (!owner || owner.disabled_at) fail(403, 'This account is disabled.');
+    if (context.startsWith('owner:') && context !== `owner:${challenge.owner_id}`) fail(403, 'This passkey request belongs to another account.');
+    if (context === 'setup' && owner.email !== config.ownerEmail) fail(403, 'Invalid setup account.');
+    if (context.startsWith('invite:')) {
+      const { rowCount } = await db.query(
+        `UPDATE owner_invites SET used_at = now() WHERE token_hash = $1 AND email = $2 AND used_at IS NULL AND expires_at > now()`,
+        [context.slice(7), owner.email]
+      );
+      if (!rowCount) fail(400, 'This invitation is invalid or has expired.');
+    }
+    let verification;
+    try {
+      verification = await verifyRegistrationResponse({
+        response: response as RegistrationResponseJSON,
+        expectedChallenge: challenge.challenge,
+        expectedOrigin: config.passkey.origin,
+        expectedRPID: config.passkey.rpId,
+        requireUserVerification: true,
+      });
+    } catch {
+      fail(400, 'The passkey could not be verified.');
+    }
+    if (!verification.verified) fail(400, 'The passkey could not be verified.');
+    const { credential, credentialDeviceType, credentialBackedUp } = verification.registrationInfo;
+    await db.query(
+      `INSERT INTO passkeys (id, owner_id, public_key, counter, transports, device_type, backed_up, name)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [credential.id, challenge.owner_id, Buffer.from(credential.publicKey), credential.counter,
+        credential.transports ?? [], credentialDeviceType, credentialBackedUp, name || 'Passkey']
+    );
+    return challenge.owner_id;
+  });
 }
 
 /** Replaces all recovery codes for an owner; the plaintext is returned once. */
@@ -104,6 +125,7 @@ export async function issueRecoveryCodes(c: Ctx, ownerId: string): Promise<strin
   const codes = Array.from({ length: RECOVERY_CODE_COUNT }, generateRecoveryCode);
   const hashes = await Promise.all(codes.map(code => hmacHex(config.recoveryPepper, `recovery|${normalizeRecoveryCode(code)}`)));
   await c.get('db').tx(async (t) => {
+    await t.query('SELECT id FROM owners WHERE id = $1 FOR UPDATE', [ownerId]);
     await t.query('DELETE FROM recovery_codes WHERE owner_id = $1', [ownerId]);
     for (const hash of hashes) {
       await t.query('INSERT INTO recovery_codes (owner_id, code_hash) VALUES ($1, $2)', [ownerId, hash]);
@@ -131,6 +153,7 @@ export const authRoutes = new Hono<AppEnv>();
 
 // What the sign-in page needs to render.
 authRoutes.get('/state', async (c) => {
+  await limit(c, 'auth-state', ipKey(c), 120, 60);
   const { config } = c.get('deps');
   const session = await readSession(c);
   const setupOpen = Boolean(config.ownerEmail && config.ownerSetupToken) && (await passkeyCount(c.get('db'))) === 0;
@@ -160,7 +183,7 @@ authRoutes.post('/setup/options', async (c) => {
     `INSERT INTO owners (email) VALUES ($1) ON CONFLICT (email) DO UPDATE SET email = EXCLUDED.email
      RETURNING id, email, display_name`, [input.email]
   );
-  return c.json(await registrationOptions(c, rows[0]!));
+  return c.json(await registrationOptions(c, rows[0]!, 'setup'));
 });
 
 const finishBody = z.strictObject({ challengeId: z.uuid(), response: responseJson, name: z.string().trim().max(60).default('Passkey') });
@@ -169,7 +192,7 @@ authRoutes.post('/setup/verify', async (c) => {
   await limit(c, 'setup', ipKey(c), 5, 900);
   const input = await body(c, finishBody);
   if ((await passkeyCount(c.get('db'))) > 0) fail(403, 'Setup is closed.');
-  const ownerId = await finishRegistration(c, input.challengeId, input.response, input.name);
+  const ownerId = await finishRegistration(c, input.challengeId, input.response, input.name, 'setup');
   const recoveryCodes = await issueRecoveryCodes(c, ownerId);
   await createSession(c, ownerId);
   await audit(c, 'auth.setup', 'success', null, ownerId);
@@ -194,19 +217,14 @@ authRoutes.post('/invite/options', async (c) => {
      RETURNING id, email, display_name, disabled_at`, [invites[0].email]
   );
   if (rows[0]!.disabled_at) fail(403, 'This account is disabled.');
-  return c.json(await registrationOptions(c, rows[0]!));
+  return c.json(await registrationOptions(c, rows[0]!, `invite:${await sha256Hex(input.token)}`));
 });
 
 authRoutes.post('/invite/verify', async (c) => {
   await limit(c, 'invite', ipKey(c), 10, 900);
   const input = await body(c, finishBody.extend({ token: z.string().min(20).max(200) }));
   const db = c.get('db');
-  const { rowCount } = await db.query(
-    `UPDATE owner_invites SET used_at = now() WHERE token_hash = $1 AND used_at IS NULL AND expires_at > now()`,
-    [await sha256Hex(input.token)]
-  );
-  if (rowCount === 0) fail(400, 'This invitation is invalid or has expired.');
-  const ownerId = await finishRegistration(c, input.challengeId, input.response, input.name);
+  const ownerId = await finishRegistration(c, input.challengeId, input.response, input.name, `invite:${await sha256Hex(input.token)}`);
   const recoveryCodes = await issueRecoveryCodes(c, ownerId);
   await createSession(c, ownerId);
   await audit(c, 'auth.invite_accepted', 'success', null, ownerId);
@@ -260,8 +278,9 @@ authRoutes.post('/login/verify', async (c) => {
     await audit(c, 'auth.login', 'failure', null, key.owner_id);
     fail(401, 'The passkey could not be verified.');
   }
-  await db.query('UPDATE passkeys SET counter = $2, last_used_at = now() WHERE id = $1',
-    [key.id, verification.authenticationInfo.newCounter]);
+  const { rowCount: updated } = await db.query('UPDATE passkeys SET counter = $2, last_used_at = now() WHERE id = $1 AND counter = $3',
+    [key.id, verification.authenticationInfo.newCounter, key.counter]);
+  if (!updated) fail(409, 'Another sign-in changed this passkey. Please try again.');
   await createSession(c, key.owner_id);
   await audit(c, 'auth.login', 'success', null, key.owner_id);
   return c.json({ owner: await ownerProfile(db, key.owner_id, false) });
@@ -305,6 +324,7 @@ authRoutes.post('/logout', async (c) => {
 authRoutes.post('/dev-login', async (c) => {
   const { config } = c.get('deps');
   if (config.environment !== 'development' || !config.devLoginToken || !config.ownerEmail) fail(404, 'Not found.');
+  await limit(c, 'dev-login', ipKey(c), 5, 900);
   const input = await body(c, z.strictObject({ token: z.string().max(200) }));
   if (!safeEqual(input.token, config.devLoginToken)) fail(401, 'Invalid development token.');
   const { rows } = await c.get('db').query<{ id: string }>(

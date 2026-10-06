@@ -46,6 +46,7 @@ export async function globalSetup() {
   const initdb = findBinary('initdb');
   pgCtl = findBinary('pg_ctl');
   if (!initdb || !pgCtl) {
+    if (process.env.REQUIRE_INTEGRATION_TESTS === '1') throw new Error('Security verification requires PostgreSQL binaries or a disposable TEST_DATABASE_ADMIN_URL.');
     process.env.TEST_DATABASE_UNAVAILABLE = 'PostgreSQL binaries (initdb/pg_ctl) not found; set PG_BIN or TEST_DATABASE_ADMIN_URL';
     return;
   }
@@ -54,6 +55,7 @@ export async function globalSetup() {
   const dataDir = path.join(clusterDir, 'data');
   const init = spawnSync(initdb, ['-D', dataDir, '-U', 'araccoon_test', '--auth=trust', '-E', 'UTF8', '--no-locale'], { encoding: 'utf8' });
   if (init.status !== 0) {
+    if (process.env.REQUIRE_INTEGRATION_TESTS === '1') throw new Error(`Security verification initdb failed: ${init.stderr?.slice(0, 300)}`);
     process.env.TEST_DATABASE_UNAVAILABLE = `initdb failed: ${init.stderr?.slice(0, 300)}`;
     return;
   }
@@ -66,6 +68,7 @@ export async function globalSetup() {
     '-w', 'start',
   ], { stdio: 'ignore', timeout: 60_000 }); // the postmaster inherits pipes; 'ignore' stops spawnSync waiting on it
   if (start.status !== 0) {
+    if (process.env.REQUIRE_INTEGRATION_TESTS === '1') throw new Error('Security verification could not start disposable PostgreSQL.');
     process.env.TEST_DATABASE_UNAVAILABLE = `pg_ctl start failed (exit ${start.status}); see ${clusterDir}/postgres.log`;
     return;
   }

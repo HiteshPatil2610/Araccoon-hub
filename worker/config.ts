@@ -79,6 +79,24 @@ export function loadConfig(env: RawEnv): Config {
   if (prod && (sessionSecret.length < 32 || recoveryPepper.length < 32)) {
     throw new ConfigError('SESSION_SECRET and RECOVERY_CODE_PEPPER must be at least 32 characters.');
   }
+  if (prod && (sessionSecret === DEV_SECRET || recoveryPepper === DEV_SECRET || sessionSecret === recoveryPepper)) {
+    throw new ConfigError('Production session and recovery secrets must be independent and must not use the development default.');
+  }
+  if (prod) {
+    try {
+      const site = new URL(origin);
+      const redis = new URL(upstashUrl!);
+      if (site.protocol !== 'https:' || site.origin !== origin || site.username || site.password
+        || !(site.hostname === rpId || site.hostname.endsWith(`.${rpId}`))
+        || rpId === 'localhost' || !rpId.includes('.')
+        || redis.protocol !== 'https:' || redis.username || redis.password) throw new Error();
+    } catch {
+      throw new ConfigError('Production requires an https PASSKEY_ORIGIN matching PASSKEY_RP_ID and an https Redis URL without credentials.');
+    }
+    if (env.OWNER_SETUP_TOKEN && env.OWNER_SETUP_TOKEN.trim().length < 32) {
+      throw new ConfigError('OWNER_SETUP_TOKEN must be at least 32 characters in production.');
+    }
+  }
 
   const cloud = [env.CLOUDINARY_CLOUD_NAME, env.CLOUDINARY_API_KEY, env.CLOUDINARY_API_SECRET].map(v => v?.trim());
   const reportTimezone = env.REPORT_TIMEZONE?.trim() || 'UTC';

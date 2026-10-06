@@ -60,6 +60,7 @@ const searchParams = z.object({
 export const publicRoutes = new Hono<AppEnv>();
 
 publicRoutes.get('/api/health', async (c) => {
+  await limit(c, 'health', ipKey(c), 60, 60);
   await c.get('db').query('SELECT 1');
   return c.json({ ok: true });
 });
@@ -87,7 +88,7 @@ publicRoutes.get('/api/products/:id', async (c) => {
 // Short outbound link: records the click, then 302s to Amazon. Also the
 // fallback when the browser beacon fails (same clickKey → counted once).
 publicRoutes.get('/r/:id', async (c) => {
-  await limit(c, 'redirect', ipKey(c), 60, 60, true);
+  await limit(c, 'redirect', ipKey(c), 60, 60);
   const row = await getProduct(c.get('db'), c.req.param('id'));
   const { config } = c.get('deps');
   const destination = row && row.status === 'published'
@@ -109,7 +110,7 @@ publicRoutes.get('/r/:id', async (c) => {
 
 // Beacon used by the storefront before opening the destination in a new tab.
 publicRoutes.post('/api/track', async (c) => {
-  await limit(c, 'track', ipKey(c), 120, 60, true);
+  await limit(c, 'track', ipKey(c), 120, 60);
   const input = await body(c, trackClickSchema);
   const row = await getProduct(c.get('db'), input.productId);
   const { config } = c.get('deps');

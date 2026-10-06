@@ -37,15 +37,14 @@ adminSecurityRoutes.post('/passkeys/options', requireOwner({ allowRecoverySessio
   const { rows } = await c.get('db').query<{ id: string; email: string; display_name: string }>(
     'SELECT id, email, display_name FROM owners WHERE id = $1', [ownerId(c)]
   );
-  return c.json(await registrationOptions(c, rows[0]!));
+  return c.json(await registrationOptions(c, rows[0]!, `owner:${ownerId(c)}`));
 });
 
 adminSecurityRoutes.post('/passkeys/verify', requireOwner({ allowRecoverySession: true }), async (c) => {
   await limit(c, 'passkey-add', ownerId(c), 10, 900);
   const input = await body(c, z.strictObject({ challengeId: z.uuid(), response: z.record(z.string(), z.unknown()), name: z.string().trim().max(60).default('Passkey') }));
   const session = c.get('session')!;
-  const registeredFor = await finishRegistration(c, input.challengeId, input.response, input.name);
-  if (registeredFor !== session.ownerId) fail(403, 'This passkey request belongs to another account.');
+  await finishRegistration(c, input.challengeId, input.response, input.name, `owner:${session.ownerId}`);
   if (session.needsPasskey) {
     await c.get('db').query('UPDATE sessions SET needs_passkey = false WHERE id_hash = $1', [session.idHash]);
   }
@@ -63,6 +62,7 @@ adminSecurityRoutes.patch('/passkeys/:id', requireOwner(), async (c) => {
 adminSecurityRoutes.delete('/passkeys/:id', requireOwner(), async (c) => {
   const db = c.get('db');
   const result = await db.tx(async (t) => {
+    await t.query('SELECT id FROM owners WHERE id = $1 FOR UPDATE', [ownerId(c)]);
     const { rows } = await t.query<{ n: string }>('SELECT count(*) AS n FROM passkeys WHERE owner_id = $1', [ownerId(c)]);
     if (Number(rows[0]!.n) <= 1) return 'last' as const;
     const del = await t.query('DELETE FROM passkeys WHERE id = $1 AND owner_id = $2', [c.req.param('id'), ownerId(c)]);
@@ -145,7 +145,7 @@ adminSecurityRoutes.post('/owners/invite', requireOwner(), async (c) => {
 });
 
 adminSecurityRoutes.post('/owners/:id/disable', requireOwner(), async (c) => {
-  const target = c.req.param('id');
+  const target = z.uuid().parse(c.req.param('id'));
   if (target === ownerId(c)) fail(400, 'You cannot disable your own account.');
   const db = c.get('db');
   const { rowCount } = await db.query('UPDATE owners SET disabled_at = now() WHERE id = $1 AND disabled_at IS NULL', [target]);
@@ -156,7 +156,7 @@ adminSecurityRoutes.post('/owners/:id/disable', requireOwner(), async (c) => {
 });
 
 adminSecurityRoutes.post('/owners/:id/enable', requireOwner(), async (c) => {
-  const { rowCount } = await c.get('db').query('UPDATE owners SET disabled_at = NULL WHERE id = $1 AND disabled_at IS NOT NULL', [c.req.param('id')]);
+  const { rowCount } = await c.get('db').query('UPDATE owners SET disabled_at = NULL WHERE id = $1 AND disabled_at IS NOT NULL', [z.uuid().parse(c.req.param('id'))]);
   if (!rowCount) fail(404, 'Owner not found or not disabled.');
   await audit(c, 'security.owner_enabled', 'success', c.req.param('id'));
   return c.json({ ok: true });

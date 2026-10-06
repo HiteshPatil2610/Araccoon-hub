@@ -97,7 +97,7 @@ adminProductRoutes.post('/:id/duplicate', async (c) => {
 adminProductRoutes.delete('/:id', async (c) => {
   await limit(c, 'owner-write', ownerKey(c), 60, 60);
   const { rows } = await c.get('db').query<{ id: string; image_public_id: string | null }>(
-    'DELETE FROM products WHERE id = $1 RETURNING id, image_public_id', [c.req.param('id')]
+    'DELETE FROM products WHERE id = $1 RETURNING id, image_public_id', [z.uuid().parse(c.req.param('id'))]
   );
   if (!rows[0]) fail(404, 'Product not found.');
   await releaseImage(c, rows[0].image_public_id);

@@ -12,10 +12,11 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "test": "node --import tsx --test --test-global-setup=tests/support/globalPostgres.ts --test-concurrency=4 \"tests/**/*.test.ts\"",
+    "test:security": "node scripts/security-test.mjs",
     "db:local": "tsx scripts/local-db.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
-    "deploy": "npm run typecheck && npm test && vite build --configLoader runner && wrangler deploy",
+    "deploy": "npm run typecheck && npm run test:security && vite build --configLoader runner && wrangler deploy",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {

@@ -86,6 +86,10 @@ export function createApp(deps: AppDeps): Hono<AppEnv> {
       c.header('X-Correlation-ID', correlationId);
       c.header('X-Content-Type-Options', 'nosniff');
       c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+      c.header('X-Frame-Options', 'DENY');
+      c.header('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+      if (deps.config.environment === 'production') c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+      if (/^\/api\/(admin|auth)(\/|$)/.test(c.req.path)) c.header('Cache-Control', 'no-store');
       if (db.close) {
         const closing = db.close();
         try {
@@ -97,10 +101,34 @@ export function createApp(deps: AppDeps): Hono<AppEnv> {
     }
   });
 
-  // Bound request bodies before any parsing (webhooks have their own limit).
+  // Measure actual bytes, including chunked bodies and dishonest length headers.
   app.use('/api/*', async (c, next) => {
+    const max = c.req.path.startsWith('/api/webhooks/') ? 64 * 1024 : MAX_JSON_BYTES;
     const len = Number(c.req.header('content-length') ?? '0');
-    if (len > MAX_JSON_BYTES && !c.req.path.startsWith('/api/webhooks/')) fail(413, 'Request body is too large.');
+    if (len > max) fail(413, 'Request body is too large.');
+    if (c.req.raw.body) {
+      const reader = c.req.raw.body.getReader();
+      const chunks: Uint8Array[] = [];
+      let size = 0;
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          size += value.byteLength;
+          if (size > max) {
+            void reader.cancel().catch(() => {});
+            fail(413, 'Request body is too large.');
+          }
+          chunks.push(value);
+        }
+      } finally {
+        reader.releaseLock();
+      }
+      const bytes = new Uint8Array(size);
+      let offset = 0;
+      for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+      c.req.raw = new Request(c.req.raw, { body: bytes });
+    }
     await next();
   });
 

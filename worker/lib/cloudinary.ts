@@ -62,7 +62,7 @@ export function cloudinaryStore(cfg: CloudinaryConfig | null, fetcher: typeof fe
       body.set('timestamp', String(timestamp));
       body.set('api_key', cfg.apiKey);
       body.set('signature', signature);
-      const res = await fetcher(`https://api.cloudinary.com/v1_1/${cfg.cloudName}/image/destroy`, { method: 'POST', body });
+      const res = await fetcher(`https://api.cloudinary.com/v1_1/${cfg.cloudName}/image/destroy`, { method: 'POST', body, signal: AbortSignal.timeout(5000) });
       return res.ok;
     },
   };

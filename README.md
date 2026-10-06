@@ -31,10 +31,11 @@ npm run dev                           # http://localhost:5173
 |---|---|
 | `npm run dev` | Vite + the Worker in the real `workerd` runtime, pointed at the dev database |
 | `npm run typecheck` | Strict TypeScript for client, Worker and tests |
-| `npm test` | 37 tests: integration suites run the real API against a throwaway Postgres cluster (never `.env`) |
+| `npm test` | Unit and integration tests against a throwaway Postgres cluster (never `.env`); visibly skips integration suites if PostgreSQL is unavailable |
+| `npm run test:security` | Full suite including adversarial security tests; fails if PostgreSQL integration tests cannot run |
 | `npm run build` | Type-check and production build |
 | `npm run db:migrate -- --target=dev\|prod` | Apply versioned migrations (you must name the target) |
-| `npm run deploy` | Type-check, test, build, `wrangler deploy` |
+| `npm run deploy` | Type-check, mandatory security/integration tests, build, `wrangler deploy` |
 
 ## First deployment
 

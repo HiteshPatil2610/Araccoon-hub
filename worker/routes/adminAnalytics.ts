@@ -176,7 +176,7 @@ adminAnalyticsRoutes.post('/conversions', async (c) => {
 
 adminAnalyticsRoutes.delete('/conversions/:id', async (c) => {
   await limit(c, 'owner-write', ownerKey(c), 60, 60);
-  const { rowCount } = await c.get('db').query(`DELETE FROM conversions WHERE id = $1 AND source = 'manual'`, [c.req.param('id')]);
+  const { rowCount } = await c.get('db').query(`DELETE FROM conversions WHERE id = $1 AND source = 'manual'`, [z.uuid().parse(c.req.param('id'))]);
   if (!rowCount) fail(404, 'Manual conversion not found.');
   await audit(c, 'conversion.delete', 'success', c.req.param('id'));
   return c.json({ ok: true });

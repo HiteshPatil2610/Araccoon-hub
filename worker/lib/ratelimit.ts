@@ -35,6 +35,7 @@ export function upstashLimiter(url: string, token: string, fetcher: typeof fetch
       const redisKey = `rl:${key}:${bucket}`;
       const res = await fetcher(`${url.replace(/\/$/, '')}/pipeline`, {
         method: 'POST',
+        signal: AbortSignal.timeout(5000),
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify([
           ['INCR', redisKey],
@@ -43,8 +44,10 @@ export function upstashLimiter(url: string, token: string, fetcher: typeof fetch
       });
       if (!res.ok) throw new Error(`rate limiter unavailable (${res.status})`);
       const data = (await res.json()) as { result?: unknown; error?: string }[];
-      const count = Number(data[0]?.result);
-      if (!Number.isFinite(count)) throw new Error('rate limiter returned an invalid response');
+      const count = data[0]?.result;
+      if (!Array.isArray(data) || data.length !== 2 || data.some(item => item.error)
+        || typeof count !== 'number' || !Number.isSafeInteger(count) || count < 1
+        || (data[1]?.result !== 0 && data[1]?.result !== 1)) throw new Error('rate limiter returned an invalid response');
       const retryAfter = (bucket + 1) * windowSeconds - Math.floor(Date.now() / 1000);
       return { ok: count <= max, retryAfter: Math.max(1, retryAfter) };
     },
