@@ -41,13 +41,13 @@ export function ActivityLog() {
       {error && <p role="alert" className="field-error mb-4">{error}</p>}
       <ol className="panel divide-y divide-[color:var(--border)]/15">
         {items.map(e => (
-          <li key={e.id} className="flex items-start gap-3 p-3">
+          <li key={e.id} className="grid grid-cols-[20px_minmax(0,1fr)] sm:flex sm:items-start gap-x-3 gap-y-1 p-3">
             {e.result === 'success' ? <CheckCircle2 className="w-5 h-5 text-success shrink-0" aria-label="Succeeded" /> : <XCircle className="w-5 h-5 text-danger shrink-0" aria-label="Failed" />}
             <div className="flex-1 min-w-0">
               <p className="font-bold text-sm">{label(e.action)}{e.result === 'failure' && <span className="text-danger"> — failed</span>}</p>
               <p className="text-xs text-muted-fg truncate">{e.actor ?? 'Unknown / system'}{e.target ? ` · ${e.target}` : ''}</p>
             </div>
-            <time className="text-xs text-muted-fg whitespace-nowrap" dateTime={e.occurredAt}>{new Date(e.occurredAt).toLocaleString()}</time>
+            <time className="col-start-2 text-xs text-muted-fg sm:whitespace-nowrap" dateTime={e.occurredAt}>{new Date(e.occurredAt).toLocaleString()}</time>
           </li>
         ))}
         {!items.length && !loading && <li className="p-4 text-sm text-muted-fg">Nothing yet.</li>}

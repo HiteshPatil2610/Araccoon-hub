@@ -94,19 +94,19 @@ export function Settings() {
         <Card title="Passkeys" description="Sign in with your fingerprint, face or device PIN. Add one on each device you use (phone + laptop), so losing one never locks you out.">
           <ul className="space-y-2 mb-4">
             {passkeys.map(p => (
-              <li key={p.id} className="flex items-center gap-3 panel-sm p-3">
+              <li key={p.id} className="grid grid-cols-[20px_minmax(0,1fr)] sm:flex sm:items-center gap-3 panel-sm p-3">
                 <Fingerprint className="w-5 h-5 shrink-0" aria-hidden="true" />
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm truncate">{p.name}{p.backedUp && <span className="chip !ml-2 !bg-sky !text-on-sky !border-line">Synced</span>}</p>
                   <p className="text-xs text-muted-fg">Added {when(p.createdAt)} · last used {when(p.lastUsedAt)}</p>
                 </div>
-                {!recovering && <>
+                {!recovering && <div className="col-start-2 flex shrink-0 gap-2">
                   <button type="button" className="btn btn-ghost !px-2" aria-label={`Rename ${p.name}`} onClick={() => setRename(p)}><Pencil className="w-4 h-4" /></button>
                   <button type="button" className="btn btn-ghost !px-2" aria-label={`Remove ${p.name}`} disabled={passkeys.length <= 1}
                     onClick={() => setConfirm({ title: 'Remove this passkey?', message: `“${p.name}” will no longer be able to sign in.`, action: () => api.deletePasskey(p.id) })}>
                     <Trash2 className="w-4 h-4" />
                   </button>
-                </>}
+                </div>}
               </li>
             ))}
           </ul>
@@ -140,13 +140,13 @@ export function Settings() {
           <Card title="Signed-in devices" description="Sessions last 12 hours. Sign out anything you don't recognise.">
             <ul className="space-y-2 mb-4">
               {sessions.map(s => (
-                <li key={s.id} className="flex items-center gap-3 panel-sm p-3">
+                <li key={s.id} className="grid grid-cols-[20px_minmax(0,1fr)] sm:flex sm:items-center gap-3 panel-sm p-3">
                   <Laptop className="w-5 h-5 shrink-0" aria-hidden="true" />
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm truncate">{s.userAgent?.match(/\(([^)]+)\)/)?.[1] ?? 'Unknown device'}{s.current && <span className="chip !ml-2 !bg-sun !text-on-sun">This device</span>}</p>
                     <p className="text-xs text-muted-fg">Active {when(s.lastSeenAt)}</p>
                   </div>
-                  {!s.current && <button type="button" className="btn btn-ghost" onClick={() => act(() => api.revokeSession(s.id), 'Device signed out.')}>Sign out</button>}
+                  {!s.current && <button type="button" className="btn btn-ghost col-start-2 justify-self-start shrink-0" onClick={() => act(() => api.revokeSession(s.id), 'Device signed out.')}>Sign out</button>}
                 </li>
               ))}
             </ul>
@@ -156,8 +156,8 @@ export function Settings() {
           <Card title="Owners" description="Everyone listed can manage products and see analytics. Disabling someone signs them out instantly.">
             <ul className="space-y-2 mb-4">
               {owners.map(o => (
-                <li key={o.id} className="flex items-center gap-3 panel-sm p-3">
-                  <div className="flex-1 min-w-0">
+                <li key={o.id} className="flex flex-col items-start sm:flex-row sm:items-center gap-3 panel-sm p-3">
+                  <div className="w-full sm:w-auto flex-1 min-w-0">
                     <p className="font-bold text-sm truncate">{o.displayName || o.email}{o.you && <span className="chip !ml-2">You</span>}{o.disabled && <span className="chip !ml-2 !bg-coral !text-on-coral">Disabled</span>}</p>
                     <p className="text-xs text-muted-fg truncate">{o.email} · {o.passkeys} passkey{o.passkeys === 1 ? '' : 's'}</p>
                   </div>

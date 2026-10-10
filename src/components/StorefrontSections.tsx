@@ -2,7 +2,8 @@ import { useRef, type CSSProperties, type ReactNode } from 'react';
 import { descriptionSummary } from '../../shared/productCopy';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, Ticket } from 'lucide-react';
-import { Blurb, HERO_CUES, IndexBadge, Reveal, ScrambleText, SectionLabel, StatDisc, Sticker, TrackingReveal, Viewfinder, useHeroEntrance, usePrefersReducedMotion } from './cine';
+import { Blurb, FilmStrip, HERO_CUES, IndexBadge, Reveal, SectionLabel, StatDisc, Sticker, UnfoldText, Viewfinder, useHeroEntrance, usePrefersReducedMotion } from './cine';
+import { useStoryEntrance } from '../lib/useStoryEntrance';
 import { ProductImage } from './ProductImage';
 import { storeLabel } from './ProductCard';
 import { CATEGORIES, type PublicProduct } from '../../shared/types';
@@ -28,7 +29,7 @@ function HeroArt({ children }: { children: ReactNode }) {
 }
 
 /** Pose-specific decorative cutouts; the live product card remains a separate interactive layer. */
-export function Cutout({ name, className, delay = 200, distance = 56 }: { name: keyof typeof MASCOT_ART; className: string; delay?: number; distance?: number }) {
+export function Cutout({ name, className, delay = 200, distance = 56, scroll = false }: { name: keyof typeof MASCOT_ART; className: string; delay?: number; distance?: number; scroll?: boolean }) {
   const art = <img src={`/art/video-concept/${MASCOT_ART[name]}.webp`} alt="" decoding="async" loading={name === 'hero' ? 'eager' : 'lazy'} fetchPriority={name === 'hero' ? 'high' : 'auto'} draggable={false} />;
   if (name === 'hero') return (
     <div className={`cd-cutout ${className}`} data-morph="type">
@@ -36,6 +37,7 @@ export function Cutout({ name, className, delay = 200, distance = 56 }: { name: 
     </div>
   );
   return (
+    scroll ? <div className={`cd-cutout ${className}`}><div className="cd-picks__art">{art}</div></div> :
     <Reveal effect="rise" distance={distance} delay={delay} duration={850} once className={`cd-cutout ${className}`} morph="type">
       {art}
     </Reveal>
@@ -91,32 +93,40 @@ interface CarouselProps {
   onQuick: (p: PublicProduct) => void;
 }
 
+function ScrollCue({ start = 0, className = '', children }: { start?: number; className?: string; children: ReactNode }) {
+  return <div className={`cd-scroll-cue ${className}`} style={{ '--cue-start': start } as CSSProperties}>{children}</div>;
+}
+
 export function PicksSection({ total, picks, index, onIndex, onQuick }: CarouselProps & { total: number | null }) {
   const pick = picks[index];
   const dir = useDirection(index, picks.length);
   const step = (d: number) => picks.length && onIndex((index + d + picks.length) % picks.length);
   return (
     <section id="picks" className="cd-picks" data-nav-tone="dark" data-morph-root aria-labelledby="picks-title">
-      <Viewfinder size="min(760px, 96vw)" top="62%" />
+      <div className="cd-picks__divider"><FilmStrip red tilt={-2} direction="left" holes={80} /></div>
+      <Viewfinder size="min(560px, 88vw)" top="58%" />
       <div className="cd-picks__grid">
-        <Reveal effect="slide-left" distance={40} className="cd-picks__left" morph="move">
+        <ScrollCue className="cd-picks__left">
           <SectionLabel>Editor's picks</SectionLabel>
           <h2 id="picks-title" className="cd-lockup !text-[28px] !leading-none"><b>Raccoon</b><span>Hub</span></h2>
-          <IndexBadge n={2} />
-          <span className="cd-stars" aria-label="Hand-picked">★★★★<span>★</span></span>
-        </Reveal>
+          <ScrollCue start={.25} className="cd-picks__index">
+            <IndexBadge n={2} />
+            <span className="cd-stars" aria-label="Hand-picked">★★★★<span>★</span></span>
+          </ScrollCue>
+        </ScrollCue>
         <div className="cd-picks__discs">
-          <Reveal effect="pop" delay={150} morph><StatDisc label="Finds" value={total == null ? '—' : <ScrambleText text={pad(total)} charset="0123456789" />} /></Reveal>
-          <Reveal effect="pop" delay={270} morph><StatDisc tone="accent" label="Picks" value={pad(picks.length)} /></Reveal>
-          <Reveal effect="pop" delay={390} morph><StatDisc tone="dark" label="Aisles" value={pad(CATEGORIES.length)} /></Reveal>
+          <ScrollCue start={.05}><StatDisc label="Finds" value={total == null ? '—' : pad(total)} /></ScrollCue>
+          <ScrollCue start={.16}><StatDisc tone="accent" label="Picks" value={pad(picks.length)} /></ScrollCue>
+          <ScrollCue start={.27}><StatDisc tone="dark" label="Aisles" value={pad(CATEGORIES.length)} /></ScrollCue>
         </div>
-        <Reveal effect="slide-right" distance={40} delay={300} className="cd-quote" morph="move">
+        <div className="cd-quote">
           {pick ? (
             <>
               <Swap id={pick.id} dir={dir}>
-                <p className="cd-quote__text">{pick.title}</p>
-                <p className="mt-3 text-xs text-[var(--cd-gray-300)] line-clamp-3">{descriptionSummary(pick.description)}</p>
+                <ScrollCue start={.28} className="cd-scroll-cue--focus"><p className="cd-quote__text">{pick.title}</p></ScrollCue>
+                <ScrollCue start={.45} className="cd-scroll-cue--focus"><p className="mt-3 text-xs text-[var(--cd-gray-300)] line-clamp-3">{descriptionSummary(pick.description)}</p></ScrollCue>
               </Swap>
+              <ScrollCue start={.55}>
               <button type="button" className="mt-3 inline-flex items-center gap-1 min-h-11 eyebrow text-white hover:text-[var(--cd-red-300)]" onClick={() => onQuick(pick)}>
                 View details <ArrowUpRight className="w-4 h-4" aria-hidden="true" /><span className="sr-only">: {pick.title}</span>
               </button>
@@ -125,18 +135,22 @@ export function PicksSection({ total, picks, index, onIndex, onQuick }: Carousel
                   {picks.map((p, i) => <button key={p.id} type="button" aria-current={i === index} aria-label={`Pick ${i + 1}: ${p.title}`} onClick={() => onIndex(i)} />)}
                 </div>
               )}
+              </ScrollCue>
             </>
           ) : (
-            <p className="cd-quote__text">New picks land here as soon as the raccoon finds them.</p>
+            <ScrollCue start={.28}><p className="cd-quote__text">New picks land here as soon as the raccoon finds them.</p></ScrollCue>
           )}
-        </Reveal>
+        </div>
       </div>
-      {picks.length > 1 && (
-        <>
-          <button type="button" data-morph className="cd-picks__nav cd-picks__nav--prev" onClick={() => step(-1)} aria-label="Previous pick"><ChevronLeft className="w-6 h-6" /></button>
-          <button type="button" data-morph className="cd-picks__nav cd-picks__nav--next" onClick={() => step(1)} aria-label="Next pick"><ChevronRight className="w-6 h-6" /></button>
-        </>
-      )}
+      <div className="cd-picks__lower">
+        <Cutout name="box" className="cd-picks__raccoon" scroll />
+        {picks.length > 1 && (
+          <>
+            <button type="button" data-morph className="cd-picks__nav cd-picks__nav--prev" onClick={() => step(-1)} aria-label="Previous pick"><ChevronLeft className="w-6 h-6" /></button>
+            <button type="button" data-morph className="cd-picks__nav cd-picks__nav--next" onClick={() => step(1)} aria-label="Next pick"><ChevronRight className="w-6 h-6" /></button>
+          </>
+        )}
+      </div>
     </section>
   );
 }
@@ -178,18 +192,23 @@ function Stills({ items, onQuick }: { items: PublicProduct[]; onQuick: (p: Publi
 }
 
 export function StorySection({ picks, index, onIndex, onQuick, onOpen, pending }: CarouselProps & { onOpen: (p: PublicProduct) => void; pending: boolean }) {
+  const sectionRef = useRef<HTMLElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = usePrefersReducedMotion();
+  useStoryEntrance(sectionRef, titleRef, reducedMotion);
   const pick = picks[index];
   const dir = useDirection(index, picks.length);
   const others = picks.filter((_, i) => i !== index);
   const step = (d: number) => picks.length && onIndex((index + d + picks.length) % picks.length);
   return (
-    <section id="story" className="cd-story cd-editorial" data-nav-tone="editorial" data-morph-root aria-labelledby="story-title">
-      <Viewfinder size="min(760px, 96vw)" top="62%" light />
-      <div className="cd-story__directed">
+    <section ref={sectionRef} id="story" className="cd-story" data-nav-tone="light" data-morph-root aria-labelledby="story-title">
+      <Viewfinder size="min(760px, 96vw)" top="62%" />
+      <div className="cd-story__directed" ref={titleRef}>
         <h2 id="story-title">
-          <TrackingReveal from="0.08em" duration={800} once className="cd-story__big" morph="type">Curated</TrackingReveal>
-          <Reveal effect="fade" duration={500} delay={150} once className="cd-story__by" morph="move">by</Reveal>
-          <TrackingReveal from="0.08em" duration={800} delay={100} once className="cd-story__big" morph="type">The Raccoon</TrackingReveal>
+          <span className="sr-only">Curated by Raccoon</span>
+          <UnfoldText text="Curated" className="cd-story__big cd-story__big--curated" />
+          <UnfoldText text="by" start={.08} end={.7} className="cd-story__by" />
+          <UnfoldText text="Raccoon" start={.14} end={1} className="cd-story__big cd-story__big--name" />
         </h2>
       </div>
       <div className="cd-story__index" aria-hidden="true"><span>01</span><span>02</span><span>03</span><span>04</span></div>
@@ -218,7 +237,7 @@ export function StorySection({ picks, index, onIndex, onQuick, onOpen, pending }
       </div>
 
       <div className="cd-story__grid">
-        <Reveal effect="slide-left" distance={40} delay={300} className="cd-story__col" morph="move">
+        <Reveal effect="fade" delay={450} once className="cd-story__col" morph="move">
           <SectionLabel>{pick?.category ?? 'The idea'}</SectionLabel>
           <Blurb part="C">{pick ? descriptionSummary(pick.description) : 'Desk essentials, clever gadgets and unexpected home finds, picked one at a time.'}</Blurb>
           <Stills items={[others[0], others[1]].filter((p): p is PublicProduct => !!p)} onQuick={onQuick} />
@@ -231,7 +250,7 @@ export function StorySection({ picks, index, onIndex, onQuick, onOpen, pending }
           )}
           <Cutout name="presenter" className="cd-story__raccoon" delay={300} distance={48} />
         </div>
-        <Reveal effect="slide-right" distance={40} delay={300} className="cd-story__col cd-story__col--r" morph="move">
+        <Reveal effect="fade" delay={550} once className="cd-story__col cd-story__col--r" morph="move">
           <SectionLabel>Opening on Amazon</SectionLabel>
           <Blurb part="D">Every find opens on Amazon in a new tab, where prices and availability are set. No accounts, no checkout here.</Blurb>
           <Stills items={[others[1], others[0]].filter((p): p is PublicProduct => !!p)} onQuick={onQuick} />

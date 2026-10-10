@@ -152,9 +152,9 @@ export function SignIn() {
       {error && <p id="auth-error" role="alert" className="field-error mt-4">{error}</p>}
 
       <div className="mt-6 pt-4 border-t border-line flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold">
-        {mode !== 'passkey' && <button type="button" className="underline" onClick={() => { setMode('passkey'); setError(''); }}><KeyRound className="inline w-3.5 h-3.5" /> Use a passkey</button>}
-        {mode !== 'recover' && <button type="button" className="underline" onClick={() => { setMode('recover'); setError(''); }}><LifeBuoy className="inline w-3.5 h-3.5" /> Lost your device?</button>}
-        {state?.setupOpen && mode !== 'setup' && <button type="button" className="underline" onClick={() => setMode('setup')}><ShieldCheck className="inline w-3.5 h-3.5" /> First-time setup</button>}
+        {mode !== 'passkey' && <button type="button" className="inline-flex min-h-11 items-center gap-1 underline" onClick={() => { setMode('passkey'); setError(''); }}><KeyRound className="w-3.5 h-3.5" /> Use a passkey</button>}
+        {mode !== 'recover' && <button type="button" className="inline-flex min-h-11 items-center gap-1 underline" onClick={() => { setMode('recover'); setError(''); }}><LifeBuoy className="w-3.5 h-3.5" /> Lost your device?</button>}
+        {state?.setupOpen && mode !== 'setup' && <button type="button" className="inline-flex min-h-11 items-center gap-1 underline" onClick={() => setMode('setup')}><ShieldCheck className="w-3.5 h-3.5" /> First-time setup</button>}
       </div>
 
       {state?.devLogin && <DevLogin onDone={() => navigate(next, { replace: true })} />}

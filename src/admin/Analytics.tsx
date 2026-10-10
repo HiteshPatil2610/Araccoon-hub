@@ -18,7 +18,7 @@ function Bars({ title, rows }: { title: string; rows: { key: string; clicks: num
         <ul className="space-y-2">
           {rows.map(r => (
             <li key={r.key}>
-              <div className="flex justify-between text-xs font-bold"><span className="truncate">{r.key === '??' ? 'Unknown' : r.key}</span><span>{r.clicks} · {r.percentage}%</span></div>
+              <div className="flex justify-between gap-2 text-xs font-bold"><span className="min-w-0 truncate" title={r.key}>{r.key === '??' ? 'Unknown' : r.key}</span><span className="shrink-0 whitespace-nowrap">{r.clicks} · {r.percentage}%</span></div>
               <div className="h-2.5 rounded-full border border-line bg-muted mt-1 overflow-hidden"><div className="h-full bg-brand" style={{ width: `${r.percentage}%` }} /></div>
             </li>
           ))}
@@ -132,7 +132,7 @@ export function Analytics() {
       )}
 
       <div className="grid lg:grid-cols-2 gap-6 mt-6">
-        <section className="panel p-4 overflow-x-auto">
+        <section className="panel p-4 overflow-x-auto" tabIndex={0} role="region" aria-label="Top products table">
           <h2 className="text-[30px] mb-3">Top products</h2>
           <table className="w-full text-sm">
             <thead><tr className="text-left text-sm uppercase tracking-wider"><th className="py-1">Product</th><th className="text-right">Clicks</th><th className="text-right">Conv.</th><th className="text-right">Rate</th></tr></thead>
@@ -239,7 +239,7 @@ function AddConversion({ open, onClose, onSaved }: { open: boolean; onClose: () 
           <select id="c-p" className="field" value={productId} onChange={e => setProductId(e.target.value)} required>
             {products.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
           </select></div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 min-[440px]:grid-cols-2 gap-3">
           <div><label htmlFor="c-d" className="field-label">Date</label><input id="c-d" type="date" className="field" value={date} onChange={e => setDate(e.target.value)} /></div>
           <div><label htmlFor="c-a" className="field-label">Commission (optional)</label><input id="c-a" inputMode="decimal" className="field" placeholder="e.g. 42.50" value={amount} onChange={e => setAmount(e.target.value)} /></div>
         </div>

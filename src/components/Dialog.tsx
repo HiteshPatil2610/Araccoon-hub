@@ -41,12 +41,12 @@ function DialogContent({ onClose, title, children, wide = false, busy = false, a
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: moving ? 18 : 0, scale: moving ? 0.985 : 1 }}
         transition={{ duration: moving ? (present ? 0.32 : 0.18) : 0, ease: [0.22, 1, 0.36, 1] }}
-        className={`relative panel !rounded-b-none sm:!rounded-2xl w-full min-w-0 max-w-full ${wide ? 'sm:max-w-3xl' : 'sm:max-w-lg'} max-h-[92vh] overflow-x-hidden overflow-y-auto p-5 sm:p-6`}>
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <h2 id={titleId} className="text-3xl sm:text-4xl">{title}</h2>
+        className={`relative panel !rounded-b-none sm:!rounded-2xl w-full min-w-0 max-w-full ${wide ? 'sm:max-w-3xl' : 'sm:max-w-lg'} max-h-[92vh] supports-[height:100dvh]:max-h-[92dvh] flex flex-col overflow-hidden`}>
+        <div className="shrink-0 flex items-start justify-between gap-4 px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
+          <h2 id={titleId} className="min-w-0 text-3xl sm:text-4xl">{title}</h2>
           <button type="button" disabled={busy} onClick={close} aria-label="Close" className="btn btn-ghost shrink-0 !px-3"><X className="w-5 h-5" /></button>
         </div>
-        {children}
+        <div className="min-h-0 overflow-y-auto overflow-x-hidden px-5 pb-5 sm:px-6 sm:pb-6">{children}</div>
       </motion.div>
     </motion.div>
   );

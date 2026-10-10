@@ -12,6 +12,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "ui-fixtures",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/ui-fixture-preview.mjs"],
+      "port": 5174
     }
   ]
 }

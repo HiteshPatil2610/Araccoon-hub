@@ -1,0 +1,14 @@
+# Hero → Picks scroll handoff
+
+Implemented from reference frames 056–080, after the initial hero entrance.
+
+- The character follows the page. At every breakpoint, the title, circle, captions, category row, hero footer and dark strip move at 43% of that speed, approximating the measured 481/207 displacement ratio. On tablets and phones the independent foreground mascot extends across the strip, with space reserved below it for the supporting copy and controls. A short bottom mask softens the asset edge.
+- The dark hero strip stays separate. A red divider belongs to the incoming Picks panel and travels left. It starts hidden, then reveals over the first 56 pixels of scrolling. The panel and divider cover the outgoing hero at their boundary.
+- White, red and dark statistic discs reveal in sequence with their actual values. The quote heading reveals before its summary and controls. The small focus effect is an adaptation, not a measured reference blur radius.
+- The box raccoon enters from below into a normal grid row beneath the upper content, with the full existing asset contained inside the section. The carousel arrows share that row outside the mascot column: 80–112px on desktop with larger icons, and 64px on tablets and phones.
+- HUB moves as one word with the central C (fourth character, index 3), sharing its 5.6-second loop, delay, peak timing and visibility state. Travel scales with the measured C height but is capped at 12px upward and 5px downward. Symmetric easing smooths the rise/fall, and the extra rebound is removed. HUB keeps its shape, its lower resting position and its separate entrance wrappers.
+- The desktop hero occupies at least one viewport vertically. Picks uses content-driven height with 64px top padding, a 24px row gap and 24px bottom padding, targeting roughly 520–620px for typical content. There is no viewport minimum or bottom-anchored mascot. Tablet content uses two columns with the quote below; phones stack naturally. The ring is reduced to 560px maximum, and the glow is centered behind the mascot. Story's layout is unchanged.
+- A passive, frame-coalesced listener updates CSS variables without rerendering the catalog. Resize observation refreshes artwork placement. Reverse scrolling restores the same positions and hides the red divider again at the top.
+- Reduced motion exposes content without parallax or kinetic animation. The divider still waits for scrolling. Keyboard focus makes the Picks content immediately readable.
+
+The production build and focused geometry tests validate initial state, displacement ratio, reveal order, reverse/jump scrolling, resize and reduced motion. Browser playback was checked in the local development server on 8 October 2026: phone and tablet scrolling moved the mascot 109.09px and the poster 46.91px, preserving the 43% relationship. Returning to the top restored zero lag and hid the red divider.

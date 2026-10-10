@@ -52,7 +52,7 @@ export function AdminLayout() {
 
       <div className="min-w-0 pb-0">
         <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-16 border-b border-line bg-[var(--nav-bg)] backdrop-blur">
-          <NavLink to="/" className="font-display text-2xl leading-none pt-1">← Raccoon<span className="text-red"> Hub</span></NavLink>
+          <NavLink to="/" className="inline-flex items-center min-h-11 font-display text-2xl leading-none pt-1">← Raccoon<span className="text-red"> Hub</span></NavLink>
           <div className="flex gap-2">
             <button type="button" className="icon-btn" onClick={toggle} aria-label={dark ? 'Light mode' : 'Dark mode'}>{dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}</button>
             <button type="button" className="icon-btn" onClick={signOut} aria-label="Sign out"><LogOut className="w-4 h-4" /></button>

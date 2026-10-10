@@ -15,8 +15,8 @@ const LINKS = [
 ] as const;
 
 /**
- * Fixed nav. Sections marked data-nav-tone="dark" (the black hero and picks curtain) get a transparent
- * nav with white type; everything else gets the solid page tone. The link for the section under the nav is current.
+ * Fixed nav. Sections marked data-nav-tone="dark" (the black hero and picks curtain) get a dark
+ * nav with white type; everything else follows the page theme. The link for the section under the nav is current.
  */
 export function Navbar() {
   const introReady = useHeroEntrance();
@@ -25,7 +25,6 @@ export function Navbar() {
   const introEnabled = introReady !== null && !introDone;
   const { dark, toggle } = useTheme();
   const [overDark, setOverDark] = useState(true);
-  const [overEditorial, setOverEditorial] = useState(false);
   const [current, setCurrent] = useState<string>('top');
 
   useEffect(() => { if (reducedMotion) setIntroDone(true); }, [reducedMotion]);
@@ -35,16 +34,13 @@ export function Navbar() {
       if (window.scrollY > 96) setIntroDone(true);
       const y = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-height')) || 96) / 2;
       let tone = false;
-      let editorial = false;
       for (const el of document.querySelectorAll<HTMLElement>('[data-nav-tone]')) {
         const r = el.getBoundingClientRect();
         if (r.top <= y && r.bottom > y) {
           tone = el.dataset.navTone === 'dark';
-          editorial = el.dataset.navTone === 'editorial';
         }
       }
       setOverDark(tone);
-      setOverEditorial(editorial);
       let at = '';
       for (const l of LINKS) {
         const r = document.getElementById(l.id)?.getBoundingClientRect();
@@ -59,11 +55,11 @@ export function Navbar() {
   }, []);
 
   return (
-    <header className={`cd-nav ${overDark ? 'cd-nav--over-dark' : ''} ${overEditorial ? 'cd-editorial' : ''} ${introEnabled ? 'cd-nav--intro' : ''} ${introEnabled && introReady ? 'cd-nav--intro-shown' : ''}`} style={{ '--nav-entry-delay': `${HERO_CUES.nav}ms` } as CSSProperties}
+    <header className={`cd-nav ${overDark ? 'cd-nav--over-dark' : ''} ${introEnabled ? 'cd-nav--intro' : ''} ${introEnabled && introReady ? 'cd-nav--intro-shown' : ''}`} style={{ '--nav-entry-delay': `${HERO_CUES.nav}ms` } as CSSProperties}
       onFocusCapture={() => setIntroDone(true)} onAnimationEnd={e => { if (e.animationName === 'hero-nav-arrive') setIntroDone(true); }} data-morph-root>
       <a href="#main" className="skip-link">Skip to content</a>
       <div className="cd-nav__inner">
-        <Link to="/" className="font-display text-[26px] sm:text-[32px] leading-none pt-1 justify-self-start" aria-label="Raccoon Hub home" data-morph="type">
+        <Link to="/" className="inline-flex items-center min-h-11 font-display text-[26px] sm:text-[32px] leading-none pt-1 justify-self-start" aria-label="Raccoon Hub home" data-morph="type">
           Raccoon<span className="text-red"> Hub</span>
         </Link>
         <nav aria-label="Site" className="cd-nav__center" data-morph="move">

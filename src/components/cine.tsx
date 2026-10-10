@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ElementType, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ElementType, type ReactNode } from 'react';
 import { Play } from 'lucide-react';
 
 /* Cine Daily primitives: scroll-choreographed entrances and the small editorial pieces of the design system. */
@@ -37,7 +37,7 @@ export function useReveal<T extends Element>(ref: React.RefObject<T | null>, { o
 
 // These are chosen timings for our adaptation; the reference JPEGs do not contain timestamps.
 export const HERO_CUES = {
-  title: 60, letterStep: 100, wave: 2900, mascot: 180, disc: 320, hub: 360,
+  title: 60, letterStep: 100, wave: 2900, waveStep: 120, waveAnchor: 3, mascot: 180, disc: 320, hub: 360,
   nav: 450, strip: 680, captions: 320, story: 1150, cta: 1250, badge: 1370,
 } as const;
 const HeroEntranceContext = createContext<boolean | null>(null);
@@ -112,18 +112,30 @@ export function PosterTitle({ text, label, id }: { text: string; label: string; 
   const ref = useRef<HTMLHeadingElement>(null);
   const shown = useEntrance(ref, { hero: true, once: true });
   const active = useReveal(ref, { threshold: 0.05 });
+  useLayoutEffect(() => {
+    const glyph = ref.current?.querySelectorAll<HTMLElement>('.poster-title__glyph')[HERO_CUES.waveAnchor];
+    const stage = ref.current?.closest<HTMLElement>('.cd-hero__stage');
+    if (!glyph || !stage) return;
+    // Use the untransformed C height, so HUB follows its pixel travel on every screen size.
+    const measure = () => stage.style.setProperty('--hero-wave-height', `${glyph.offsetHeight}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(glyph);
+    return () => { observer.disconnect(); stage.style.removeProperty('--hero-wave-height'); };
+  }, [text]);
   return <h1 ref={ref} id={id} aria-label={label} className={`poster-title ${shown ? 'poster-title--shown' : ''} ${active ? 'poster-title--active' : ''}`}>
     <span className="poster-title__letters" aria-hidden="true">
-      {Array.from(text).map((letter, index) => <span key={index} className="poster-title__letter" style={{ '--letter-delay': `${HERO_CUES.title + index * HERO_CUES.letterStep}ms`, '--kinetic-delay': `${HERO_CUES.wave + index * 120}ms` } as CSSProperties}><span className="poster-title__reveal"><span className="poster-title__glyph">{letter}</span></span></span>)}
+      {Array.from(text).map((letter, index) => <span key={index} className="poster-title__letter" style={{ '--letter-delay': `${HERO_CUES.title + index * HERO_CUES.letterStep}ms`, '--kinetic-delay': `${HERO_CUES.wave + index * HERO_CUES.waveStep}ms` } as CSSProperties}><span className="poster-title__reveal"><span className="poster-title__glyph">{letter}</span></span></span>)}
     </span>
   </h1>;
 }
 
 /** Reveal a word letter by letter while keeping one accessible text label. */
-export function CharacterStagger({ text, delay = 180, stagger = 110 }: { text: string; delay?: number; stagger?: number }) {
+export function CharacterStagger({ text, delay = 180, stagger = 110, followWave = false }: { text: string; delay?: number; stagger?: number; followWave?: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
   const shown = useEntrance(ref, { hero: true, once: true });
-  return <span ref={ref} aria-label={text} className={`character-stagger ${shown ? 'character-stagger--shown' : ''}`}>
+  return <span ref={ref} aria-label={text} className={`character-stagger ${followWave ? 'character-stagger--follow' : ''} ${shown ? 'character-stagger--shown' : ''}`}
+    style={followWave ? { '--kinetic-delay': `${HERO_CUES.wave + HERO_CUES.waveAnchor * HERO_CUES.waveStep}ms` } as CSSProperties : undefined}>
     {Array.from(text).map((letter, index) => <span key={index} aria-hidden="true" className="character-stagger__letter" style={{ '--character-delay': `${delay + index * stagger}ms` } as CSSProperties}>{letter === ' ' ? '\u00a0' : letter}</span>)}
   </span>;
 }
@@ -152,6 +164,14 @@ export function Reveal({ effect = 'rise', delay = 0, duration = 900, distance = 
   // A fully clipped element has no intersection area, so clip effects observe the outer box and clip an inner one.
   if (h.clip) return <T ref={ref} className={className} style={style} {...morphAttr(morph)}><div style={s}>{children}</div></T>;
   return <T ref={ref} className={className} style={{ ...style, ...s }} {...morphAttr(morph)}>{children}</T>;
+}
+
+/** Letter faces unfold and close their spacing without reflowing the surrounding layout. */
+export function UnfoldText({ text, start = 0, end = .86, className = '' }: { text: string; start?: number; end?: number; className?: string }) {
+  const letters = Array.from(text);
+  return <span aria-hidden="true" className={`cd-unfold ${className}`}>
+    {letters.map((letter, index) => <span key={index} className="cd-unfold__letter" style={{ '--unfold-start': start + (end - .5 - start) * index / Math.max(letters.length - 1, 1), '--unfold-offset': `${.42 + index * .16}em` } as CSSProperties}><span className="cd-unfold__glyph">{letter === ' ' ? '\u00a0' : letter}</span></span>)}
+  </span>;
 }
 
 /** Signature move: wide, faded tracking collapses to tight Bebas spacing while brightening. */
@@ -228,11 +248,11 @@ export function Viewfinder({ size = 640, top = '50%', light = false }: { size?: 
 }
 
 /** The entire hero band fades in while its independently animated pattern travels. */
-export function FilmStrip({ red = false, tilt = -1, holes = 160, entrance = false }: { red?: boolean; tilt?: number; holes?: number; entrance?: boolean }) {
+export function FilmStrip({ red = false, tilt = -1, holes = 160, entrance = false, direction = 'right' }: { red?: boolean; tilt?: number; holes?: number; entrance?: boolean; direction?: 'left' | 'right' }) {
   const ref = useRef<HTMLDivElement>(null);
   const shown = useEntrance(ref, { hero: entrance, once: true, threshold: 0.05 });
   return (
-    <div ref={ref} className={`film-strip ${red ? 'film-strip--red' : ''} ${entrance ? 'film-strip--entrance' : ''} ${shown ? 'film-strip--shown' : ''}`} style={{ '--strap-delay': `${HERO_CUES.strip}ms` } as CSSProperties} aria-hidden="true">
+    <div ref={ref} className={`film-strip film-strip--${direction} ${red ? 'film-strip--red' : ''} ${entrance ? 'film-strip--entrance' : ''} ${shown ? 'film-strip--shown' : ''}`} style={{ '--strap-delay': `${HERO_CUES.strip}ms` } as CSSProperties} aria-hidden="true">
       <div className="film-strip__band" style={{ '--strip-tilt': `${tilt}deg`, '--strip-duration': `${holes * 28 / 52}s` } as CSSProperties}>
         <div className="film-strip__tape">
         <div className="film-strip__track">

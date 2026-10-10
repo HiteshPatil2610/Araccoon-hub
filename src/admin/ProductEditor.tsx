@@ -309,7 +309,7 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
               {err('sortOrder')}
             </div>
           </div>
-          <label className="flex items-center gap-3 font-bold text-sm cursor-pointer">
+          <label className="flex items-center gap-3 min-h-11 font-bold text-sm cursor-pointer">
             <input type="checkbox" className="w-5 h-5 accent-[var(--primary)]" checked={form.featured} onChange={e => set('featured', e.target.checked)} />
             Feature in the curiosity board and catalog
           </label>

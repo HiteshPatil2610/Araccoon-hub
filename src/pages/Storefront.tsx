@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowDown, ArrowUpRight, ArrowUpDown, CheckCircle2, ExternalLink, RefreshCw, X } from 'lucide-react';
@@ -6,11 +6,12 @@ import { api } from '../lib/api';
 import { featuredProducts } from '../lib/catalog';
 import { useOutbound } from '../lib/outbound';
 import { useLayoutMorph } from '../lib/useLayoutMorph';
+import { useHeroHandoff } from '../lib/useHeroHandoff';
 import { Navbar, Footer } from '../components/SiteChrome';
 import { ProductImage } from '../components/ProductImage';
 import { ProductCard, storeLabel } from '../components/ProductCard';
 import { Dialog } from '../components/Dialog';
-import { Blurb, CharacterStagger, FilmStrip, HERO_CUES, HeroDisc, HeroEntrance, HeroMetadata, PosterTitle, Reveal, SectionLabel, Sticker, TrackingReveal, Viewfinder } from '../components/cine';
+import { Blurb, CharacterStagger, FilmStrip, HERO_CUES, HeroDisc, HeroEntrance, HeroMetadata, PosterTitle, Reveal, SectionLabel, Sticker, TrackingReveal, Viewfinder, usePrefersReducedMotion } from '../components/cine';
 import { Cutout, PicksSection, StorySection } from '../components/StorefrontSections';
 import { CATEGORIES, type PublicProduct } from '../../shared/types';
 import { formatProductCopy } from '../../shared/productCopy';
@@ -26,7 +27,9 @@ export function Storefront() {
   const [products, setProducts] = useState<PublicProduct[] | null>(null);
   const [error, setError] = useState('');
   const [quick, setQuick] = useState<PublicProduct | null>(null);
-  const [stripRed, setStripRed] = useState(false);
+  const handoffRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = usePrefersReducedMotion();
+  useHeroHandoff(handoffRef, reducedMotion);
   const outbound = useOutbound();
   useLayoutMorph(); // glide between layouts when the window changes size
 
@@ -40,18 +43,6 @@ export function Storefront() {
     }
   }, []);
   useEffect(() => { void load(); }, [load]);
-
-  // Coordinate the divider with the stage exiting, rather than a fixed page offset.
-  useEffect(() => {
-    const onScroll = () => {
-      const stage = document.querySelector('.cd-hero__stage');
-      if (stage) setStripRed(stage.getBoundingClientRect().top < -stage.clientHeight * 0.18);
-    };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); };
-  }, []);
 
   const setCategory = (c: string) => {
     const next = new URLSearchParams(params);
@@ -94,7 +85,7 @@ export function Storefront() {
         {/* Dark block: hero + picks curtain. Its rounded bottom and pink seam overlap the story section.
             Entrance delays follow the design system's hero cue sheet. */}
         <div className="cd-dark">
-          <div className="cd-dark__inner">
+          <div className="cd-dark__inner cd-handoff" ref={handoffRef}>
             <section id="top" className="cd-hero" data-nav-tone="dark" data-morph-root aria-labelledby="hero-title">
               <HeroMetadata>
                 <div className="cd-hero__tags" role="group" aria-label="Jump to a category" data-morph="move">
@@ -111,7 +102,7 @@ export function Storefront() {
               <div className="cd-hero__composition">
                 <div className="cd-hero__stage">
                   <HeroDisc />
-                  <div className="cd-hero__numeral" data-morph="type" aria-hidden="true"><CharacterStagger text="Hub" delay={HERO_CUES.hub} stagger={100} /></div>
+                  <div className="cd-hero__numeral" data-morph="type" aria-hidden="true"><CharacterStagger text="Hub" delay={HERO_CUES.hub} stagger={100} followWave /></div>
                   <div className="cd-hero__flank cd-hero__flank--l" data-morph="move"><CharacterStagger text="Small finds." delay={HERO_CUES.captions} stagger={48} /><CharacterStagger text="Hand-picked." delay={HERO_CUES.captions + 80} stagger={48} /></div>
                   <div className="cd-hero__flank cd-hero__flank--r" data-morph="move"><CharacterStagger text="Clever objects." delay={HERO_CUES.captions + 160} stagger={48} /><CharacterStagger text="Everyday upgrades." delay={HERO_CUES.captions + 240} stagger={48} /></div>
                   <div className="cd-hero__title" data-morph="type">
@@ -119,7 +110,7 @@ export function Storefront() {
                   </div>
                   <Reveal hero effect="fade" delay={HERO_CUES.strip} duration={1000} once className="cd-hero__year" morph="move"><span aria-hidden="true">[{new Date().getFullYear()}]</span></Reveal>
                   <div className="cd-hero__strip">
-                    <FilmStrip red={stripRed} tilt={stripRed ? -2.4 : -1} entrance />
+                    <FilmStrip tilt={-1} entrance />
                   </div>
                 </div>
 
@@ -140,7 +131,6 @@ export function Storefront() {
             </section>
 
             <PicksSection total={products ? products.length : null} picks={picks} index={pickIndex} onIndex={setPickIndex} onQuick={setQuick} />
-            <Cutout name="box" className="cd-picks__raccoon" delay={150} />
           </div>
         </div>
 
@@ -201,7 +191,7 @@ export function Storefront() {
               <button type="button" className="btn btn-primary" onClick={load}><RefreshCw className="w-4 h-4" /> Try again</button>
             </div>
           ) : !products ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5" aria-busy="true" aria-label="Loading products">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-6 gap-5" aria-busy="true" aria-label="Loading products">
               {Array.from({ length: 8 }, (_, i) => <div key={i} className="panel h-96 !bg-muted" />)}
             </div>
           ) : visible.length === 0 ? (
@@ -212,7 +202,7 @@ export function Storefront() {
               {products.length > 0 && <p className="relative text-sm text-muted-fg mt-4">Try a different search or clear the filters above.</p>}
             </div>
           ) : (
-            <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-6 gap-5">
               <AnimatePresence mode="popLayout">
                 {visible.map((p, i) => (
                   <ProductCard key={p.id} product={p} index={i} onOpen={outbound.open} onQuickView={setQuick} pending={outbound.state?.status === 'opening'} />

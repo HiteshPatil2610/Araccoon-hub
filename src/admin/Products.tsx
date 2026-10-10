@@ -156,29 +156,33 @@ export function Products() {
         </div>
       ) : (
         <div className="panel overflow-hidden">
-          <div className="hidden lg:grid grid-cols-[40px_64px_1fr_120px_110px_150px] gap-3 items-center px-4 py-2 border-b border-line eyebrow bg-muted">
-            <input type="checkbox" aria-label="Select all visible" className="w-5 h-5" checked={allChecked}
-              onChange={() => setSelected(allChecked ? new Set() : new Set(visible.map(p => p.id)))} />
+          <div className="hidden xl:grid grid-cols-[40px_64px_minmax(0,1fr)_100px_80px_188px] gap-3 items-center px-4 py-2 border-b border-line eyebrow bg-muted">
+            <label className="flex items-center justify-center w-10 min-h-11 -my-1 cursor-pointer">
+              <input type="checkbox" aria-label="Select all visible" className="w-5 h-5" checked={allChecked}
+                onChange={() => setSelected(allChecked ? new Set() : new Set(visible.map(p => p.id)))} />
+            </label>
             <span /> <span>Product</span> <span>Status</span> <span>Link</span> <span className="text-right">Actions</span>
           </div>
           <ul>
             {visible.map(p => (
-              <li key={p.id} className="grid grid-cols-[40px_56px_1fr] lg:grid-cols-[40px_64px_minmax(0,1fr)_100px_70px_180px] gap-3 items-center px-4 py-3 border-b border-line last:border-0">
-                <input type="checkbox" aria-label={`Select ${p.title}`} className="w-5 h-5" checked={selected.has(p.id)} onChange={() => toggle(p.id)} />
+              <li key={p.id} className="grid grid-cols-[40px_56px_1fr] xl:grid-cols-[40px_64px_minmax(0,1fr)_100px_80px_188px] gap-3 items-center px-4 py-3 border-b border-line last:border-0">
+                <label className="flex items-center justify-center w-10 min-h-11 cursor-pointer">
+                  <input type="checkbox" aria-label={`Select ${p.title}`} className="w-5 h-5" checked={selected.has(p.id)} onChange={() => toggle(p.id)} />
+                </label>
                 <ProductImage src={p.imageUrl} title={p.title} compact className="w-14 h-14 md:w-16 md:h-16 rounded border border-line object-contain bg-muted" />
                 <div className="min-w-0">
                   <p className="font-bold flex items-start gap-1.5 break-words">{p.featured && <Star className="w-4 h-4 fill-current text-fg shrink-0" aria-label="Featured" />}{p.title}</p>
                   <p className="text-xs text-muted-fg truncate">{p.category} · {p.store}{p.badge ? ` · ${p.badge}` : ''}</p>
-                  <div className="flex lg:hidden gap-2 mt-1 flex-wrap">
+                  <div className="flex xl:hidden gap-2 mt-1 flex-wrap">
                     <span className={`chip ${STATUS_CHIP[p.status]}`}>{p.status}</span>
                     {!p.linkHealthy && <span className="chip !bg-coral !text-on-coral">Link blocked</span>}
                   </div>
                 </div>
-                <span className={`hidden lg:inline-flex chip justify-self-start ${STATUS_CHIP[p.status]}`}>{p.status}</span>
-                <span className="hidden lg:inline-flex">
+                <span className={`hidden xl:inline-flex chip justify-self-start ${STATUS_CHIP[p.status]}`}>{p.status}</span>
+                <span className="hidden xl:inline-flex">
                   {p.linkHealthy ? <span className="chip !bg-sky !text-on-sky !border-line">OK</span> : <span className="chip !bg-coral !text-on-coral" title="Not an approved Amazon host"><AlertTriangle className="w-3 h-3" /> Blocked</span>}
                 </span>
-                <div className="col-span-3 lg:col-span-1 flex gap-1 justify-end">
+                <div className="col-span-3 xl:col-span-1 flex gap-1 justify-end">
                   <button type="button" className="btn btn-ghost !px-2" aria-label={`Edit ${p.title}`} onClick={() => { setEditing(p); setEditorOpen(true); }}><Pencil className="w-4 h-4" /></button>
                   <button type="button" className="btn btn-ghost !px-2" aria-label={`Duplicate ${p.title}`} onClick={() => duplicate(p)}><Copy className="w-4 h-4" /></button>
                   <a className="btn btn-ghost !px-2" href={`/r/${p.id}?utm_source=owner_test`} target="_blank" rel="noopener noreferrer" aria-label={`Test link for ${p.title} (not counted)`}><ExternalLink className="w-4 h-4" /></a>

@@ -8,8 +8,8 @@ export function RecoveryCodes({ codes }: { codes: string[] }) {
   const text = `Raccoon Hub recovery codes (each works once)\n\n${codes.join('\n')}\n`;
   return (
     <div>
-      <ol className="grid grid-cols-2 gap-2 font-mono text-sm panel-sm !bg-muted p-4" aria-label="Recovery codes">
-        {codes.map(c => <li key={c} className="tracking-wider">{c}</li>)}
+      <ol className="grid grid-cols-1 min-[440px]:grid-cols-2 gap-2 font-mono text-sm panel-sm !bg-muted p-4" aria-label="Recovery codes">
+        {codes.map(c => <li key={c} className="min-w-0 break-words tracking-wider">{c}</li>)}
       </ol>
       <div className="flex gap-2 mt-3">
         <button type="button" className="btn flex-1" onClick={async () => {
