@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ElementType, type ReactNode } from 'react';
 import { Play } from 'lucide-react';
+import { heroPosterScale } from '../lib/heroTypography';
 
 /* Cine Daily primitives: scroll-choreographed entrances and the small editorial pieces of the design system. */
 
@@ -113,15 +114,24 @@ export function PosterTitle({ text, label, id }: { text: string; label: string; 
   const shown = useEntrance(ref, { hero: true, once: true });
   const active = useReveal(ref, { threshold: 0.05 });
   useLayoutEffect(() => {
-    const glyph = ref.current?.querySelectorAll<HTMLElement>('.poster-title__glyph')[HERO_CUES.waveAnchor];
-    const stage = ref.current?.closest<HTMLElement>('.cd-hero__stage');
-    if (!glyph || !stage) return;
-    // Use the untransformed C height, so HUB follows its pixel travel on every screen size.
-    const measure = () => stage.style.setProperty('--hero-wave-height', `${glyph.offsetHeight}px`);
+    const title = ref.current;
+    const glyph = title?.querySelectorAll<HTMLElement>('.poster-title__glyph')[HERO_CUES.waveAnchor];
+    const stage = title?.closest<HTMLElement>('.cd-hero__stage');
+    if (!title || !glyph || !stage) return;
+    let disposed = false;
+    // Scale the poster without changing its letter slots or the foreground scroll plane.
+    const measure = () => {
+      if (disposed) return;
+      const scale = heroPosterScale(stage.clientHeight, glyph.offsetHeight);
+      title.style.setProperty('--poster-stretch', scale.toFixed(4));
+      stage.style.setProperty('--hero-wave-height', `${glyph.offsetHeight * scale}px`);
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(glyph);
-    return () => { observer.disconnect(); stage.style.removeProperty('--hero-wave-height'); };
+    observer.observe(stage);
+    void document.fonts.ready.then(measure);
+    return () => { disposed = true; observer.disconnect(); title.style.removeProperty('--poster-stretch'); stage.style.removeProperty('--hero-wave-height'); };
   }, [text]);
   return <h1 ref={ref} id={id} aria-label={label} className={`poster-title ${shown ? 'poster-title--shown' : ''} ${active ? 'poster-title--active' : ''}`}>
     <span className="poster-title__letters" aria-hidden="true">

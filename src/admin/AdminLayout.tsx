@@ -12,11 +12,24 @@ const NAV = [
 ];
 
 export function AdminLayout() {
-  const { state, owner, error, signOut } = useAuth();
+  const { state, owner, error, refresh, signOut } = useAuth();
   const { dark, toggle } = useTheme();
   const location = useLocation();
 
-  if (error) return <p role="alert" className="p-8 font-bold">{error}</p>;
+  if (error) return (
+    <main className="min-h-screen bg-bg text-fg flex items-center justify-center p-6">
+      <div className="max-w-lg w-full panel p-6 sm:p-8">
+        <p className="eyebrow text-red mb-3">Owner hub</p>
+        <h1 className="text-4xl sm:text-5xl">Couldn’t check access</h1>
+        <p role="alert" className="text-muted-fg mt-4">{error}</p>
+        <p className="text-sm text-muted-fg mt-2">Your session hasn’t been changed. Try again when the service is available.</p>
+        <div className="flex flex-wrap gap-3 mt-6">
+          <button type="button" className="btn btn-primary" onClick={() => void refresh()}>Try again</button>
+          <a href="/" className="btn">Back to the finds</a>
+        </div>
+      </div>
+    </main>
+  );
   if (!state) return <p className="p-8 font-bold text-muted-fg" aria-busy="true">Checking access…</p>;
   if (!owner) return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />;
   if (owner.needsPasskey && location.pathname !== '/admin/settings') return <Navigate to="/admin/settings" replace />;

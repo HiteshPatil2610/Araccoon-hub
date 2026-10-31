@@ -8,15 +8,17 @@ import { Storefront } from './pages/Storefront';
 import { ToastProvider } from './components/Toasts';
 // Entry point only: keep components out of this file so Fast Refresh never re-runs it (that would mount a second root).
 import { NotFound } from './pages/NotFound';
+import { PageLoadError } from './pages/PageLoadError';
 
 // The owner hub (and the charting library) load only when /admin is visited.
 const page = (load: () => Promise<{ Component: React.ComponentType }>) => ({ lazy: load });
 
 const router = createBrowserRouter([
-  { path: '/', element: <Storefront /> },
-  { path: '/raccoon-preview', ...page(async () => ({ Component: (await import('./pages/RaccoonPreview')).RaccoonPreview })) },
+  { path: '/', element: <Storefront />, ErrorBoundary: PageLoadError },
+  { path: '/raccoon-preview', ErrorBoundary: PageLoadError, ...page(async () => ({ Component: (await import('./pages/RaccoonPreview')).RaccoonPreview })) },
   {
     path: '/admin',
+    ErrorBoundary: PageLoadError,
     ...page(async () => ({ Component: (await import('./admin/AdminApp')).default })),
     HydrateFallback: () => null,
     children: [
@@ -34,7 +36,7 @@ const router = createBrowserRouter([
       },
     ],
   },
-  { path: '*', element: <NotFound /> },
+  { path: '*', element: <NotFound />, ErrorBoundary: PageLoadError },
 ]);
 
 createRoot(document.getElementById('root')!).render(
