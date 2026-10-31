@@ -17,3 +17,12 @@ coverage/
 
 # Local QA artifacts (screenshots, geometry logs)
 .tmp/
+
+# Third-party reference material (not ours to redistribute)
+*.zip
+**/design-system/**/uploads/
+**/design-system/**/scraps/
+
+# Generated poster exports (rebuild with: python art/posters/compose.py)
+art/posters/*/
+!art/posters/source/

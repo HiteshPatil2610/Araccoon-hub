@@ -210,13 +210,6 @@ No section change, scrolling transition, footer motion, hover animation, click b
 
 ## Visual evidence
 
-The labeled sheets cover every requested image. Reading order is left-to-right, then top-to-bottom.
+The labeled contact sheets were working copies of frames from a third-party reference animation. They are kept out of this repository because they are not ours to redistribute.
 
-- [Frames 006–013](frames-006-013.jpg)
-- [Frames 014–021](frames-014-021.jpg)
-- [Frames 022–029](frames-022-029.jpg)
-- [Frames 030–037](frames-030-037.jpg)
-- [Enlarged strap and badge comparisons](strap-and-badge-details.jpg)
 - [Supporting width, intensity, and displacement measurements](measurements.json)
-
-The crops enlarge existing pixels for comparison; they do not recover missing detail. The primary evidence remains the original JPEG files in the source folder.

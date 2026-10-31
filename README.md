@@ -1,6 +1,10 @@
 # Araccoon Hub
 
-A curated Amazon affiliate storefront ("Small finds. Big everyday upgrades.") with a private owner hub for products, analytics and security. The Cine Daily interface (near-black, white and one crimson; Bebas Neue + Archivo) uses real featured catalog records, Bento and Classic layouts, and passkey authentication. See [UI context](context/ui-context.md), [architecture](context/architecture.md), and [verification/progress](context/progress-tracker.md).
+A curated Amazon affiliate storefront ("Small finds. Big everyday upgrades.") with a private owner hub for products, analytics and security. The Cine Daily interface (near-black, white and one crimson; Bebas Neue + Archivo) uses real featured catalog records, Bento and Classic layouts, and passkey authentication.
+
+**Open source:** the code is [MIT licensed](LICENSE); the raccoon mascot and artwork are [CC BY-NC 4.0](LICENSE-ART.md). Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+See [UI context](context/ui-context.md), [architecture](context/architecture.md), and [verification/progress](context/progress-tracker.md).
 
 | Part | Technology | Free tier |
 |---|---|---|
@@ -13,7 +17,7 @@ A curated Amazon affiliate storefront ("Small finds. Big everyday upgrades.") wi
 
 ## Local development
 
-Requires Node 24+ and, for the local database and tests, PostgreSQL binaries on `PATH` (or `PG_BIN`).
+Requires Node 24+ and, for the local database and tests, PostgreSQL binaries on `PATH` (or `PG_BIN`). No paid accounts are needed for local development: copy `.env.example` to `.env`, leave the service keys empty and use the local database.
 
 ```bash
 npm install
@@ -74,3 +78,21 @@ As an Amazon Associate I earn from qualifying purchases.
 ## UI verification preview
 
 `npm run build` uses Vite's runner config loader to avoid native plugin bundling issues on Windows. After building, `node scripts/ui-fixture-preview.mjs` serves **isolated QA fixtures** at `http://127.0.0.1:5174`. This test server has no database, does not upload to Cloudinary, and deliberately fails product writes. Its product labels and zero activity are test data, never real catalog or business records. It is not part of the Worker deployment. See the progress tracker for screenshot coverage and remaining manual checks.
+
+## Running your own copy
+
+You are welcome to fork this project and run your own storefront. Before you do:
+
+- Use **your own** Amazon Associates tag (`AMAZON_ASSOCIATE_TAG`) and your own service accounts.
+- Replace the Araccoon name and raccoon mascot with your own branding. The artwork may not be used commercially (see [LICENSE-ART.md](LICENSE-ART.md)).
+- Keep the Amazon Associates disclosure on your site, as Amazon's program rules require.
+
+## Contributing and security
+
+- How to contribute: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Reporting a vulnerability: [SECURITY.md](SECURITY.md)
+
+## License
+
+- **Code:** [MIT](LICENSE) © 2026 Hitesh Patil
+- **Raccoon mascot and artwork:** [CC BY-NC 4.0](LICENSE-ART.md) © 2026 Hitesh Patil

@@ -3,15 +3,14 @@
 **Cine Daily** is a cinematic film-news / editorial web concept: long-scroll feature pages for a single film (release date, cast, production facts, booking). The only product surface is the **marketing/feature website** (desktop, ~1280–1440px).
 
 ## Sources
-- `uploads/From Klickpin.com- Bookmark these creative honeymoon plan ideas ….mp4` — a 9s, 720×1171 screen-recording of a "CINE✚DAILY" Deadpool III concept site scrolling from dark hero → production → light "Directed by" story → "In theaters". No codebase, Figma, or font files were provided; every value here is measured by eye from video frames (`scraps/f0–f9.png`).
+- Design values were measured by eye from a short screen recording of a third-party film-concept website. That recording, the frames taken from it and its logo are not part of this repository, because they are not ours to redistribute.
 
 ## Index
 - `styles.css` — entry; imports `tokens/*.css`
 - `tokens/` — `fonts.css`, `colors.css`, `typography.css`, `spacing.css`, `effects.css`, `motion.css`
-- `guidelines/` — foundation specimen cards (Colors, Type, Spacing, Brand)
+- `guidelines/` — foundation specimen cards (Colors, Type, Spacing)
 - `components/` — React primitives (see below), one card per folder
 - `ui_kits/website/` — feature-page recreation (`index.html` + JSX screens)
-- `assets/` — `logo-cinedaily-dark-ref.png`, `logo-cinedaily-light-ref.png` (low-res crops from the video; reference only)
 - `thumbnail.html`, `SKILL.md`
 
 ## Components
