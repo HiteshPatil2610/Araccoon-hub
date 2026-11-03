@@ -11,6 +11,7 @@ Feature-complete for the open-source release; preparing first production deploym
 | 31 Oct 2026 | Open-sourced: MIT code, CC BY-NC 4.0 art, CONTRIBUTING and SECURITY; third-party media removed from history; repo public; private vulnerability reporting on | Typecheck, build, 127 tests |
 | 3 Nov 2026 | Editable site text (table, API, owner hub page); Markdown articles with journal pages; Worker-rendered pages with embedded data, share tags, JSON-LD and noscript fallback; robots.txt, sitemap, share image (commit 59cfe17) | Typecheck, build, 142 tests; dev-site check of home, journal, article with product cards, phone width, robots and sitemap; site text read from the database onto the page |
 | 3 Nov 2026 | Added `CLAUDE.md` and context files `project-overview.md`, `code-standards.md`, `ai-workflow-rules.md`; architecture updated | Docs only |
+| 3 Nov 2026 | Open-source docs: code of conduct, issue/PR templates, CODEOWNERS, Dependabot, changelog, README badges and quick start, `art/README.md`, `docs/OPEN_SOURCE_CHECKLIST.md` (maintainer to-dos); art and video scripts made portable (no fixed local paths, font and Chrome fallbacks); render logs untracked; personal path removed from a reference doc | Typecheck, build, tests; Python scripts syntax-checked, Blender renders not re-run |
 
 ### Not yet verified
 
@@ -23,11 +24,13 @@ Feature-complete for the open-source release; preparing first production deploym
 2. First deployment: Hyperdrive id in `wrangler.jsonc`, production secrets, `npm run db:migrate -- --target=prod`, `npm run deploy`.
 3. After deploy: check link previews (share image), submit the sitemap to Google Search Console, measure Lighthouse on `/` and an article.
 4. Write real articles in `content/articles/`.
+5. Work through the GitHub settings in `docs/OPEN_SOURCE_CHECKLIST.md` (About, topics, branch ruleset, security features, labels, v0.1.0 release).
 
 ### Open questions
 
 - Custom domain? (Affects canonical URLs, passkey origin and Turnstile.)
 - Should the share image be per-article when no cover image is set?
+- Is `video/araccoon-promo/design-system/cine-daily-design-system/` ours to redistribute, and is `art/araccoon/reference_raccoon.webp` our own image?
 
 ---
 

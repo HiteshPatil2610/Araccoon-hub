@@ -5,10 +5,17 @@ Run (does not save the .blend):
 Writes RGBA PNGs to art/araccoon/renders/site_<view>.png; scripts/site_export.py trims them into public/art/*.webp.
 """
 import bpy, math, colorsys
+import os as _os
+try:
+    # Folder art/araccoon, wherever the repo lives (ARACCOON_ART_DIR overrides).
+    ART = _os.environ.get("ARACCOON_ART_DIR") or _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+except NameError:  # pasted into Blender's console: run from the repo root
+    ART = _os.environ.get("ARACCOON_ART_DIR") or _os.path.abspath(_os.path.join("art", "araccoon"))
+ART = ART.replace(_os.sep, "/")
 from mathutils import Vector
 
 S = bpy.data.scenes["Araccoon"]
-OUT = "E:/Personal-Projects/Araccoon-hub/art/araccoon/renders/site_%s.png"
+OUT = ART + "/renders/site_%s.png"
 CRIMSON_H = 355 / 360  # site accent #C8202F
 
 

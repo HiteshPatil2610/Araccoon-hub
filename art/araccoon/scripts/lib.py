@@ -1,9 +1,16 @@
 """Shared helpers for the Araccoon character build (run inside Blender via MCP)."""
 import bpy, bmesh, math, random
+import os as _os
+try:
+    # Folder art/araccoon, wherever the repo lives (ARACCOON_ART_DIR overrides).
+    ART = _os.environ.get("ARACCOON_ART_DIR") or _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+except NameError:  # pasted into Blender's console: run from the repo root
+    ART = _os.environ.get("ARACCOON_ART_DIR") or _os.path.abspath(_os.path.join("art", "araccoon"))
+ART = ART.replace(_os.sep, "/")
 from mathutils import Vector, Matrix, Euler, Quaternion, noise
 from mathutils.kdtree import KDTree
 
-ROOT = "E:/Personal-Projects/Araccoon-hub/art/araccoon"
+ROOT = ART
 SCENE_NAME = "Araccoon"
 MB_K = 1 / 0.575  # metaball radius -> surface radius (stiffness 2, threshold 0.6)
 

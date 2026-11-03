@@ -1,8 +1,19 @@
 # Araccoon Hub
 
+[![CI](https://github.com/HiteshPatil2610/Araccoon-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/HiteshPatil2610/Araccoon-hub/actions/workflows/ci.yml)
+[![Code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](LICENSE)
+[![Art: CC BY-NC 4.0](https://img.shields.io/badge/art-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE-ART.md)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+![Araccoon Hub: the raccoon mascot on the near-black Cine Daily storefront](public/og-image.jpg)
+
 A curated Amazon affiliate storefront ("Small finds. Big everyday upgrades.") with a private owner hub for products, analytics and security. The Cine Daily interface (near-black, white and one crimson; Bebas Neue + Archivo) uses real featured catalog records, Bento and Classic layouts, and passkey authentication.
 
-**Open source:** the code is [MIT licensed](LICENSE); the raccoon mascot and artwork are [CC BY-NC 4.0](LICENSE-ART.md). Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
+**Open source:** the code is [MIT licensed](LICENSE); the raccoon mascot and artwork are [CC BY-NC 4.0](LICENSE-ART.md). Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
+
+**Status:** version 0.1.0. Feature-complete and tested locally; first production deployment in progress. Changes are listed in the [changelog](CHANGELOG.md).
+
+**Contents:** [Quick start](#quick-start-for-contributors) · [Local development](#local-development) · [Editing content](#editing-content) · [Pages, search and sharing](#pages-search-and-sharing) · [First deployment](#first-deployment) · [Security design](#security-design-summary) · [Project layout](#project-layout) · [Running your own copy](#running-your-own-copy) · [Contributing](#contributing-and-security) · [License](#license)
 
 See [UI context](context/ui-context.md), [architecture](context/architecture.md), and [verification/progress](context/progress-tracker.md).
 
@@ -15,6 +26,23 @@ See [UI context](context/ui-context.md), [architecture](context/architecture.md)
 | Bot check | Cloudflare Turnstile | Unlimited |
 | Owner sign-in | Passkeys (WebAuthn) + one-time recovery codes | Built in, no service |
 
+## Quick start for contributors
+
+No accounts or API keys needed. You need Node 24+ and PostgreSQL installed (its `bin` folder on `PATH`, or `PG_BIN` set).
+
+```bash
+git clone https://github.com/<your-username>/Araccoon-hub.git
+cd Araccoon-hub
+npm install
+cp .env.example .env
+echo "ENVIRONMENT=development" > .env.local
+npm run db:local
+npm run db:migrate -- --target=dev
+npm run db:seed
+npm run dev
+```
+
+Open http://localhost:5173. Before a pull request, run `npm run typecheck`, `npm test` and `npm run build`. New here? Look for issues labelled [good first issue](https://github.com/HiteshPatil2610/Araccoon-hub/labels/good%20first%20issue).
 ## Local development
 
 Requires Node 24+ and, for the local database and tests, PostgreSQL binaries on `PATH` (or `PG_BIN`). No paid accounts are needed for local development: copy `.env.example` to `.env`, leave the service keys empty and use the local database.
@@ -106,7 +134,10 @@ You are welcome to fork this project and run your own storefront. Before you do:
 ## Contributing and security
 
 - How to contribute: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Reporting a vulnerability: [SECURITY.md](SECURITY.md)
+- Community rules: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- Reporting a vulnerability: [SECURITY.md](SECURITY.md) (privately, never in a public issue)
+- What changed: [CHANGELOG.md](CHANGELOG.md)
+- Maintainer's open-source checklist: [docs/OPEN_SOURCE_CHECKLIST.md](docs/OPEN_SOURCE_CHECKLIST.md)
 
 ## License
 

@@ -12,7 +12,10 @@ const URL_ = args.url || 'http://localhost:8765/index.html';
 const SCALE = +(args.scale || 1.5);
 const OUT = join(HERE, args.out || 'araccoon-promo.mp4');
 const AUDIO = args.audio;   // optional soundtrack to mux in
-const CHROME = ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(existsSync);
+// CHROME_PATH overrides; otherwise the usual Chrome/Edge/Chromium install locations on Windows, macOS and Linux.
+const CHROME = [process.env.CHROME_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'].find(p => p && existsSync(p));
+if (!CHROME) { console.error('No Chrome found: set CHROME_PATH to a Chrome or Chromium executable.'); process.exit(1); }
 const PORT = 9333;
 
 const profile = join(HERE, '.chrome-profile');

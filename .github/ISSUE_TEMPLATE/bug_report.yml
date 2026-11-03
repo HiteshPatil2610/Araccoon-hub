@@ -1,0 +1,52 @@
+name: Bug report
+description: Something on the storefront, owner hub or tooling does not work as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Security problems must not be reported here** — use a [private advisory](https://github.com/HiteshPatil2610/Araccoon-hub/security/advisories/new) instead.
+        Never paste secrets, database URLs or `.env` contents.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run `npm run dev`
+        2. Open http://localhost:5173/...
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Storefront
+        - Journal / articles
+        - Owner hub
+        - API / Worker
+        - Build, tests or tooling
+        - Art scripts
+        - Documentation
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: OS, browser and Node version, and the commit you are on.
+      placeholder: Windows 11, Chrome 140, Node 24.1, commit abc1234
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Console or terminal output (remove anything private).
+      render: text

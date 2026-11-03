@@ -1,8 +1,15 @@
 """Background driver:  blender -b [file.blend] --python run.py -- steps=a,b,c [save=path] [KEY=VAL ...]
 Runs build scripts in one shared namespace and writes build_log.json next to the scripts."""
 import bpy, sys, json, time, traceback, os
+import os as _os
+try:
+    # Folder art/araccoon, wherever the repo lives (ARACCOON_ART_DIR overrides).
+    ART = _os.environ.get("ARACCOON_ART_DIR") or _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+except NameError:  # pasted into Blender's console: run from the repo root
+    ART = _os.environ.get("ARACCOON_ART_DIR") or _os.path.abspath(_os.path.join("art", "araccoon"))
+ART = ART.replace(_os.sep, "/")
 
-HERE = "E:/Personal-Projects/Araccoon-hub/art/araccoon/scripts/"
+HERE = ART + "/scripts/"
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 opts = dict(a.split('=', 1) for a in args)
 steps = [s for s in opts.pop('steps', '').split(',') if s]

@@ -29,3 +29,7 @@ art/posters/*/
 
 # Generated from content/articles by scripts/articles.ts
 shared/generated/
+
+# Blender render logs (contain local paths)
+art/araccoon/scripts/*.txt
+art/araccoon/scripts/build_log.json

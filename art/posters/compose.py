@@ -27,10 +27,21 @@ def font(name, size):
         'bebas': os.path.join(FONTS, 'bebas-neue', 'files', 'bebas-neue-latin-400-normal.woff'),
         'archivo': os.path.join(FONTS, 'archivo', 'files', 'archivo-latin-500-normal.woff'),
         'archivo-bold': os.path.join(FONTS, 'archivo', 'files', 'archivo-latin-800-normal.woff'),
-        'mono': 'C:/Windows/Fonts/consola.ttf',
-        'jp': 'C:/Windows/Fonts/YuGothB.ttc',
+        # System fonts differ per OS; the first one found is used, else Archivo.
+        'mono': first_font(['C:/Windows/Fonts/consola.ttf', '/System/Library/Fonts/Menlo.ttc',
+                            '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf']),
+        'jp': first_font(['C:/Windows/Fonts/YuGothB.ttc', '/System/Library/Fonts/Hiragino Sans GB.ttc',
+                          '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc']),
     }
     return ImageFont.truetype(paths[name], size)
+
+
+def first_font(candidates):
+    found = next((p for p in candidates if os.path.exists(p)), None)
+    if found is None:
+        print(f'note: none of {candidates} found; using Archivo (Japanese text will not render)')
+        return os.path.join(FONTS, 'archivo', 'files', 'archivo-latin-500-normal.woff')
+    return found
 
 
 class Art:

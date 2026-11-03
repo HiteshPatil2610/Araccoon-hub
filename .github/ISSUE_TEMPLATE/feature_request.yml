@@ -1,0 +1,25 @@
+name: Feature request
+description: Suggest an improvement or a new idea.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How it could work. Sketches and examples are welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+  - type: markdown
+    attributes:
+      value: |
+        Some things are deliberately out of scope (cart, checkout, prices, fake ratings, visitor accounts, a CMS). See [project-overview.md](https://github.com/HiteshPatil2610/Araccoon-hub/blob/main/context/project-overview.md#out-of-scope-deliberately).

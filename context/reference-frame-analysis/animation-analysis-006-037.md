@@ -4,7 +4,7 @@ Analyzed 6 October 2026. This is an analysis document; no project UI or animatio
 
 ## Evidence and limits
 
-Source folder: `C:\Users\Hitesh Patil\Downloads\ezgif-60e56e59371f24aa-jpg`.
+Source folder: a local folder of extracted reference frames (not included in the repo).
 
 All 32 images, `ezgif-frame-006.jpg` through `ezgif-frame-037.jpg`, were inspected in chronological, labeled contact sheets. Frames 006, 008, 009, 011, 014, 015, 020, 027, 031, and 037 were also inspected individually. Enlarged crops and pixel comparisons were used for the small strap pattern and first title letter. The originals were left unchanged.
 

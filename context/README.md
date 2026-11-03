@@ -13,6 +13,8 @@ Core files, in reading order:
 
 Reference material:
 
+- [Open-source checklist](../docs/OPEN_SOURCE_CHECKLIST.md) — what is in place and the maintainer's remaining GitHub steps
+
 - [Screenshot manifest](ui-screenshots/README.md)
 - [Product URL import implementation plan](product-url-import-plan.md) — scraping provider isolation, future API adapter, and manual cutover runbook (proposal)
 - [Implemented product URL assistance](product-url-assistance.md) — owner-supplied content flow and current API preparation boundary

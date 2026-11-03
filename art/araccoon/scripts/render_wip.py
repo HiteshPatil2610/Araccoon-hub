@@ -1,4 +1,11 @@
 import bpy, math
+import os as _os
+try:
+    # Folder art/araccoon, wherever the repo lives (ARACCOON_ART_DIR overrides).
+    ART = _os.environ.get("ARACCOON_ART_DIR") or _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+except NameError:  # pasted into Blender's console: run from the repo root
+    ART = _os.environ.get("ARACCOON_ART_DIR") or _os.path.abspath(_os.path.join("art", "araccoon"))
+ART = ART.replace(_os.sep, "/")
 from mathutils import Vector
 S = bpy.data.scenes["Araccoon"]
 
@@ -23,7 +30,7 @@ def wip(shots, pct=40, samples=16):
         bpy.data.objects["AR_LightRig"].rotation_euler = (0, 0, math.radians(az))
         S.eevee.taa_render_samples = samples
         S.render.resolution_percentage = pct
-        p = "E:/Personal-Projects/Araccoon-hub/art/araccoon/renders/wip_%s.png" % nm
+        p = ART + "/renders/wip_%s.png" % nm
         S.render.filepath = p
         bpy.ops.render.render(write_still=True, scene=S.name)
         out.append(p)
