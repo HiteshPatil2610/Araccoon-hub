@@ -6,6 +6,7 @@ import { useTheme } from '../lib/theme';
 import { useDialog } from '../lib/useDialog';
 import { HERO_CUES, Reveal, SectionLabel, TrackingReveal, useHeroEntrance, usePrefersReducedMotion } from './cine';
 import { CATEGORIES } from '../../shared/types';
+import { useSiteText } from '../lib/siteText';
 
 const LINKS = [
   { id: 'top', label: 'Featured' },
@@ -71,6 +72,8 @@ export function Navbar() {
               </Fragment>
             ))}
             <li aria-hidden="true" className="cd-nav__dot" />
+            <li><Link to="/articles">Journal</Link></li>
+            <li aria-hidden="true" className="cd-nav__dot" />
             <li><Link to="/admin">Owner hub</Link></li>
           </ul>
         </nav>
@@ -123,7 +126,7 @@ function MenuButton({ current }: { current: string }) {
               <button type="button" className="icon-btn !border-white/70" onClick={() => setOpen(false)} aria-label="Close menu" data-initial-focus><X className="w-5 h-5" /></button>
             </div>
             <nav aria-label="Site" className="cd-menu__links">
-              {[...LINKS.map(l => ({ ...l, to: '' })), { id: 'admin', label: 'Owner hub', to: '/admin' }].map((l, i) => (
+              {[...LINKS.map(l => ({ ...l, to: '' })), { id: 'articles', label: 'Journal', to: '/articles' }, { id: 'admin', label: 'Owner hub', to: '/admin' }].map((l, i) => (
                 <motion.div key={l.id} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20, transition: { duration: 0.2 } }}
                   transition={{ duration: 0.7, delay: 0.18 + i * 0.07, ease: [0.7, 0, 0.2, 1] }}>
                   {l.to
@@ -144,6 +147,7 @@ function MenuButton({ current }: { current: string }) {
 }
 
 export function Footer() {
+  const text = useSiteText();
   return (
     <footer className="mt-auto bg-ink text-white relative" data-morph-root>
       <div className="h-[3px]" style={{ background: 'var(--gradient-section-edge)' }} aria-hidden="true" />
@@ -154,7 +158,7 @@ export function Footer() {
         <div className="cd-footer__details mt-12 border-t border-white/10">
           <div data-morph="move">
             <SectionLabel>The idea</SectionLabel>
-            <p className="mt-4 text-sm text-[var(--cd-gray-300)] max-w-xs">A small internet treasure map of clever objects and useful oddities.</p>
+            <p className="mt-4 text-sm text-[var(--cd-gray-300)] max-w-xs">{text.footerIdea}</p>
           </div>
           <nav aria-label="Categories" data-morph="move">
             <SectionLabel>Browse</SectionLabel>
@@ -164,7 +168,8 @@ export function Footer() {
           </nav>
           <div className="text-sm text-[var(--cd-gray-300)]" data-morph="move">
             <SectionLabel className="text-white">Good to know</SectionLabel>
-            <p className="mt-4">Prices and availability are shown on Amazon and may change.</p>
+            <p className="mt-4">{text.footerNote}</p>
+            <Link to="/articles" className="inline-flex min-h-11 items-center mt-1 mr-4 eyebrow text-white/60 hover:text-white">Journal ↗</Link>
             <Link to="/admin" className="inline-flex min-h-11 items-center mt-1 eyebrow text-white/60 hover:text-white">Owner sign-in ↗</Link>
           </div>
           <Reveal effect="rise" distance={24} once className="cd-footer__mascot" morph="move">

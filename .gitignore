@@ -26,3 +26,6 @@ coverage/
 # Generated poster exports (rebuild with: python art/posters/compose.py)
 art/posters/*/
 !art/posters/source/
+
+# Generated from content/articles by scripts/articles.ts
+shared/generated/

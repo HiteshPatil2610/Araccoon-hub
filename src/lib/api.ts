@@ -2,6 +2,7 @@
 // (sent automatically, unreadable from JS); nothing secret lives in storage.
 import type { AnalyticsSummary, AuditEntry, OwnerProfile, PasskeyInfo, Product, PublicProduct } from '../../shared/types';
 import type { ProductInput, ProductPatch } from '../../shared/schemas';
+import type { SiteText, SiteTextPatch, SiteTextState } from '../../shared/siteText';
 import { productImportPreviewSchema, type ProductImportRequest, type ProductImportPreview, type OwnerContentSource } from '../../shared/productImport';
 
 export class HttpError extends Error {
@@ -60,7 +61,9 @@ export const api = {
   stats: () => request<{ clicksToday: number }>('GET', '/api/stats', undefined, { timeoutMs: 5000 }),
   track: (b: { productId: string; clickKey: string; utmSource?: string; utmMedium?: string; referrer?: string }) =>
     request<{ clickId: string; destinationUrl: string }>('POST', '/api/track', b, { timeoutMs: 4000 }),
-  redirectUrl: (productId: string, clickKey: string) => `/r/${productId}?ck=${clickKey}&utm_source=storefront&utm_medium=fallback`,
+  siteText: () => request<SiteText>('GET', '/api/site-text', undefined, { timeoutMs: 5000 }),
+  redirectUrl: (productId: string, clickKey: string, source = 'storefront') =>
+    `/r/${productId}?ck=${clickKey}&utm_source=${encodeURIComponent(source)}&utm_medium=fallback`,
 
   // ---- auth
   authState: () => request<AuthState>('GET', '/api/auth/state'),
@@ -95,6 +98,10 @@ export const api = {
   bulkProducts: (ids: string[], action: 'publish' | 'draft' | 'archive' | 'feature' | 'unfeature' | 'delete') =>
     request<{ affected: number }>('POST', '/api/admin/products/bulk', { ids, action }),
   signImageUpload: () => request<{ cloudName: string; apiKey: string; timestamp: number; signature: string; folder: string; uploadPreset: string }>('POST', '/api/admin/products/images/sign', {}),
+
+  // ---- owner: site text
+  adminSiteText: () => request<SiteTextState>('GET', '/api/admin/site-text'),
+  updateSiteText: (b: SiteTextPatch) => request<SiteTextState>('PUT', '/api/admin/site-text', b),
 
   // ---- owner: analytics
   analytics: (days: number) => request<AnalyticsSummary>('GET', `/api/admin/analytics?days=${days}`),

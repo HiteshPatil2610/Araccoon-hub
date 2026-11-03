@@ -46,6 +46,25 @@ export function fakeImages(): ImageStore & { destroyed: string[] } {
   };
 }
 
+/** Shaped like the built index.html that the ASSETS binding serves. */
+export const PAGE_TEMPLATE = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="static description" />
+    <title>Static title</title>
+    <script type="module" crossorigin src="/assets/index-test.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+`;
+
+export function fakeAssets() {
+  return { fetch: async (req: Request) => (new URL(req.url).pathname === '/' ? new Response(PAGE_TEMPLATE, { headers: { 'content-type': 'text/html' } }) : new Response('not found', { status: 404 })) };
+}
+
 export interface Res { status: number; headers: Headers; body: any; text: string }
 
 export class Browser {
@@ -121,6 +140,7 @@ export async function createTestContext(env: Partial<RawEnv> = {}, productImport
     limiter: memoryLimiter(),
     human: { verify: async (token) => token === TURNSTILE_PASS },
     images,
+    assets: fakeAssets(),
     openDb: () => ({ query: db.query, tx: db.tx }), // shared pool; no per-request close
   });
 

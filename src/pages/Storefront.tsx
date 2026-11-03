@@ -1,30 +1,36 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowDown, ArrowUpRight, ArrowUpDown, CheckCircle2, ExternalLink, RefreshCw, X } from 'lucide-react';
+import { ArrowDown, ArrowUpDown, RefreshCw } from 'lucide-react';
 import { api } from '../lib/api';
+import { takeInitialProducts } from '../lib/initialData';
+import { useSiteText } from '../lib/siteText';
+import { usePageMeta } from '../lib/pageMeta';
 import { featuredProducts } from '../lib/catalog';
 import { useOutbound } from '../lib/outbound';
 import { useLayoutMorph } from '../lib/useLayoutMorph';
 import { useHeroHandoff } from '../lib/useHeroHandoff';
 import { Navbar, Footer } from '../components/SiteChrome';
-import { ProductImage } from '../components/ProductImage';
-import { ProductCard, storeLabel } from '../components/ProductCard';
-import { Dialog } from '../components/Dialog';
+import { ProductCard } from '../components/ProductCard';
 import { Blurb, CharacterStagger, FilmStrip, HERO_CUES, HeroDisc, HeroEntrance, HeroMetadata, PosterTitle, Reveal, SectionLabel, Sticker, TrackingReveal, Viewfinder, usePrefersReducedMotion } from '../components/cine';
 import { Cutout, PicksSection, StorySection } from '../components/StorefrontSections';
 import { CATEGORIES, type PublicProduct } from '../../shared/types';
 import { formatProductCopy } from '../../shared/productCopy';
-import { ProductDescription } from '../components/ProductDescription';
+import { ProductOverlays } from '../components/ProductOverlays';
 
 type Sort = 'curated' | 'popular' | 'recent' | 'title';
+
+const withCopy = (list: PublicProduct[] | null) => list?.map(p => ({ ...p, ...formatProductCopy(p.title, p.description) })) ?? null;
 
 export function Storefront() {
   const [params, setParams] = useSearchParams();
   const category = params.get('category') ?? 'All';
   const [search, setSearch] = useState(params.get('q') ?? '');
   const [sort, setSort] = useState<Sort>('curated');
-  const [products, setProducts] = useState<PublicProduct[] | null>(null);
+  const text = useSiteText();
+  usePageMeta(text.seoTitle, text.seoDescription);
+  // The Worker embeds the catalog in the page, so the first render needs no fetch.
+  const [products, setProducts] = useState<PublicProduct[] | null>(() => withCopy(takeInitialProducts()));
   const [error, setError] = useState('');
   const [quick, setQuick] = useState<PublicProduct | null>(null);
   const handoffRef = useRef<HTMLDivElement>(null);
@@ -37,12 +43,13 @@ export function Storefront() {
   const load = useCallback(async () => {
     setError('');
     try {
-      setProducts((await api.products()).map(p => ({ ...p, ...formatProductCopy(p.title, p.description) })));
+      setProducts(withCopy(await api.products()));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load products.');
     }
   }, []);
-  useEffect(() => { void load(); }, [load]);
+  const embedded = useRef(products !== null);
+  useEffect(() => { if (!embedded.current) void load(); }, [load]);
 
   const setCategory = (c: string) => {
     const next = new URLSearchParams(params);
@@ -117,7 +124,7 @@ export function Storefront() {
                 <div className="cd-hero__foot">
                   <Reveal hero effect="rise" distance={18} delay={HERO_CUES.story} duration={900} once className="flex flex-col gap-4 max-w-[320px]" morph="move">
                     <SectionLabel trail={false}>The Raccoon story</SectionLabel>
-                    <Blurb part="A">Desk essentials, clever gadgets and unexpected home finds, hand-picked. Find your next favourite, then view it on Amazon.</Blurb>
+                    <Blurb part="A">{text.heroBlurb}</Blurb>
                   </Reveal>
                   <div className="flex items-center gap-6 sm:gap-9">
                     <Reveal hero effect="grow-rise" distance={12} delay={HERO_CUES.cta} duration={1000} once className="cd-hero__action" style={{ transformOrigin: 'center bottom' }} morph="move">
@@ -216,45 +223,7 @@ export function Storefront() {
 
       <Footer />
 
-      <Dialog open={quick !== null} onClose={() => setQuick(null)} title={quick?.title ?? ''} wide animated>
-        {quick && (
-          <div className="grid sm:grid-cols-2 gap-6 min-w-0">
-            <div className="cd-still aspect-square"><ProductImage src={quick.imageUrl} title={quick.title} className="w-full h-full object-contain p-[8%]" /></div>
-            <div className="flex flex-col min-w-0">
-              <SectionLabel className="text-muted-fg">{quick.category}</SectionLabel>
-              <ProductDescription text={quick.description} className="mt-4 mb-6" />
-              <button type="button" disabled={outbound.state?.status === 'opening'} className="btn btn-primary btn-bar mt-auto" onClick={() => { void outbound.open(quick); setQuick(null); }}>
-                View on {storeLabel(quick.store)} <ArrowUpRight className="w-4 h-4" />
-              </button>
-              <p className="mt-2 text-xs text-muted-fg">Opens Amazon in a new tab. Prices are set by Amazon.</p>
-            </div>
-          </div>
-        )}
-      </Dialog>
-
-      <AnimatePresence>
-        {outbound.state && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            role="status" className="fixed bottom-6 left-4 right-4 sm:left-auto sm:w-96 z-50 rounded-[var(--radius-l)] bg-ink-700 text-white shadow-[var(--shadow-card)] px-4 pb-4 pt-6">
-            {/* BookingCard notch medallion */}
-            <span className="absolute -top-[18px] left-1/2 -translate-x-1/2 w-9 h-9 rounded-full bg-red border-[3px] border-ink-700 flex items-center justify-center" aria-hidden="true"><CheckCircle2 className="w-4 h-4" /></span>
-            <div className="flex items-start gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="eyebrow text-[var(--cd-gray-300)]">
-                  {outbound.state.status === 'opening' ? 'Opening Amazon…' : outbound.state.status === 'opened' ? 'Opened in a new tab' : 'Your browser blocked the new tab'}
-                </p>
-                <p className="font-display text-2xl leading-none mt-2 truncate">{outbound.state.product.title}</p>
-                {outbound.state.status === 'blocked' && outbound.state.url && (
-                  <a href={outbound.state.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-bar mt-3">
-                    Open on Amazon <ExternalLink className="w-4 h-4" />
-                  </a>
-                )}
-              </div>
-              <button type="button" disabled={outbound.state.status === 'opening'} onClick={outbound.dismiss} aria-label="Dismiss" className="icon-btn !border-white/40"><X className="w-4 h-4" /></button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <ProductOverlays quick={quick} onCloseQuick={() => setQuick(null)} outbound={outbound} />
     </div>
     </HeroEntrance>
   );

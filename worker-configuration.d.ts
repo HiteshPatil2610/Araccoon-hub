@@ -3,6 +3,7 @@
 // Runtime types generated with workerd@1.20261001.1 2026-10-02 nodejs_compat
 interface __BaseEnv_Env {
 	HYPERDRIVE: Hyperdrive;
+	ASSETS: Fetcher;
 	ENVIRONMENT: "production";
 	REPORT_TIMEZONE: "Asia/Kolkata";
 	AFFILIATE_ALLOWED_HOSTS: "amazon.com,amazon.in,amzn.to,amzn.in";

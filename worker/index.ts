@@ -20,6 +20,9 @@ function getApp(env: Env) {
       limiter: config.upstash ? upstashLimiter(config.upstash.url, config.upstash.token) : memoryLimiter(),
       human: turnstileVerifier(config.turnstile.secretKey),
       images: cloudinaryStore(config.cloudinary),
+      assets: { fetch: (request: Request) => currentEnv!.ASSETS.fetch(request) },
+      // Rendered pages are cached at the edge in production only, so dev always shows fresh output.
+      pageCache: config.environment === 'production' ? caches.default : undefined,
       openDb: () => createRequestDb(currentEnv!.HYPERDRIVE.connectionString),
     });
     cached = { app, config };

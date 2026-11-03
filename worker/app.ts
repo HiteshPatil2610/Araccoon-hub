@@ -9,6 +9,7 @@ import type { ImageStore } from './lib/cloudinary';
 import type { OwnerSession } from './auth/sessions';
 import { clientIp } from './lib/request';
 import type { ProductImportProvider } from './lib/productImport/contracts';
+import { PAGE_HEADERS } from './lib/pageHeaders';
 
 export interface AppDeps {
   config: Config;
@@ -16,6 +17,10 @@ export interface AppDeps {
   human: HumanCheck;
   images: ImageStore;
   productImporter?: ProductImportProvider;
+  /** The built static site (Cloudflare's ASSETS binding); pages read index.html from it. */
+  assets?: { fetch(request: Request): Promise<Response> };
+  /** Edge cache for rendered pages (caches.default in production; absent in dev and tests). */
+  pageCache?: Pick<Cache, 'match' | 'put'>;
   /** Opens the database for one request; close() runs after the response. */
   openDb: () => Db & { close?: () => Promise<void> };
 }
@@ -89,7 +94,15 @@ export function createApp(deps: AppDeps): Hono<AppEnv> {
       c.header('X-Content-Type-Options', 'nosniff');
       c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
       c.header('X-Frame-Options', 'DENY');
-      c.header('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+      if (c.res.headers.get('content-type')?.startsWith('text/html')) {
+        // Rendered pages run the React app, so they get the site's page policy, not the API's.
+        // Local dev skips the CSP, like Vite's own pages: its hot-reload preamble is an inline script.
+        for (const [k, v] of Object.entries(PAGE_HEADERS)) {
+          if (k !== 'Content-Security-Policy' || deps.config.environment !== 'development') c.header(k, v);
+        }
+      } else {
+        c.header('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+      }
       if (deps.config.environment === 'production') c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
       if (/^\/api\/(admin|auth)(\/|$)/.test(c.req.path)) c.header('Cache-Control', 'no-store');
       if (db.close) {

@@ -2,6 +2,10 @@ import { useCallback, useRef, useState } from 'react';
 import { api } from './api';
 import type { PublicProduct } from '../../shared/types';
 
+/** Where the click came from, for the UTM fields in click reports. */
+export type OutboundSource = { source: string; medium: string };
+const STOREFRONT: OutboundSource = { source: 'storefront', medium: 'product_card' };
+
 export type OutboundState = { product: PublicProduct; url: string | null; status: 'opening' | 'opened' | 'blocked' } | null;
 
 /**
@@ -15,16 +19,16 @@ export function useOutbound() {
   const [state, setState] = useState<OutboundState>(null);
   const busy = useRef(false);
 
-  const open = useCallback(async (product: PublicProduct) => {
+  const open = useCallback(async (product: PublicProduct, from: OutboundSource = STOREFRONT) => {
     if (busy.current) return;
     busy.current = true;
     const clickKey = crypto.randomUUID();
     setState({ product, url: null, status: 'opening' });
     const tab = window.open('about:blank', '_blank');
     if (tab) tab.opener = null;
-    let url = api.redirectUrl(product.id, clickKey);
+    let url = api.redirectUrl(product.id, clickKey, from.source);
     try {
-      const res = await api.track({ productId: product.id, clickKey, utmSource: 'storefront', utmMedium: 'product_card', referrer: document.referrer || undefined });
+      const res = await api.track({ productId: product.id, clickKey, utmSource: from.source, utmMedium: from.medium, referrer: document.referrer || undefined });
       url = res.destinationUrl;
     } catch {
       /* fall back to the server redirect (also records the click) */

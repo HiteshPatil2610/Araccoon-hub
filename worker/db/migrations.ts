@@ -174,6 +174,17 @@ UPDATE auth_challenges SET used_at = now() WHERE purpose = 'register' AND used_a
 ALTER TABLE product_content_sources ADD CONSTRAINT product_content_sources_provider_check
   CHECK (provider IN ('owner-content', 'amazon-page'));`,
   },
+  {
+    version: 5,
+    name: 'site_text',
+    // Owner-edited storefront copy. A missing row means "use the built-in default".
+    sql: `CREATE TABLE site_text (
+      key        text PRIMARY KEY CHECK (key ~ '^[a-zA-Z]{1,40}$'),
+      value      text NOT NULL CHECK (char_length(value) BETWEEN 1 AND 300),
+      updated_by uuid REFERENCES owners(id) ON DELETE SET NULL,
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );`,
+  },
 ];
 
 const LOCK_KEY = 4_204_201_337;

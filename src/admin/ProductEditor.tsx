@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { ImagePlus, Link2, RefreshCw } from 'lucide-react';
+import { Check, Copy, ImagePlus, Link2, RefreshCw } from 'lucide-react';
 import { Dialog, ConfirmDialog } from '../components/Dialog';
 import { ProductImage } from '../components/ProductImage';
 import { api, HttpError } from '../lib/api';
@@ -313,6 +313,7 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
             <input type="checkbox" className="w-5 h-5 accent-[var(--primary)]" checked={form.featured} onChange={e => set('featured', e.target.checked)} />
             Feature in the curiosity board and catalog
           </label>
+          {product && <ProductIdForArticles id={product.id} />}
           {errors._ && <p role="alert" className="field-error">{errors._}</p>}
           {assistance && <div className="space-y-2">
             <p className="text-sm text-muted-fg">This assisted product will be saved as a draft. Open the saved draft to review and publish it.</p>
@@ -331,5 +332,32 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
         </div>
       </form>
     </Dialog><ConfirmDialog open={discard} title="Discard unsaved changes?" message="Your changes have not been saved to the product." confirmLabel="Discard changes" danger onClose={() => setDiscard(false)} onConfirm={() => { setDiscard(false); onClose(); }} /></>
+  );
+}
+
+/** The id writers list under `products:` in an article's front matter. */
+function ProductIdForArticles({ id }: { id: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard blocked: the id stays selectable below.
+    }
+  };
+  return (
+    <div className="border-t border-line pt-4">
+      <p className="field-label">Product id (for articles)</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <code className="text-sm break-all select-all">{id}</code>
+        <button type="button" className="btn !min-h-9 !text-sm" onClick={copy}>
+          {copied ? <Check className="w-3.5 h-3.5" aria-hidden="true" /> : <Copy className="w-3.5 h-3.5" aria-hidden="true" />}
+          {copied ? 'Copied' : 'Copy id'}
+        </button>
+      </div>
+      <p className="text-sm text-muted-fg mt-1">List it under <code>products:</code> in an article to show this find as a card. See content/articles/README.md.</p>
+    </div>
   );
 }

@@ -2,6 +2,7 @@ import { useRef, type CSSProperties, type ReactNode } from 'react';
 import { descriptionSummary } from '../../shared/productCopy';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, Ticket } from 'lucide-react';
+import { useSiteText } from '../lib/siteText';
 import { Blurb, FilmStrip, HERO_CUES, IndexBadge, Reveal, SectionLabel, StatDisc, Sticker, UnfoldText, Viewfinder, useHeroEntrance, usePrefersReducedMotion } from './cine';
 import { useStoryEntrance } from '../lib/useStoryEntrance';
 import { ProductImage } from './ProductImage';
@@ -192,6 +193,7 @@ function Stills({ items, onQuick }: { items: PublicProduct[]; onQuick: (p: Publi
 }
 
 export function StorySection({ picks, index, onIndex, onQuick, onOpen, pending }: CarouselProps & { onOpen: (p: PublicProduct) => void; pending: boolean }) {
+  const text = useSiteText();
   const sectionRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
@@ -239,7 +241,7 @@ export function StorySection({ picks, index, onIndex, onQuick, onOpen, pending }
       <div className="cd-story__grid">
         <Reveal effect="fade" delay={450} once className="cd-story__col" morph="move">
           <SectionLabel>{pick?.category ?? 'The idea'}</SectionLabel>
-          <Blurb part="C">{pick ? descriptionSummary(pick.description) : 'Desk essentials, clever gadgets and unexpected home finds, picked one at a time.'}</Blurb>
+          <Blurb part="C">{pick ? descriptionSummary(pick.description) : text.storyBlurb}</Blurb>
           <Stills items={[others[0], others[1]].filter((p): p is PublicProduct => !!p)} onQuick={onQuick} />
         </Reveal>
         <div className="cd-story__center">
@@ -252,7 +254,7 @@ export function StorySection({ picks, index, onIndex, onQuick, onOpen, pending }
         </div>
         <Reveal effect="fade" delay={550} once className="cd-story__col cd-story__col--r" morph="move">
           <SectionLabel>Opening on Amazon</SectionLabel>
-          <Blurb part="D">Every find opens on Amazon in a new tab, where prices and availability are set. No accounts, no checkout here.</Blurb>
+          <Blurb part="D">{text.amazonBlurb}</Blurb>
           <Stills items={[others[1], others[0]].filter((p): p is PublicProduct => !!p)} onQuick={onQuick} />
         </Reveal>
       </div>

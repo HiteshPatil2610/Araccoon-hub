@@ -10,7 +10,7 @@ Copyright (c) 2026 Hitesh Patil
 ## What counts as artwork
 
 - `art/`: the 3D model, textures, renders, posters and the scripts' image outputs
-- `public/art/` and `public/raccoon-mascot.jpg`
+- `public/art/`, `public/raccoon-mascot.jpg` and `public/og-image.jpg`
 - `video/araccoon-promo/assets/` and `video/araccoon-promo/araccoon-promo.mp4`
 - Any other image, video or 3D file that shows the Araccoon mascot
 

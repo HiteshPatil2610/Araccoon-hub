@@ -31,6 +31,20 @@ npm run dev                           # http://localhost:5173
 - `.env.local` should contain `ENVIRONMENT=development`. Optionally add `DEV_LOGIN_TOKEN=<random>` to get a development-only sign-in box on `/admin/login`. The server refuses it unless `ENVIRONMENT=development` (production config ignores the token, and a test checks this).
 - Owner hub: `http://localhost:5173/admin`. Passkeys work on `localhost` in modern browsers.
 
+## Editing content
+
+| What | Where | How it reaches the site |
+|---|---|---|
+| Products | Owner hub → **Products** | Database; live within a minute |
+| Short storefront text (hero, story, footer, search title and description) | Owner hub → **Site text** | Database; live within a minute. Reset any field to its original text |
+| Articles | Markdown files in [`content/articles/`](content/articles/README.md) | Compiled at build; publish by committing and deploying |
+
+Article rules (front matter, alt text, no direct Amazon links: list product ids instead) are in [content/articles/README.md](content/articles/README.md); the build stops with the file name if something is wrong.
+
+## Pages, search and sharing
+
+The Worker serves `/`, `/articles` and `/articles/<slug>` itself (`worker/routes/pages.ts`). It fills the built `index.html` with the page's title, description, canonical link, Open Graph/Twitter share tags (image: `public/og-image.jpg`, made by `art/og/make_og.py`), JSON-LD, a `<noscript>` text version, and the page's data (site text and products), so the first render needs no API call. Rendered pages are cached at the edge for 60 seconds in production. It also serves `/robots.txt` and `/sitemap.xml`; outside production both pages and robots.txt tell search engines to stay away.
+
 | Command | What it does |
 |---|---|
 | `npm run dev` | Vite + the Worker in the real `workerd` runtime, pointed at the dev database |
@@ -39,13 +53,14 @@ npm run dev                           # http://localhost:5173
 | `npm run test:security` | Full suite including adversarial security tests; fails if PostgreSQL integration tests cannot run |
 | `npm run build` | Type-check and production build |
 | `npm run db:migrate -- --target=dev\|prod` | Apply versioned migrations (you must name the target) |
+| `npm run articles` | Compile `content/articles/*.md` (also runs automatically before build, typecheck, test and during dev) |
 | `npm run deploy` | Type-check, mandatory security/integration tests, build, `wrangler deploy` |
 
 ## First deployment
 
 1. Fill in `.env` (all values from the setup guide) and run `npx wrangler login`.
 2. Create the database connection: `npx wrangler hyperdrive create araccoon-hub-db --connection-string="<DATABASE_URL>"` and paste the returned id into `wrangler.jsonc` → `hyperdrive[0].id`.
-3. Migrate production: `npm run db:migrate -- --target=prod`.
+3. Migrate production: `npm run db:migrate -- --target=prod` (run it again after updates that add migrations, such as the site text table).
 4. Upload secrets (one at a time, paste each value when prompted):
    `SESSION_SECRET RECOVERY_CODE_PEPPER OWNER_EMAIL OWNER_SETUP_TOKEN PASSKEY_RP_ID PASSKEY_ORIGIN TURNSTILE_SITE_KEY TURNSTILE_SECRET_KEY CLOUDINARY_CLOUD_NAME CLOUDINARY_API_KEY CLOUDINARY_API_SECRET CLOUDINARY_UPLOAD_PRESET UPSTASH_REDIS_REST_URL UPSTASH_REDIS_REST_TOKEN AMAZON_ASSOCIATE_TAG`
    → `npx wrangler secret put <NAME>`. For production, `PASSKEY_RP_ID` = your host (e.g. `araccoon-hub.<you>.workers.dev`) and `PASSKEY_ORIGIN` = `https://` + that host. Add the same host to the Turnstile widget.
@@ -69,7 +84,8 @@ npm run dev                           # http://localhost:5173
 shared/     types, zod schemas, URL policy, CSV (used by client and server)
 worker/     Hono API: routes/, auth/, repo/, db/ (migrations), lib/ (rate limit, Turnstile, Cloudinary, crypto)
 src/        React app: pages/ (storefront), admin/ (owner hub), components/, lib/
-scripts/    dev, local database, migrations, seed
+scripts/    dev, local database, migrations, seed, article compiler
+content/    articles as Markdown (content/articles/)
 tests/      unit + integration (virtual passkey authenticator, throwaway Postgres)
 ```
 

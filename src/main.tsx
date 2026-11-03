@@ -6,6 +6,7 @@ import { RouterProvider } from 'react-router/dom';
 import './index.css';
 import { Storefront } from './pages/Storefront';
 import { ToastProvider } from './components/Toasts';
+import { SiteTextProvider } from './lib/siteText';
 // Entry point only: keep components out of this file so Fast Refresh never re-runs it (that would mount a second root).
 import { NotFound } from './pages/NotFound';
 import { PageLoadError } from './pages/PageLoadError';
@@ -15,6 +16,8 @@ const page = (load: () => Promise<{ Component: React.ComponentType }>) => ({ laz
 
 const router = createBrowserRouter([
   { path: '/', element: <Storefront />, ErrorBoundary: PageLoadError },
+  { path: '/articles', ErrorBoundary: PageLoadError, ...page(async () => ({ Component: (await import('./pages/Articles')).ArticleList })) },
+  { path: '/articles/:slug', ErrorBoundary: PageLoadError, ...page(async () => ({ Component: (await import('./pages/Articles')).ArticlePage })) },
   { path: '/raccoon-preview', ErrorBoundary: PageLoadError, ...page(async () => ({ Component: (await import('./pages/RaccoonPreview')).RaccoonPreview })) },
   {
     path: '/admin',
@@ -30,6 +33,7 @@ const router = createBrowserRouter([
           { index: true, ...page(async () => ({ Component: (await import('./admin/Overview')).Overview })) },
           { path: 'products', ...page(async () => ({ Component: (await import('./admin/Products')).Products })) },
           { path: 'analytics', ...page(async () => ({ Component: (await import('./admin/Analytics')).Analytics })) },
+          { path: 'site-text', ...page(async () => ({ Component: (await import('./admin/SiteText')).SiteTextEditor })) },
           { path: 'activity', ...page(async () => ({ Component: (await import('./admin/Activity')).ActivityLog })) },
           { path: 'settings', ...page(async () => ({ Component: (await import('./admin/Settings')).Settings })) },
         ],
@@ -41,8 +45,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MotionConfig reducedMotion="user"><ToastProvider>
+    <MotionConfig reducedMotion="user"><ToastProvider><SiteTextProvider>
       <RouterProvider router={router} />
-    </ToastProvider></MotionConfig>
+    </SiteTextProvider></ToastProvider></MotionConfig>
   </StrictMode>,
 );

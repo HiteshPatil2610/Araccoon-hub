@@ -1,5 +1,5 @@
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router';
-import { Activity, BarChart3, ExternalLink, Gauge, LogOut, Moon, Package, Settings, Sun } from 'lucide-react';
+import { Activity, BarChart3, ExternalLink, Gauge, LogOut, Moon, Package, Settings, Sun, Type } from 'lucide-react';
 import { useAuth } from './auth';
 import { useTheme } from '../lib/theme';
 
@@ -7,6 +7,7 @@ const NAV = [
   { to: '/admin', label: 'Overview', icon: Gauge, end: true },
   { to: '/admin/products', label: 'Products', icon: Package },
   { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { to: '/admin/site-text', label: 'Site text', icon: Type },
   { to: '/admin/activity', label: 'Activity', icon: Activity },
   { to: '/admin/settings', label: 'Account', icon: Settings },
 ];
