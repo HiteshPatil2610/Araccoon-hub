@@ -1,15 +1,45 @@
 # Architecture — Araccoon Hub
 
-Updated 3 October 2026 after source inspection.
+Updated 3 November 2026 (pages, site text and articles added; earlier sections from 3 October 2026).
 
 ## Runtime
 
-- React 19, React Router, Vite 8, Tailwind 4; Syne and Space Grotesk are bundled locally.
-- Cloudflare Worker serves static assets and the Hono API. PostgreSQL is reached through Hyperdrive. The owner bundle and Recharts load on owner routes.
+- React 19, React Router, Vite 8, Tailwind 4; Bebas Neue and Archivo are bundled locally via @fontsource.
+- Cloudflare Worker serves static assets and the Hono API, and renders the public pages (see below). PostgreSQL is reached through Hyperdrive. The owner bundle and Recharts load on owner routes.
 - `src/lib/api.ts` is the HTTP boundary; shared types and Zod schemas live in `shared/`. The server remains authoritative for validation and authorization.
 - `src/pages/Storefront.tsx` owns discovery and quick view. `src/components/ProductCard.tsx` is the catalog card; `ProductImage.tsx` provides stable image fallbacks. The featured board uses `src/lib/catalog.ts`.
 - `src/admin/` contains passkey sign-in, products/editor, reporting, overview, account/security and audit activity. Existing draft, archive, duplication, bulk operations, account invitations and conversion recording remain supported.
 - `Dialog.tsx` and `useDialog.ts` provide labelled modals, initial focus, keyboard containment, inert background, Escape, scroll lock and focus return. Pending writes disable dismissal. Confirmations initially focus Cancel.
+
+## Storage model
+
+| Data | Source of truth | Notes |
+| --- | --- | --- |
+| Products, affiliate links | Postgres `products` | Edited in the owner hub; visitors get `toPublic` fields only |
+| Clicks, conversions | Postgres `clicks`, `conversions` | Product snapshot kept; 90-day click retention (daily cron) |
+| Owners, passkeys, sessions, recovery codes, invites, audit log | Postgres | Session and recovery secrets stored hashed |
+| Short storefront copy | Postgres `site_text` (migration 5) | Key/value; a missing row means the default in `shared/siteText.ts` |
+| Articles | `content/articles/*.md` in git | Compiled to `shared/generated/articles.ts` (gitignored) by `scripts/articles.ts` |
+| Product images | Cloudinary | Signed direct uploads into one folder |
+| Mascot art, share image | `public/` | Static assets |
+
+## Public pages (Worker-rendered)
+
+`run_worker_first` in `wrangler.jsonc` sends `/`, `/articles`, `/articles/*`, `/robots.txt` and `/sitemap.xml` to the Worker (`worker/routes/pages.ts`). It reads the built `index.html` through the `ASSETS` binding and fills in the title, description, canonical URL, Open Graph/Twitter tags, JSON-LD, a `<noscript>` text version, and a `<script type="application/json" id="rh-initial">` payload (site text plus the products the page shows). The React app reads that payload (`src/lib/initialData.ts`), so the first render makes no API call; later in-app navigation uses the API. In production the rendered HTML is cached in `caches.default` for 60 seconds; a database error still renders the page with defaults, uncached. Outside production, pages are `noindex` and `robots.txt` disallows everything. The site origin is `PASSKEY_ORIGIN` in production and the request origin elsewhere.
+
+HTML responses get the page security headers from `worker/lib/pageHeaders.ts` (identical to `public/_headers`, enforced by a unit test); API responses keep the locked-down API CSP. Local development omits the page CSP because Vite's hot-reload preamble is an inline script.
+
+## Content editing
+
+- Site text: `GET /api/site-text` (public), `GET`/`PUT /api/admin/site-text` (owner, validated, audited; `null` resets a field). Owner hub page `src/admin/SiteText.tsx`; storefront reads it through `useSiteText()`.
+- Articles: Markdown with strict front matter. The compiler escapes raw HTML, requires alt text, rejects `#` headings and direct Amazon links; products are referenced by id and rendered as cards with tracked links (`utm_source=article`). Drafts compile only in dev. It runs before build, typecheck and test, and live in dev through a Vite plugin.
+
+## Invariants
+
+- Visitors never receive affiliate URLs; every outbound click goes through `/api/track` or `/r/:id`.
+- Embedded JSON and HTML are escaped (`serializeInitialData`, `escapeHtml`); articles never contain raw HTML.
+- The server validates and authorizes everything; client checks are only for feedback.
+- Pages must render (with defaults) when the database is down.
 
 ## Security boundaries retained
 

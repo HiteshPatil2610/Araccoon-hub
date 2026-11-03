@@ -1,5 +1,38 @@
 # Progress tracker
 
+## Current phase (3 November 2026)
+
+Feature-complete for the open-source release; preparing first production deployment.
+
+### Latest changes
+
+| Date | Change | Verification |
+| --- | --- | --- |
+| 31 Oct 2026 | Open-sourced: MIT code, CC BY-NC 4.0 art, CONTRIBUTING and SECURITY; third-party media removed from history; repo public; private vulnerability reporting on | Typecheck, build, 127 tests |
+| 3 Nov 2026 | Editable site text (table, API, owner hub page); Markdown articles with journal pages; Worker-rendered pages with embedded data, share tags, JSON-LD and noscript fallback; robots.txt, sitemap, share image (commit 59cfe17) | Typecheck, build, 142 tests; dev-site check of home, journal, article with product cards, phone width, robots and sitemap; site text read from the database onto the page |
+| 3 Nov 2026 | Added `CLAUDE.md` and context files `project-overview.md`, `code-standards.md`, `ai-workflow-rules.md`; architecture updated | Docs only |
+
+### Not yet verified
+
+- The Site text editor was not clicked through in a browser (local `PASSKEY_ORIGIN` did not match the dev port); its API is covered by integration tests.
+- The production page cache and `ASSETS` binding have only run in dev and tests, not on Cloudflare.
+
+### Next steps
+
+1. Fix the Neon dev password or keep using the local database (`DATABASE_URL_DEV=` in `.env.local`).
+2. First deployment: Hyperdrive id in `wrangler.jsonc`, production secrets, `npm run db:migrate -- --target=prod`, `npm run deploy`.
+3. After deploy: check link previews (share image), submit the sitemap to Google Search Console, measure Lighthouse on `/` and an article.
+4. Write real articles in `content/articles/`.
+
+### Open questions
+
+- Custom domain? (Affects canonical URLs, passkey origin and Turnstile.)
+- Should the share image be per-article when no cover image is set?
+
+---
+
+## Earlier record (3 October 2026)
+
 Updated 3 October 2026. Implementation is in the current checkout; no deployment or commit was performed.
 
 ## Completed redesign batches
