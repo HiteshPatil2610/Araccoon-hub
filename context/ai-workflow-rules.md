@@ -40,4 +40,5 @@ Updated 3 November 2026. How an AI assistant (or any contributor) should work in
 
 - Local database: `npm run db:local` (Postgres in `.localdb/`, port 54329), then `npm run db:migrate -- --target=dev` and `npm run db:seed`. An empty `DATABASE_URL_DEV` selects it.
 - Owner sign-in locally needs `PASSKEY_ORIGIN` to match the dev URL (`http://localhost:5173`); otherwise the origin check rejects sign-in.
+- Turnstile: real keys fail on `localhost` ("Verification failed", error 600010). Put Cloudflare's test keys in `.env.local` (see `.env.example`) and restart `npm run dev`.
 - Tests start their own disposable Postgres and never read `.env`.
