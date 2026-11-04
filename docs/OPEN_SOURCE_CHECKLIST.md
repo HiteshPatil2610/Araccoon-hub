@@ -1,12 +1,12 @@
-# Open-source checklist
+# Public-repo checklist
 
-Updated 3 November 2026. What has been done to make Araccoon Hub a proper open-source project, and what the maintainer still has to do by hand (mostly GitHub settings that cannot live in the repo).
+Updated 4 November 2026. What has been done to make Araccoon Hub a proper public, source-available project (code under PolyForm Noncommercial, art under CC BY-NC), and what the maintainer still has to do by hand (mostly GitHub settings that cannot live in the repo).
 
 ## Already in the repository
 
 | Item | File |
 | --- | --- |
-| Code licence (MIT) | [`LICENSE`](../LICENSE), `"license": "MIT"` in `package.json` |
+| Code licence (PolyForm Noncommercial 1.0.0) | [`LICENSE`](../LICENSE), `"license": "PolyForm-Noncommercial-1.0.0"` in `package.json` |
 | Artwork licence (CC BY-NC 4.0) and which files it covers | [`LICENSE-ART.md`](../LICENSE-ART.md) |
 | Project introduction, quick start, badges, banner | [`README.md`](../README.md) |
 | How to contribute | [`CONTRIBUTING.md`](../CONTRIBUTING.md) |
@@ -71,15 +71,26 @@ After the changes in the Unreleased section are merged:
 
 - [ ] Once a week, review Dependabot's grouped PR. If CI is green, merge it. If it fails, read the log; major version bumps arrive as separate PRs and may need code changes.
 
-## Decisions only you can make
+## Decisions made (4 November 2026)
 
-- **Personal email in history.** Your git author email is public in old commits. To hide it in future commits, turn on **Settings (your account) → Emails → Keep my email address private** and run `git config user.email <id>+HiteshPatil2610@users.noreply.github.com` (GitHub shows the exact address on that page). Old commits keep the old email unless history is rewritten again, which is not recommended now that the repo is public.
-- **`reference_raccoon.webp`** in `art/araccoon/`: confirm it is your own image or freely licensed. If it came from someone else, remove it (and from history) like the other third-party media.
-- **`video/araccoon-promo/design-system/cine-daily-design-system/`.** This folder is a recreation of the Cine Daily design system used for the promo video. Confirm you made it or are allowed to share it; if it copies someone else's product, remove it from the repo.
-- **Art licence for forks.** CC BY-NC means companies cannot use the mascot commercially. If you would rather people could, switch to CC BY 4.0 in `LICENSE-ART.md`.
-- **Maintainer contact.** Code-of-conduct reports currently go through a private advisory or your GitHub profile. Add a dedicated email to `CODE_OF_CONDUCT.md` and `SECURITY.md` if you prefer.
+- **Code licence:** PolyForm Noncommercial 1.0.0. Others may use the code only non-commercially; the owner keeps commercial rights and may sell commercial licences. Earlier copies (up to commit `75551df`) stay MIT. Because of this the project is "source-available", not OSI "open source".
+- **Art licence:** stays CC BY-NC 4.0. Companies may not use the mascot commercially.
+- **`art/araccoon/reference_raccoon.webp`:** the owner's own generated image; stays in the repo.
+- **`video/araccoon-promo/design-system/`:** kept private. Removed from the repo and ignored; the local copy stays on the owner's machine. It is still in older commits unless history is rewritten.
+- **Email:** this repo's git config now uses the GitHub no-reply address, so new commits don't show a personal email. Old commits keep the old one.
 
-## Still needed for the live site (not open-source specific)
+### Email: your steps on GitHub (2 min)
+
+1. Go to https://github.com/settings/emails.
+2. Turn on **Keep my email addresses private**.
+3. Turn on **Block command line pushes that expose my email**.
+4. Optional, for all your other repos too: `git config --global user.email 224592670+HiteshPatil2610@users.noreply.github.com`
+
+### Commercial licence requests
+
+People asking for commercial use will open an issue titled "Commercial licence" or contact you on GitHub. Agree the terms (price, scope, duration) in writing; a lawyer can draft a short licence agreement.
+
+## Still needed for the live site (not licence specific)
 
 - [ ] Fix the Neon dev password, or keep using the local database (`DATABASE_URL_DEV=` empty).
 - [ ] First deployment: set the Hyperdrive id in `wrangler.jsonc`, add production secrets with `wrangler secret put`, then `npm run db:migrate -- --target=prod` and `npm run deploy`.

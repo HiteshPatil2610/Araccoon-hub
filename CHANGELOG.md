@@ -4,10 +4,14 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Changed (licence)
+
+- **Code licence changed from MIT to PolyForm Noncommercial 1.0.0.** Commercial use now needs a licence from the author. Copies taken before this change (up to commit `75551df`) remain under MIT. Contributors grant the author the right to use their contributions commercially (see CONTRIBUTING.md).
+
 ### Added
 
 - Code of conduct, issue and pull request templates, CODEOWNERS, Dependabot config and this changelog.
-- [Open-source checklist](docs/OPEN_SOURCE_CHECKLIST.md) with the maintainer's remaining manual steps.
+- [Public-repo checklist](docs/OPEN_SOURCE_CHECKLIST.md) with the maintainer's remaining manual steps.
 
 ### Changed
 
@@ -16,6 +20,7 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 ### Removed
 
 - Blender render logs (they held local paths) from version control; they are now ignored.
+- The promo video's design-system handoff folder (`video/araccoon-promo/design-system/`) from the repository; it is kept private.
 
 ## [0.1.0] - 2026-11-03
 

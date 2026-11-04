@@ -2,7 +2,7 @@
 
 ## Current phase (3 November 2026)
 
-Feature-complete for the open-source release; preparing first production deployment.
+Feature-complete for the public (source-available) release; preparing first production deployment.
 
 ### Latest changes
 
@@ -12,7 +12,7 @@ Feature-complete for the open-source release; preparing first production deploym
 | 3 Nov 2026 | Editable site text (table, API, owner hub page); Markdown articles with journal pages; Worker-rendered pages with embedded data, share tags, JSON-LD and noscript fallback; robots.txt, sitemap, share image (commit 59cfe17) | Typecheck, build, 142 tests; dev-site check of home, journal, article with product cards, phone width, robots and sitemap; site text read from the database onto the page |
 | 3 Nov 2026 | Added `CLAUDE.md` and context files `project-overview.md`, `code-standards.md`, `ai-workflow-rules.md`; architecture updated | Docs only |
 | 3 Nov 2026 | Open-source docs: code of conduct, issue/PR templates, CODEOWNERS, Dependabot, changelog, README badges and quick start, `art/README.md`, `docs/OPEN_SOURCE_CHECKLIST.md` (maintainer to-dos); art and video scripts made portable (no fixed local paths, font and Chrome fallbacks); render logs untracked; personal path removed from a reference doc | Typecheck, build, tests; Python scripts syntax-checked, Blender renders not re-run |
-
+| 4 Nov 2026 | Code licence MIT → PolyForm Noncommercial 1.0.0 (README, CONTRIBUTING contributor grant, LICENSE-ART, PR template, changelog, overview); promo design-system folder removed from the repo and ignored; repo git email set to GitHub no-reply; local dev uses Turnstile test keys and in-memory rate limits | Typecheck, build, tests |
 ### Not yet verified
 
 - The Site text editor was not clicked through in a browser (local `PASSKEY_ORIGIN` did not match the dev port); its API is covered by integration tests.
@@ -30,7 +30,7 @@ Feature-complete for the open-source release; preparing first production deploym
 
 - Custom domain? (Affects canonical URLs, passkey origin and Turnstile.)
 - Should the share image be per-article when no cover image is set?
-- Is `video/araccoon-promo/design-system/cine-daily-design-system/` ours to redistribute, and is `art/araccoon/reference_raccoon.webp` our own image?
+- Rewrite git history to remove the promo design-system folder from older commits? (Needs a force push.)
 
 ---
 

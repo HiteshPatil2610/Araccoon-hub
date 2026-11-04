@@ -11,5 +11,6 @@
 - [ ] `npm run typecheck`, `npm test` and `npm run build` pass
 - [ ] Tests added or updated for changed behaviour
 - [ ] Docs updated if needed (README, `context/`, `CHANGELOG.md` under "Unreleased")
+- [ ] I agree to the contribution terms in [CONTRIBUTING.md](https://github.com/HiteshPatil2610/Araccoon-hub/blob/main/CONTRIBUTING.md#licensing-of-contributions)
 - [ ] No secrets, `.env` files, personal data or third-party media (logos, screenshots, copyrighted images) added
 - [ ] Security rules in [`context/code-standards.md`](https://github.com/HiteshPatil2610/Araccoon-hub/blob/main/context/code-standards.md) are kept

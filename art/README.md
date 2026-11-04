@@ -1,6 +1,6 @@
 # Art sources
 
-Everything in this folder is covered by [CC BY-NC 4.0](../LICENSE-ART.md) (artwork) and MIT (the scripts). None of it is needed to run the website; the site uses the finished images in `public/art/`.
+Everything in this folder is covered by [CC BY-NC 4.0](../LICENSE-ART.md) (artwork) and the [PolyForm Noncommercial](../LICENSE) code licence (the scripts). None of it is needed to run the website; the site uses the finished images in `public/art/`.
 
 | Folder | What | Tools |
 | --- | --- | --- |

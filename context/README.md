@@ -13,7 +13,7 @@ Core files, in reading order:
 
 Reference material:
 
-- [Open-source checklist](../docs/OPEN_SOURCE_CHECKLIST.md) — what is in place and the maintainer's remaining GitHub steps
+- [Public-repo checklist](../docs/OPEN_SOURCE_CHECKLIST.md) — what is in place and the maintainer's remaining GitHub steps
 
 - [Screenshot manifest](ui-screenshots/README.md)
 - [Product URL import implementation plan](product-url-import-plan.md) — scraping provider isolation, future API adapter, and manual cutover runbook (proposal)

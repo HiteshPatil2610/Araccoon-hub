@@ -1,6 +1,6 @@
 # Artwork license
 
-The source code in this repository is licensed under the [MIT License](LICENSE).
+The source code in this repository is licensed under the [PolyForm Noncommercial 1.0.0](LICENSE) (no commercial use without permission).
 
 The **Araccoon raccoon mascot and all artwork** are licensed separately, under
 [Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/).
@@ -15,7 +15,7 @@ Copyright (c) 2026 Hitesh Patil
 - Any other image, video or 3D file that shows the Araccoon mascot
 
 Scripts that *generate* artwork (for example `art/posters/*.py` or
-`art/araccoon/scripts/*.py`) are code, so they are MIT licensed. The images they
+`art/araccoon/scripts/*.py`) are code, so they are covered by the code licence ([PolyForm Noncommercial 1.0.0](LICENSE)). The images they
 produce are artwork.
 
 ## What you may do
@@ -32,4 +32,4 @@ produce are artwork.
   storefront. If you fork this project to run your own store, replace the mascot
   and the name with your own.
 
-To ask for permission, open an issue in this repository.
+To ask for permission, open an issue titled "Commercial licence" in this repository or contact [@HiteshPatil2610](https://github.com/HiteshPatil2610).

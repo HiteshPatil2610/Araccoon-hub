@@ -1,7 +1,7 @@
 # Araccoon Hub
 
 [![CI](https://github.com/HiteshPatil2610/Araccoon-hub/actions/workflows/ci.yml/badge.svg)](https://github.com/HiteshPatil2610/Araccoon-hub/actions/workflows/ci.yml)
-[![Code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](LICENSE)
+[![Code: PolyForm Noncommercial](https://img.shields.io/badge/code-PolyForm%20Noncommercial-blue.svg)](LICENSE)
 [![Art: CC BY-NC 4.0](https://img.shields.io/badge/art-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE-ART.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -9,7 +9,7 @@
 
 A curated Amazon affiliate storefront ("Small finds. Big everyday upgrades.") with a private owner hub for products, analytics and security. The Cine Daily interface (near-black, white and one crimson; Bebas Neue + Archivo) uses real featured catalog records, Bento and Classic layouts, and passkey authentication.
 
-**Open source:** the code is [MIT licensed](LICENSE); the raccoon mascot and artwork are [CC BY-NC 4.0](LICENSE-ART.md). Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
+**Source-available, non-commercial:** the code is under the [PolyForm Noncommercial 1.0.0](LICENSE) and the raccoon mascot and artwork under [CC BY-NC 4.0](LICENSE-ART.md). You may read, run, study and modify it for personal, educational and non-profit use; **commercial use needs a licence from the author**. Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 
 **Status:** version 0.1.0. Feature-complete and tested locally; first production deployment in progress. Changes are listed in the [changelog](CHANGELOG.md).
 
@@ -125,11 +125,11 @@ As an Amazon Associate I earn from qualifying purchases.
 
 ## Running your own copy
 
-You are welcome to fork this project and run your own storefront. Before you do:
+You may fork and run this project for **personal, educational or non-profit** purposes, for example to learn from it or try it out.
 
-- Use **your own** Amazon Associates tag (`AMAZON_ASSOCIATE_TAG`) and your own service accounts.
-- Replace the Araccoon name and raccoon mascot with your own branding. The artwork may not be used commercially (see [LICENSE-ART.md](LICENSE-ART.md)).
-- Keep the Amazon Associates disclosure on your site, as Amazon's program rules require.
+- **An affiliate store that earns money is commercial use.** It needs a commercial licence from the author first (open an issue titled "Commercial licence").
+- Use **your own** service accounts, and replace the Araccoon name and raccoon mascot with your own branding (see [LICENSE-ART.md](LICENSE-ART.md)).
+- If you are licensed to run a store, use your own Amazon Associates tag and keep the Associates disclosure, as Amazon's rules require.
 
 ## Contributing and security
 
@@ -137,9 +137,10 @@ You are welcome to fork this project and run your own storefront. Before you do:
 - Community rules: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 - Reporting a vulnerability: [SECURITY.md](SECURITY.md) (privately, never in a public issue)
 - What changed: [CHANGELOG.md](CHANGELOG.md)
-- Maintainer's open-source checklist: [docs/OPEN_SOURCE_CHECKLIST.md](docs/OPEN_SOURCE_CHECKLIST.md)
+- Maintainer's public-repo checklist: [docs/OPEN_SOURCE_CHECKLIST.md](docs/OPEN_SOURCE_CHECKLIST.md)
 
 ## License
 
-- **Code:** [MIT](LICENSE) © 2026 Hitesh Patil
+- **Code:** [PolyForm Noncommercial 1.0.0](LICENSE) © 2026 Hitesh Patil. Commercial use requires permission: open an issue titled "Commercial licence" or contact [@HiteshPatil2610](https://github.com/HiteshPatil2610).
+- **Versions published before 4 November 2026** (up to commit `75551df`) were released under MIT and stay MIT for anyone who copied them then.
 - **Raccoon mascot and artwork:** [CC BY-NC 4.0](LICENSE-ART.md) © 2026 Hitesh Patil

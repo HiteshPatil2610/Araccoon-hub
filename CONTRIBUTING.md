@@ -34,5 +34,10 @@ For **security problems**, do not open a public issue. Follow [SECURITY.md](SECU
 
 ## Licensing of contributions
 
-By contributing, you agree that your code is released under the [MIT License](LICENSE),
-and any artwork under [CC BY-NC 4.0](LICENSE-ART.md).
+The project is published under the [PolyForm Noncommercial 1.0.0](LICENSE) and artwork under
+[CC BY-NC 4.0](LICENSE-ART.md), and the maintainer may also offer commercial licences.
+So that this stays possible, by submitting a contribution you confirm that it is your own
+work and you grant Hitesh Patil a perpetual, worldwide, royalty-free licence to use,
+change, relicense and distribute it, including commercially, under the
+[MIT License](https://opensource.org/license/mit) terms. Everyone else receives your
+contribution under the project licences above.

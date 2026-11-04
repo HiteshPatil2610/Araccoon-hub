@@ -6,7 +6,7 @@ Updated 3 November 2026.
 
 Raccoon Hub ("Small finds. Big everyday upgrades.") is a curated Amazon affiliate storefront. Visitors browse hand-picked products and open them on Amazon in a new tab; the site earns through the Amazon Associates program. A private owner hub manages the catalog, the site's short copy, analytics and account security. The raccoon mascot and the Cine Daily look (near-black, white, one crimson) are the brand.
 
-The project is open source: code under MIT (`LICENSE`), mascot and artwork under CC BY-NC 4.0 (`LICENSE-ART.md`). Repository: https://github.com/HiteshPatil2610/Araccoon-hub (public).
+The project is public and source-available: code under PolyForm Noncommercial 1.0.0 (`LICENSE`), mascot and artwork under CC BY-NC 4.0 (`LICENSE-ART.md`). Others may use it only non-commercially; the owner keeps all commercial rights and may sell commercial licences. Releases before 4 November 2026 were MIT. Repository: https://github.com/HiteshPatil2610/Araccoon-hub (public).
 
 ## Goals
 
