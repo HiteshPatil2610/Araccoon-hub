@@ -430,7 +430,7 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 }
 
 /* Picks: the "production" curtain — stat discs, pull-quote carousel, second cut-out, big prev/next discs. */
-.cd-picks { position: relative; isolation: isolate; min-height: 0; padding: 64px var(--page-gutter) 24px; scroll-margin-top: var(--nav-height); }
+.cd-picks { position: relative; isolation: isolate; min-height: 0; padding: 64px var(--page-gutter) 0; scroll-margin-top: var(--nav-height); }
 .cd-picks__grid { position: relative; z-index: 3; max-width: var(--page-max); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 24px; align-items: start; }
 .cd-picks__grid > * { min-width: 0; }
 .cd-picks__left { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
@@ -573,10 +573,15 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 .cd-handoff .cd-hero__composition { width: 100%; flex: 1; display: flex; flex-direction: column; }
 .cd-handoff .cd-hero__stage { width: 100%; flex: 1; min-height: var(--hero-stage-height); translate: 0 var(--hero-scroll-lag, 0px); }
 .cd-handoff .cd-hero__foot { width: 100%; flex: none; padding-top: clamp(56px, calc(300px - 17vw), calc(24px + var(--hero-stage-used, var(--hero-stage-height)) * .28)); translate: 0 var(--hero-scroll-lag, 0px); }
-/* One continuous artwork proportion, including through the 1200px layout boundary. */
-.cd-handoff .cd-hero__raccoon { top: calc(var(--hero-stage-used, var(--hero-stage-height)) * .14 + 6px); bottom: auto; height: calc(var(--hero-stage-used, var(--hero-stage-height)) * 1.14); }
-.cd-handoff .cd-hero__art { mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent); }
+/* Keep the mascot in the foreground, with its lower crop aligned to the picks divider. */
+.cd-handoff .cd-hero__raccoon { top: calc(var(--hero-stage-used, var(--hero-stage-height)) * .14 + 6px); bottom: 0; height: auto; }
 .cd-handoff .cd-picks { z-index: 20; background: var(--cd-black); }
+@media (max-width: 1199px) {
+  .cd-handoff .cd-hero__raccoon { top: calc(var(--hero-stage-used, var(--hero-stage-height)) * .18 + 6px); }
+}
+@media (max-width: 767px) {
+  .cd-handoff .cd-hero__raccoon { top: calc(var(--hero-stage-used, var(--hero-stage-height)) * .21 + 6px); }
+}
 .cd-picks__divider { position: absolute; left: calc(50% - 50vw); right: calc(50% - 50vw); top: -38px; z-index: 8; pointer-events: none; opacity: var(--divider-progress, 0); translate: 0 calc((1 - var(--divider-progress, 0)) * 18px); }
 .cd-picks__divider .film-strip { overflow: visible; }
 .cd-picks__index { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
