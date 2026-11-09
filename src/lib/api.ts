@@ -73,6 +73,8 @@ export const api = {
   inviteVerify: (b: { token: string; challengeId: string; response: unknown; name: string }) => request<{ owner: OwnerProfile; recoveryCodes: string[] }>('POST', '/api/auth/invite/verify', b),
   loginOptions: (b: { turnstileToken?: string }) => request<Options>('POST', '/api/auth/login/options', b),
   loginVerify: (b: { challengeId: string; response: unknown }) => request<{ owner: OwnerProfile }>('POST', '/api/auth/login/verify', b),
+  setupPassword: (b: { email: string; setupToken: string; password: string; turnstileToken?: string }) => request<{ owner: OwnerProfile; recoveryCodes: string[] }>('POST', '/api/auth/setup/password', b),
+  passwordLogin:(b: { email: string; password: string; turnstileToken?: string }) => request<{ owner: OwnerProfile }>('POST', '/api/auth/password-login', b),
   recover: (b: { email: string; code: string; turnstileToken?: string }) => request<{ owner: OwnerProfile }>('POST', '/api/auth/recover', b),
   devLogin: (token: string) => request<{ owner: OwnerProfile }>('POST', '/api/auth/dev-login', { token }),
   logout: () => request<{ ok: true }>('POST', '/api/auth/logout', {}),
@@ -119,6 +121,8 @@ export const api = {
   // ---- owner: account & security
   me: () => request<OwnerProfile>('GET', '/api/admin/me'),
   updateMe: (displayName: string) => request<OwnerProfile>('PATCH', '/api/admin/me', { displayName }),
+  setPassword: (b: { currentPassword?: string; newPassword: string }) => request<OwnerProfile>('PUT', '/api/admin/password', b),
+  removePassword: () => request<OwnerProfile>('DELETE', '/api/admin/password', {}),
   passkeys: () => request<PasskeyInfo[]>('GET', '/api/admin/passkeys'),
   passkeyOptions: () => request<Options>('POST', '/api/admin/passkeys/options', {}),
   passkeyVerify: (b: { challengeId: string; response: unknown; name: string }) => request<{ ok: true }>('POST', '/api/admin/passkeys/verify', b),

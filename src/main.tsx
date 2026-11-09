@@ -18,7 +18,6 @@ const router = createBrowserRouter([
   { path: '/', element: <Storefront />, ErrorBoundary: PageLoadError },
   { path: '/articles', ErrorBoundary: PageLoadError, ...page(async () => ({ Component: (await import('./pages/Articles')).ArticleList })) },
   { path: '/articles/:slug', ErrorBoundary: PageLoadError, ...page(async () => ({ Component: (await import('./pages/Articles')).ArticlePage })) },
-  { path: '/raccoon-preview', ErrorBoundary: PageLoadError, ...page(async () => ({ Component: (await import('./pages/RaccoonPreview')).RaccoonPreview })) },
   {
     path: '/admin',
     ErrorBoundary: PageLoadError,

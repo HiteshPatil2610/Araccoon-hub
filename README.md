@@ -7,7 +7,7 @@
 
 ![Araccoon Hub: the raccoon mascot on the near-black Cine Daily storefront](public/og-image.jpg)
 
-A curated Amazon affiliate storefront ("Small finds. Big everyday upgrades.") with a private owner hub for products, analytics and security. The Cine Daily interface (near-black, white and one crimson; Bebas Neue + Archivo) uses real featured catalog records, Bento and Classic layouts, and passkey authentication.
+A curated Amazon affiliate storefront ("Small finds. Big everyday upgrades.") with a private owner hub for products, analytics and security. The Cine Daily interface (near-black, white and one crimson; Bebas Neue + Archivo) uses real featured catalog records, Bento and Classic layouts, and email + password or passkey sign-in.
 
 **Source-available, non-commercial:** the code is under the [PolyForm Noncommercial 1.0.0](LICENSE) and the raccoon mascot and artwork under [CC BY-NC 4.0](LICENSE-ART.md). You may read, run, study and modify it for personal, educational and non-profit use; **commercial use needs a licence from the author**. Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 
@@ -24,7 +24,7 @@ See [UI context](context/ui-context.md), [architecture](context/architecture.md)
 | Product images | Cloudinary (signed direct uploads, auto re-encoding) | 25 credits/month |
 | Rate limits | Upstash Redis (REST) | 500k commands/month |
 | Bot check | Cloudflare Turnstile | Unlimited |
-| Owner sign-in | Passkeys (WebAuthn) + one-time recovery codes | Built in, no service |
+| Owner sign-in | Email + password or passkeys (WebAuthn), plus one-time recovery codes | Built in, no service |
 
 ## Quick start for contributors
 
@@ -57,7 +57,8 @@ npm run dev                           # http://localhost:5173
 
 - Secrets live in `.env` (see `.env.example`); local overrides go in `.env.local` (both gitignored).
 - `.env.local` should contain `ENVIRONMENT=development`. Optionally add `DEV_LOGIN_TOKEN=<random>` to get a development-only sign-in box on `/admin/login`. The server refuses it unless `ENVIRONMENT=development` (production config ignores the token, and a test checks this).
-- Owner hub: `http://localhost:5173/admin`. Passkeys work on `localhost` in modern browsers.
+- Owner hub: `http://localhost:5173/admin`. Sign in with email + password or a passkey (passkeys work on `localhost` in modern browsers). With `DEV_LOGIN_TOKEN` set, the sign-in page also shows a **Developer sign-in** box: paste that token to get in, then set a password under **Account**.
+- Locked out? `npm run owner:password -- --target=dev` (or `--target=prod`) sets a new password at a hidden prompt and signs out every session.
 
 ## Editing content
 
@@ -92,12 +93,12 @@ The Worker serves `/`, `/articles` and `/articles/<slug>` itself (`worker/routes
 4. Upload secrets (one at a time, paste each value when prompted):
    `SESSION_SECRET RECOVERY_CODE_PEPPER OWNER_EMAIL OWNER_SETUP_TOKEN PASSKEY_RP_ID PASSKEY_ORIGIN TURNSTILE_SITE_KEY TURNSTILE_SECRET_KEY CLOUDINARY_CLOUD_NAME CLOUDINARY_API_KEY CLOUDINARY_API_SECRET CLOUDINARY_UPLOAD_PRESET UPSTASH_REDIS_REST_URL UPSTASH_REDIS_REST_TOKEN AMAZON_ASSOCIATE_TAG`
    → `npx wrangler secret put <NAME>`. For production, `PASSKEY_RP_ID` = your host (e.g. `araccoon-hub.<you>.workers.dev`) and `PASSKEY_ORIGIN` = `https://` + that host. Add the same host to the Turnstile widget.
-5. `npm run deploy`, open `https://<host>/admin/login` → **First-time setup** → your email + setup token → create your passkey → save the recovery codes. Setup closes permanently after this; then delete the `OWNER_SETUP_TOKEN` secret.
-6. Add a second passkey (phone + laptop) under **Settings**.
+5. `npm run deploy`, open `https://<host>/admin/login` → **First-time setup** → your email + setup token → choose a password (or create a passkey) → save the recovery codes. Setup closes once the account has a sign-in method; then delete the `OWNER_SETUP_TOKEN` secret.
+6. Under **Account**, optionally add a passkey on each device as well as your password.
 
 ## Security design (summary)
 
-- **Owners**: passkeys only (phishing-resistant, no passwords). Server-side sessions in an HttpOnly, Secure, SameSite=Strict cookie; only a SHA-256 of the token is stored. Sign-out, sign-out-everywhere and disabling an owner take effect on the next request. First-owner setup needs `OWNER_EMAIL` + `OWNER_SETUP_TOKEN` and closes after the first passkey. Further owners join by single-use 48-hour invites. Recovery codes are one-time, stored as keyed HMACs, and a recovery session can only add a new passkey.
+- **Owners**: email + password (optional, 12+ characters, PBKDF2-SHA256 with a per-password salt and a server pepper; Turnstile and per-IP/per-account rate limits) and/or passkeys (phishing-resistant). Server-side sessions in an HttpOnly, Secure, SameSite=Strict cookie; only a SHA-256 of the token is stored. Sign-out, sign-out-everywhere and disabling an owner take effect on the next request. First-owner setup needs `OWNER_EMAIL` + `OWNER_SETUP_TOKEN` and closes once any owner has a password or passkey. Further owners join by single-use 48-hour invites. Recovery codes are one-time, stored as keyed HMACs, and a recovery session can only add a new passkey or set a new password.
 - **CSRF**: SameSite=Strict cookies plus an exact `Origin` check on every state-changing API call.
 - **Trusted links**: product links must be `https` on `AFFILIATE_ALLOWED_HOSTS` (exact host or subdomain; short-link hosts exact). They're re-checked on every redirect, and visitors never see raw affiliate URLs. Per-store Associates tags are added automatically.
 - **Validation**: shared zod schemas (unknown fields rejected), parameterized SQL, CHECK constraints in the database.

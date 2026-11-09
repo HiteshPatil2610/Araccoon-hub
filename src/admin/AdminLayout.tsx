@@ -77,7 +77,7 @@ export function AdminLayout() {
         </nav>
         {owner.needsPasskey && (
           <p role="alert" className="m-4 panel-sm !bg-coral text-on-coral p-3 text-sm font-bold">
-            You signed in with a recovery code. Add a new passkey below to unlock the rest of the hub.
+            You signed in with a recovery code. Set a new password or add a new passkey below to unlock the rest of the hub.
           </p>
         )}
         <main id="owner-main" tabIndex={-1} className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">

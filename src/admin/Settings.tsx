@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { startRegistration } from '@simplewebauthn/browser';
-import { Copy, Fingerprint, KeyRound, Laptop, Pencil, Trash2, UserPlus } from 'lucide-react';
+import { Copy, Fingerprint, KeyRound, Laptop, LockKeyhole, Pencil, Trash2, UserPlus } from 'lucide-react';
 import { api, type OwnerRow, type SessionRow } from '../lib/api';
 import { PageHeader } from './AdminLayout';
 import { useAuth } from './auth';
@@ -91,6 +91,10 @@ export function Settings() {
     <>
       <PageHeader title="Account & security" subtitle="Your profile, sign-in methods and who can manage the store." />
       <div className="grid gap-6">
+        <PasswordCard recovering={recovering} hasPassword={owner?.hasPassword ?? false} canRemove={passkeys.length > 0} busy={busy}
+          onSave={(b) => act(async () => setOwner(await api.setPassword(b)), owner?.hasPassword && !recovering ? 'Password changed. Other devices were signed out.' : 'Password set. You can now sign in with your email and password.')}
+          onRemove={() => setConfirm({ title: 'Remove your password?', message: 'You will only be able to sign in with a passkey or a recovery code.', action: async () => setOwner(await api.removePassword()) })} />
+
         <Card title="Passkeys" description="Sign in with your fingerprint, face or device PIN. Add one on each device you use (phone + laptop), so losing one never locks you out.">
           <ul className="space-y-2 mb-4">
             {passkeys.map(p => (
@@ -102,7 +106,7 @@ export function Settings() {
                 </div>
                 {!recovering && <div className="col-start-2 flex shrink-0 gap-2">
                   <button type="button" className="btn btn-ghost !px-2" aria-label={`Rename ${p.name}`} onClick={() => setRename(p)}><Pencil className="w-4 h-4" /></button>
-                  <button type="button" className="btn btn-ghost !px-2" aria-label={`Remove ${p.name}`} disabled={passkeys.length <= 1}
+                  <button type="button" className="btn btn-ghost !px-2" aria-label={`Remove ${p.name}`} disabled={passkeys.length <= 1 && !owner?.hasPassword}
                     onClick={() => setConfirm({ title: 'Remove this passkey?', message: `“${p.name}” will no longer be able to sign in.`, action: () => api.deletePasskey(p.id) })}>
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -114,7 +118,7 @@ export function Settings() {
         </Card>
 
         {!recovering && <>
-          <Card title="Recovery codes" description="One-time codes for when you can't use any passkey. Keep them offline.">
+          <Card title="Recovery codes" description="One-time codes for when you forget your password or can't use a passkey. Keep them offline.">
             {newCodes ? <RecoveryCodes codes={newCodes} /> : (
               <>
                 <p className="text-sm font-bold mb-3">
@@ -186,6 +190,50 @@ export function Settings() {
       <ConfirmDialog open={confirm !== null} title={confirm?.title ?? ''} message={<>{confirm?.message}{actionError && <p role="alert" className="field-error mt-3">{actionError}</p>}</>} confirmLabel="Confirm" danger busy={busy}
         onClose={() => { setConfirm(null); setActionError(''); }} onConfirm={() => confirm && act(confirm.action, 'Done.')} />
     </>
+  );
+}
+
+function PasswordCard({ recovering, hasPassword, canRemove, busy, onSave, onRemove }: {
+  recovering: boolean; hasPassword: boolean; canRemove: boolean; busy: boolean;
+  onSave: (b: { currentPassword?: string; newPassword: string }) => Promise<boolean>; onRemove: () => void;
+}) {
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [again, setAgain] = useState('');
+  const [error, setError] = useState('');
+  const needCurrent = hasPassword && !recovering;
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (next.length < 12) return setError('Use at least 12 characters. A short phrase of a few words works well.');
+    if (next !== again) return setError('The two new passwords do not match.');
+    setError('');
+    if (await onSave({ newPassword: next, ...(needCurrent ? { currentPassword: current } : {}) })) {
+      setCurrent(''); setNext(''); setAgain('');
+    }
+  };
+
+  return (
+    <Card title="Password" description={hasPassword
+      ? 'Sign in with your email and this password from any device. Changing it signs out your other devices.'
+      : 'Set a password to sign in with your email on any device, without needing a passkey.'}>
+      <form onSubmit={submit} className="grid gap-3 sm:grid-cols-2 sm:items-end">
+        {needCurrent && (
+          <div className="sm:col-span-2"><label htmlFor="pw-current" className="field-label">Current password</label>
+            <input id="pw-current" type="password" autoComplete="current-password" className="field" maxLength={128} value={current} onChange={e => setCurrent(e.target.value)} required /></div>
+        )}
+        <div><label htmlFor="pw-new" className="field-label">New password</label>
+          <input id="pw-new" type="password" autoComplete="new-password" aria-describedby="pw-hint" className="field" minLength={12} maxLength={128} value={next} onChange={e => setNext(e.target.value)} required /></div>
+        <div><label htmlFor="pw-again" className="field-label">Repeat new password</label>
+          <input id="pw-again" type="password" autoComplete="new-password" className="field" minLength={12} maxLength={128} value={again} onChange={e => setAgain(e.target.value)} required /></div>
+        <p id="pw-hint" className="text-xs text-muted-fg sm:col-span-2">At least 12 characters. Don't reuse a password from another site.</p>
+        {error && <p role="alert" className="field-error sm:col-span-2">{error}</p>}
+        <div className="flex flex-wrap gap-3 sm:col-span-2">
+          <button type="submit" className="btn btn-primary" disabled={busy || !next || !again}><LockKeyhole className="w-4 h-4" /> {hasPassword && !recovering ? 'Change password' : 'Set password'}</button>
+          {hasPassword && !recovering && <button type="button" className="btn btn-ghost text-danger" disabled={busy || !canRemove} title={canRemove ? undefined : 'Add a passkey first'} onClick={onRemove}>Remove password</button>}
+        </div>
+      </form>
+    </Card>
   );
 }
 
