@@ -24,7 +24,7 @@ export function useTheme() {
   const toggle = useCallback((e?: React.MouseEvent<HTMLElement>) => {
     if (transitioning.current) return;
     const next = !storedDark();
-    const doc = document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } };
+    const doc = document as Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void>; ready?: Promise<void> } };
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (!doc.startViewTransition || reduced || !e) {
       setDark(next);
@@ -36,7 +36,10 @@ export function useTheme() {
     root.style.setProperty('--y', `${r.top + r.height / 2}px`);
     root.classList.add('theme-transitioning', next ? 'theme-going-dark' : 'theme-going-light');
     transitioning.current = true;
-    doc.startViewTransition(() => flushSync(() => setDark(next))).finished.catch(() => {}).finally(() => {
+    const transition = doc.startViewTransition(() => flushSync(() => setDark(next)));
+    // A transition can be skipped (e.g. the tab is hidden); the theme still changes, so ignore that rejection.
+    transition.ready?.catch(() => {});
+    transition.finished.catch(() => {}).finally(() => {
       transitioning.current = false;
       root.classList.remove('theme-transitioning', 'theme-going-dark', 'theme-going-light');
     });
