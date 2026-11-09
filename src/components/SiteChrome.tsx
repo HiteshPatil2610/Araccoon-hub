@@ -168,7 +168,7 @@ export function Footer() {
           </nav>
           <div className="text-sm text-[var(--cd-gray-300)]" data-morph="move">
             <SectionLabel className="text-white">Good to know</SectionLabel>
-            <p className="mt-4">{text.footerNote}</p>
+            <p className="mt-4">Prices and availability are shown on Amazon and may change.</p>
             <Link to="/articles" className="inline-flex min-h-11 items-center mt-1 mr-4 eyebrow text-white/60 hover:text-white">Journal ↗</Link>
             <Link to="/admin" className="inline-flex min-h-11 items-center mt-1 eyebrow text-white/60 hover:text-white">Owner sign-in ↗</Link>
           </div>
@@ -184,5 +184,40 @@ export function Footer() {
         </p>
       </div>
     </footer>
+  );
+}
+
+const DISMISS_KEY = 'rh-announcement-dismissed';
+
+/**
+ * Owner announcement from Site text: a small banner pinned to the bottom of the page.
+ * Hidden when the text is empty; a visitor can close it for the rest of the visit
+ * (until the owner changes the text).
+ */
+export function Announcement() {
+  const { announcement, announcementLink } = useSiteText();
+  const [dismissed, setDismissed] = useState<string | null>(() => {
+    try { return sessionStorage.getItem(DISMISS_KEY); } catch { return null; }
+  });
+  if (!announcement || dismissed === announcement) return null;
+
+  const close = () => {
+    setDismissed(announcement);
+    try { sessionStorage.setItem(DISMISS_KEY, announcement); } catch { /* private mode: closes for this page only */ }
+  };
+  const label = <>{announcement}{announcementLink && <span aria-hidden="true"> →</span>}</>;
+  const linkClass = 'min-w-0 flex-1 py-2 text-sm font-semibold underline-offset-4 hover:underline';
+
+  return (
+    <aside aria-label="Announcement" className="fixed inset-x-0 bottom-4 z-30 flex justify-center px-4 pointer-events-none">
+      <div className="pointer-events-auto flex max-w-xl items-center gap-2 rounded-full bg-ink text-white pl-5 pr-1.5 shadow-lg border border-white/15">
+        {!announcementLink ? <p className="min-w-0 flex-1 py-2 text-sm font-semibold">{announcement}</p>
+          : announcementLink.startsWith('/') ? <Link to={announcementLink} className={linkClass}>{label}</Link>
+          : <a href={announcementLink} target="_blank" rel="noopener noreferrer" className={linkClass}>{label}</a>}
+        <button type="button" onClick={close} className="inline-flex size-11 shrink-0 items-center justify-center rounded-full hover:bg-white/10" aria-label="Close announcement">
+          <X className="w-4 h-4" aria-hidden="true" />
+        </button>
+      </div>
+    </aside>
   );
 }

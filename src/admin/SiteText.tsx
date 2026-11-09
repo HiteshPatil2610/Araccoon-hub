@@ -4,9 +4,9 @@ import { api, HttpError } from '../lib/api';
 import { useReplaceSiteText } from '../lib/siteText';
 import { PageHeader } from './AdminLayout';
 import { useToast } from '../components/Toasts';
-import { SITE_TEXT_FIELDS, SITE_TEXT_KEYS, type SiteText, type SiteTextKey, type SiteTextPatch, type SiteTextState } from '../../shared/siteText';
+import { SITE_TEXT_GROUPS, SITE_TEXT_KEYS, siteTextField, type SiteText, type SiteTextKey, type SiteTextPatch, type SiteTextState } from '../../shared/siteText';
 
-/** Owner editor for the short storefront copy (hero, story, footer, search snippet). */
+/** Owner editor for the short storefront copy (announcement, hero, footer, search snippet). */
 export function SiteTextEditor() {
   const toast = useToast();
   const replaceLive = useReplaceSiteText();
@@ -56,11 +56,14 @@ export function SiteTextEditor() {
     void save(Object.fromEntries(changed.map(k => [k, form[k]])), 'Site text saved. The live site updates within a minute.');
   };
 
-  const reset = (key: SiteTextKey) => void save({ [key]: null }, `"${SITE_TEXT_FIELDS[key].label}" reset to the default.`);
+  const reset = (key: SiteTextKey) => {
+    const f = siteTextField(key);
+    void save({ [key]: null }, f.optional ? `"${f.label}" cleared.` : `"${f.label}" reset to the default.`);
+  };
 
   return (
     <div>
-      <PageHeader title="Site text" subtitle="Edit the short copy on the storefront. Empty slots are not allowed; reset a field to bring back its original text." />
+      <PageHeader title="Site text" subtitle="Change the wording visitors see on your site, without touching code. Saved changes show on the live site within a minute. Use Reset to go back to the original wording." />
       {loadError && <p role="alert" className="field-error">{loadError}</p>}
       {!form && !loadError && <p className="text-sm text-muted-fg" role="status">Loading…</p>}
       {form && state && (
@@ -68,36 +71,43 @@ export function SiteTextEditor() {
           {Object.keys(errors).length > 0 && (
             <p ref={errorRef} role="alert" tabIndex={-1} className="field-error">Please review the highlighted fields. Your text is still here.</p>
           )}
-          {SITE_TEXT_KEYS.map(key => {
-            const field = SITE_TEXT_FIELDS[key];
-            const id = `st-${key}`;
-            const value = form[key];
-            const custom = state.customized.includes(key);
-            const describedBy = [`${id}-help`, errors[key] ? `${id}-error` : ''].filter(Boolean).join(' ');
-            const props = {
-              id, value, maxLength: field.max, disabled: saving, className: 'field',
-              'aria-invalid': errors[key] ? true : undefined, 'aria-describedby': describedBy,
-              onChange: (e: { target: { value: string } }) => setForm({ ...form, [key]: e.target.value }),
-            };
-            return (
-              <div key={key}>
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <label htmlFor={id} className="field-label">{field.label}</label>
-                  <span className="text-xs text-muted-fg">{custom ? 'Edited' : 'Default'} · {value.trim().length}/{field.max}</span>
-                </div>
-                {field.multiline ? <textarea {...props} rows={2} /> : <input {...props} type="text" />}
-                <div className="flex flex-wrap items-center justify-between gap-2 mt-1">
-                  <p id={`${id}-help`} className="text-xs text-muted-fg">{field.help}</p>
-                  {custom && (
-                    <button type="button" className="btn !min-h-9 !text-sm" disabled={saving} onClick={() => reset(key)}>
-                      <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" /> Reset to default
-                    </button>
-                  )}
-                </div>
-                {errors[key] && <p id={`${id}-error`} className="field-error">{errors[key]}</p>}
-              </div>
-            );
-          })}
+          {SITE_TEXT_GROUPS.map(group => (
+            <fieldset key={group} className="space-y-5">
+              <legend className="eyebrow text-muted-fg mb-3">{group}</legend>
+              {SITE_TEXT_KEYS.filter(key => siteTextField(key).group === group).map(key => {
+                const field = siteTextField(key);
+                const id = `st-${key}`;
+                const value = form[key];
+                const custom = state.customized.includes(key);
+                const describedBy = [`${id}-help`, errors[key] ? `${id}-error` : ''].filter(Boolean).join(' ');
+                const props = {
+                  id, value, maxLength: field.max, disabled: saving, className: 'field',
+                  placeholder: field.optional ? (field.link ? '/articles or https://…' : 'Empty: hidden') : undefined,
+                  'aria-invalid': errors[key] ? true : undefined, 'aria-describedby': describedBy,
+                  onChange: (e: { target: { value: string } }) => setForm({ ...form, [key]: e.target.value }),
+                };
+                const status = field.optional ? (custom ? 'Shown' : 'Hidden') : custom ? 'Edited' : 'Default';
+                return (
+                  <div key={key}>
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <label htmlFor={id} className="field-label">{field.label}{field.optional && <span className="text-muted-fg font-normal"> (optional)</span>}</label>
+                      <span className="text-xs text-muted-fg">{status} · {value.trim().length}/{field.max}</span>
+                    </div>
+                    {field.multiline ? <textarea {...props} rows={2} /> : <input {...props} type="text" inputMode={field.link ? 'url' : undefined} />}
+                    <div className="flex flex-wrap items-center justify-between gap-2 mt-1">
+                      <p id={`${id}-help`} className="text-xs text-muted-fg">{field.help}</p>
+                      {custom && (
+                        <button type="button" className="btn !min-h-9 !text-sm" disabled={saving} onClick={() => reset(key)}>
+                          <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" /> {field.optional ? 'Clear' : 'Reset to default'}
+                        </button>
+                      )}
+                    </div>
+                    {errors[key] && <p id={`${id}-error`} className="field-error">{errors[key]}</p>}
+                  </div>
+                );
+              })}
+            </fieldset>
+          ))}
           <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-line">
             <button type="submit" className="btn btn-primary" disabled={saving || !changed.length}>{saving ? 'Saving…' : 'Save changes'}</button>
             <button type="button" className="btn" disabled={saving || !changed.length} onClick={() => setForm(state.values)}>Discard</button>

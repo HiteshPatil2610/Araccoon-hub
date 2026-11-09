@@ -31,7 +31,7 @@ HTML responses get the page security headers from `worker/lib/pageHeaders.ts` (i
 
 ## Content editing
 
-- Site text: `GET /api/site-text` (public), `GET`/`PUT /api/admin/site-text` (owner, validated, audited; `null` resets a field). Owner hub page `src/admin/SiteText.tsx`; storefront reads it through `useSiteText()`.
+- Site text: `GET /api/site-text` (public), `GET`/`PUT /api/admin/site-text` (owner, validated, audited; `null` resets a field). Owner hub page `src/admin/SiteText.tsx`, grouped into Announcement, Home page, Footer and Search results; storefront reads it through `useSiteText()`. Fields are defined in `shared/siteText.ts`: the four hero taglines, hero introduction, empty-catalog heading, footer line, search title and description are required (empty is refused; reset restores the default). The announcement and its link are optional (empty hides the bottom banner, `Announcement` in `SiteChrome.tsx`); the link must be a site path or an `https://` address. Rows for removed keys are ignored.
 - Articles: Markdown with strict front matter. The compiler escapes raw HTML, requires alt text, rejects `#` headings and direct Amazon links; products are referenced by id and rendered as cards with tracked links (`utm_source=article`). Drafts compile only in dev. It runs before build, typecheck and test, and live in dev through a Vite plugin.
 
 ## Invariants

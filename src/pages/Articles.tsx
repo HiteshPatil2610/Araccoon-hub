@@ -9,7 +9,7 @@ import { api } from '../lib/api';
 import { takeInitialProducts } from '../lib/initialData';
 import { useOutbound, type OutboundSource } from '../lib/outbound';
 import { usePageMeta } from '../lib/pageMeta';
-import { Navbar, Footer } from '../components/SiteChrome';
+import { Navbar, Footer, Announcement } from '../components/SiteChrome';
 import { ProductCard } from '../components/ProductCard';
 import { ProductOverlays } from '../components/ProductOverlays';
 import { SectionLabel, Viewfinder } from '../components/cine';
@@ -37,6 +37,7 @@ function Page({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <Footer />
+      <Announcement />
     </div>
   );
 }

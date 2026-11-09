@@ -72,10 +72,11 @@ describe('articles', () => {
 
 describe('site text', () => {
   it('falls back to defaults for missing, blank and unknown keys', () => {
-    const merged = mergeSiteText({ heroBlurb: 'Custom', footerNote: '  ', bogus: 'x' });
+    const merged = mergeSiteText({ heroBlurb: 'Custom', footerIdea: '  ', bogus: 'x', footerNote: 'removed field' });
     assert.equal(merged.heroBlurb, 'Custom');
-    assert.equal(merged.footerNote, DEFAULT_SITE_TEXT.footerNote);
-    assert.ok(!('bogus' in merged));
+    assert.equal(merged.footerIdea, DEFAULT_SITE_TEXT.footerIdea);
+    assert.equal(merged.announcement, '', 'the announcement is hidden by default');
+    assert.ok(!('bogus' in merged) && !('footerNote' in merged));
   });
 
   it('validates lengths, one-line text, nulls and unknown keys', () => {
@@ -84,6 +85,18 @@ describe('site text', () => {
     assert.ok(!siteTextPatchSchema.safeParse({ seoTitle: 'x'.repeat(SITE_TEXT_FIELDS.seoTitle.max + 1) }).success);
     assert.ok(!siteTextPatchSchema.safeParse({ footerIdea: 'a\tb' }).success);
     assert.ok(!siteTextPatchSchema.safeParse({ nope: 'x' }).success);
+    assert.ok(!siteTextPatchSchema.safeParse({ heroLineA: '' }).success, 'required slots cannot be emptied');
+  });
+
+  it('lets optional slots be emptied and only accepts safe announcement links', () => {
+    assert.equal(siteTextPatchSchema.parse({ announcement: '   ' }).announcement, null, 'empty clears the slot');
+    assert.equal(siteTextPatchSchema.parse({ announcement: ' Sale on ' }).announcement, 'Sale on');
+    for (const ok of ['/articles', '/?category=Desk%20%26%20Office', 'https://example.com', 'https://example.com/path?x=1', '']) {
+      assert.ok(siteTextPatchSchema.safeParse({ announcementLink: ok }).success, ok);
+    }
+    for (const bad of ['javascript:alert(1)', 'http://example.com', '//evil.example', '/\\evil.example', 'https:///x', 'articles', '/a b', 'data:text/html,x']) {
+      assert.ok(!siteTextPatchSchema.safeParse({ announcementLink: bad }).success, bad);
+    }
   });
 
   it('every default fits its own limit', () => {
