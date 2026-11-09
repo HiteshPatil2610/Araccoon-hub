@@ -16,8 +16,8 @@ const page = (load: () => Promise<{ Component: React.ComponentType }>) => ({ laz
 
 const router = createBrowserRouter([
   { path: '/', element: <Storefront />, ErrorBoundary: PageLoadError },
-  { path: '/articles', ErrorBoundary: PageLoadError, ...page(async () => ({ Component: (await import('./pages/Articles')).ArticleList })) },
-  { path: '/articles/:slug', ErrorBoundary: PageLoadError, ...page(async () => ({ Component: (await import('./pages/Articles')).ArticlePage })) },
+  { path: '/articles', ErrorBoundary: PageLoadError, HydrateFallback: () => null, ...page(async () => ({ Component: (await import('./pages/Articles')).ArticleList })) },
+  { path: '/articles/:slug', ErrorBoundary: PageLoadError, HydrateFallback: () => null, ...page(async () => ({ Component: (await import('./pages/Articles')).ArticlePage })) },
   {
     path: '/admin',
     ErrorBoundary: PageLoadError,

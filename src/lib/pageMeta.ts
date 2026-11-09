@@ -24,3 +24,19 @@ export function usePageMeta(title: string, description?: string) {
     }
   }, [title, description]);
 }
+
+/**
+ * Tells search engines not to index the current page (e.g. the 404 page, which the
+ * static host serves with status 200). Removes the tag again when the page unmounts,
+ * unless the Worker already put one there (non-production pages are all noindex).
+ */
+export function useNoIndex() {
+  useEffect(() => {
+    if (document.head.querySelector('meta[name="robots"]')) return;
+    const el = document.createElement('meta');
+    el.name = 'robots';
+    el.content = 'noindex';
+    document.head.append(el);
+    return () => el.remove();
+  }, []);
+}

@@ -148,6 +148,12 @@ describe('store: products, outbound links, analytics, exports, conversions', { s
     const r = await t.browser().get(`/r/${rows[0]!.id}`);
     assert.equal(r.status, 404);
     assert.equal(r.headers.get('location'), null);
+    assert.match(r.headers.get('content-type') ?? '', /text\/html/, 'visitors get a readable page, not JSON');
+    assert.match(r.text, /no longer available/);
+    assert.equal((await t.db.query('SELECT 1 FROM clicks WHERE product_id = $1', [rows[0]!.id])).rows.length, 0, 'no click recorded');
+    const unknown = await t.browser().get(`/r/${crypto.randomUUID()}`);
+    assert.equal(unknown.status, 404);
+    assert.match(unknown.text, /no longer available/);
     const list = await owner.get('/api/admin/products');
     assert.equal(list.body[0].linkHealthy, false, 'owner sees the broken link');
   });
