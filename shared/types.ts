@@ -27,6 +27,9 @@ export interface PublicProduct {
   createdAt: string;
 }
 
+/** Whether Amazon still has the listing: 'gone' = Amazon answered "not found"; 'unknown' = could not be told (blocked, short link, error). */
+export type ListingStatus = 'ok' | 'gone' | 'unknown';
+
 /** Full record for the owner hub. */
 export interface Product extends PublicProduct {
   imagePublicId: string | null;
@@ -37,6 +40,8 @@ export interface Product extends PublicProduct {
   sortOrder: number;
   updatedAt: string;
   linkHealthy: boolean; // destination passes the current trusted-host policy
+  /** Last listing check; status is null until the link has been checked since it last changed. */
+  listing: { status: ListingStatus | null; checkedAt: string | null };
 }
 
 export interface ClickRecord {

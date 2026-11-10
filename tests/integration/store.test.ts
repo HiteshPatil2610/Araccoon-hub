@@ -71,6 +71,54 @@ describe('store: products, outbound links, analytics, exports, conversions', { s
     assert.equal(cleared.body.pickNote, null);
   });
 
+  it('checks listings: flags only a clear "not found", never requests the tagged link, and resets on a new link', async test => {
+    const live = await create({ title: 'Live', affiliateUrl: 'https://www.amazon.in/dp/B0LIVE0001' });
+    const gone = await create({ title: 'Gone', affiliateUrl: 'https://www.amazon.in/dp/B0GONE0001' });
+    const blocked = await create({ title: 'Blocked', affiliateUrl: 'https://www.amazon.in/dp/B0BLOCK001' });
+    const moved = await create({ title: 'Moved', affiliateUrl: 'https://www.amazon.in/dp/B0MOVED001' });
+    await create({ title: 'Draft', status: 'draft', affiliateUrl: 'https://www.amazon.in/dp/B0DRAFT001' });
+    assert.deepEqual(live.listing, { status: null, checkedAt: null });
+
+    const requested: string[] = [];
+    test.mock.method(globalThis, 'fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      requested.push(url);
+      assert.equal(init?.redirect, 'manual');
+      if (url.includes('B0GONE0001')) return new Response('not here', { status: 404 });
+      if (url.includes('B0BLOCK001')) return new Response('robot check', { status: 503 });
+      if (url.includes('B0MOVED001')) return new Response(null, { status: 302, headers: { location: 'https://www.amazon.in/s?k=something+else' } });
+      if (url === 'https://www.amazon.in/dp/B0LIVE0001') return new Response(null, { status: 301, headers: { location: '/Some-Name/dp/B0LIVE0001' } });
+      return new Response('<html>ok</html>', { status: 200 });
+    });
+
+    assert.equal((await t.browser().post('/api/admin/products/check-links')).status, 401);
+    const run = await owner.post('/api/admin/products/check-links');
+    assert.equal(run.status, 200, run.text);
+    assert.deepEqual(run.body, { checked: 4, ok: 1, gone: 1, unknown: 2 });
+    assert.ok(requested.every(u => /^https:\/\/www\.amazon\.in\//.test(u) && !u.includes('tag=')), `only clean Amazon product pages are requested: ${requested.join(' ')}`);
+    assert.ok(!requested.some(u => u.includes('B0DRAFT001')), 'drafts are not checked');
+    assert.ok(!requested.some(u => u.includes('/s?k=')), 'a redirect away from the product is not followed');
+
+    const byTitle = async () => Object.fromEntries((await owner.get('/api/admin/products')).body.map((p: any) => [p.title, p.listing]));
+    let listing = await byTitle();
+    assert.equal(listing.Live.status, 'ok');
+    assert.equal(listing.Gone.status, 'gone');
+    assert.equal(listing.Blocked.status, 'unknown');
+    assert.equal(listing.Moved.status, 'unknown');
+    assert.equal(listing.Draft.status, null);
+    assert.ok(listing.Gone.checkedAt);
+
+    // Nothing changes for visitors, and the owner-only result never reaches them.
+    const visitors = await t.browser().get('/api/products');
+    assert.equal(visitors.body.length, 4);
+    assert.ok(!('listing' in visitors.body[0]));
+
+    // A new destination starts unchecked; an unrelated edit keeps the result.
+    assert.equal((await owner.patch(`/api/admin/products/${gone.id}`, { title: 'Gone renamed' })).body.listing.status, 'gone');
+    assert.deepEqual((await owner.patch(`/api/admin/products/${gone.id}`, { affiliateUrl: 'https://www.amazon.in/dp/B0FIXED0001' })).body.listing, { status: null, checkedAt: null });
+    void blocked; void moved;
+  });
+
   it('accepts .com and .in Amazon links (incl. short links) and normalizes to https', async test => {
     test.mock.method(globalThis, 'fetch', async () => new Response(null, {status:302,headers:{location:'https://www.amazon.in/dp/B0TEST0001'}}));
     for (const url of ['https://www.amazon.in/dp/B0X1', 'amazon.com/dp/B0X2', 'http://www.amazon.in/gp/product/B0X3', 'https://amzn.to/3abc', 'https://amzn.in/d/abc']) {

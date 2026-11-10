@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useMatch, useNavigate, useSearchParams } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowDown, ArrowRight, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpDown, Bookmark, Dices, RefreshCw } from 'lucide-react';
 import { api } from '../lib/api';
 import { initialData, takeInitialProducts } from '../lib/initialData';
 import { useSiteText } from '../lib/siteText';
 import { usePageMeta } from '../lib/pageMeta';
-import { featuredProducts } from '../lib/catalog';
+import { featuredProducts, pickSurprise } from '../lib/catalog';
 import { useOutbound } from '../lib/outbound';
 import { useLayoutMorph } from '../lib/useLayoutMorph';
 import { useHeroHandoff } from '../lib/useHeroHandoff';
@@ -18,6 +18,7 @@ import { CATEGORIES, type PublicProduct } from '../../shared/types';
 import { formatProductCopy } from '../../shared/productCopy';
 import { ProductOverlays } from '../components/ProductOverlays';
 import { useToast } from '../components/Toasts';
+import { useStash } from '../lib/stash';
 import { findBySlug, findPath } from '../../shared/finds';
 import { collectionPath, type CollectionSummary } from '../../shared/collections';
 import { ProductImage } from '../components/ProductImage';
@@ -31,6 +32,9 @@ export function Storefront() {
   const category = params.get('category') ?? 'All';
   const [search, setSearch] = useState(params.get('q') ?? '');
   const [sort, setSort] = useState<Sort>('curated');
+  // The visitor's saved finds (this browser only). Ids of finds that are no longer published simply match nothing.
+  const stash = useStash();
+  const [stashOnly, setStashOnly] = useState(false);
   const text = useSiteText();
   // The Worker embeds the catalog in the page, so the first render needs no fetch.
   const [products, setProducts] = useState<PublicProduct[] | null>(() => withCopy(takeInitialProducts()));
@@ -99,13 +103,27 @@ export function Storefront() {
     if (!products) return [];
     const q = search.trim().toLowerCase();
     const list = products.filter(p =>
+      (!stashOnly || stash.ids.includes(p.id)) &&
       (category === 'All' || p.category.toLowerCase() === category.toLowerCase()) &&
       (!q || `${p.title} ${p.description} ${p.category}`.toLowerCase().includes(q)));
     if (sort === 'popular') return [...list].sort((a, b) => b.reviewCount - a.reviewCount);
     if (sort === 'recent') return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     if (sort === 'title') return [...list].sort((a, b) => a.title.localeCompare(b.title));
     return list; // curated order from the owner (featured, sort order, newest)
-  }, [products, category, search, sort]);
+  }, [products, category, search, sort, stashOnly, stash.ids]);
+  const stashCount = useMemo(() => (products ?? []).filter(p => stash.ids.includes(p.id)).length, [products, stash.ids]);
+  useEffect(() => { if (stashOnly && products && stashCount === 0) setStashOnly(false); }, [stashOnly, products, stashCount]); // emptied: back to the full catalog
+
+  // "Surprise me": a random find from what the filters show (or the whole catalog when they show nothing).
+  const surprised = useRef(new Set<string>());
+  const inSurprise = Boolean((location.state as { surprise?: boolean } | null)?.surprise);
+  const surprise = useCallback(() => {
+    const pick = pickSurprise(visible.length ? visible : products ?? [], surprised.current, quick?.id ?? null);
+    if (!pick) return;
+    // "Another one" swaps the open find in place, so Back still returns to the catalog in one step.
+    navigate({ pathname: findPath(pick), search: location.search }, { state: { inApp: true, surprise: true }, replace: quick !== null, preventScrollReset: true });
+  }, [visible, products, quick, navigate, location.search]);
+  const canSurprise = (products?.length ?? 0) > (quick ? 1 : 0);
 
   // Picks and Story share one carousel: the owner's featured finds, else the first few in curated order.
   const picks = useMemo(() => {
@@ -225,6 +243,12 @@ export function Storefront() {
                   <option value="title">Title A–Z</option>
                 </select>
               </label>
+              <button type="button" className="btn" disabled={!products?.length} onClick={surprise}><Dices className="w-4 h-4" aria-hidden="true" /> Surprise me</button>
+              {(stashCount > 0 || stashOnly) && (
+                <button type="button" className={`btn ${stashOnly ? 'btn-mint' : ''}`} aria-pressed={stashOnly} title="Finds you saved, kept in this browser only" onClick={() => setStashOnly(v => !v)}>
+                  <Bookmark className="w-4 h-4" aria-hidden="true" fill={stashOnly ? 'currentColor' : 'none'} /> Your stash <span className="opacity-70">{stashCount}</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -236,10 +260,10 @@ export function Storefront() {
               </button>
             ))}
           </div>
-          {(search || category !== 'All') && (
+          {(search || category !== 'All' || stashOnly) && (
             <div className="flex flex-wrap items-center gap-3 pb-5 text-sm">
-              <p className="text-muted-fg">Filters: {category}{search && ` · “${search}”`}</p>
-              <button type="button" className="btn btn-ghost !text-lg !px-2" onClick={() => { setSearch(''); setCategory('All'); }}>Clear filters</button>
+              <p className="text-muted-fg">Filters: {stashOnly && 'Your stash · '}{category}{search && ` · “${search}”`}</p>
+              <button type="button" className="btn btn-ghost !text-lg !px-2" onClick={() => { setSearch(''); setCategory('All'); setStashOnly(false); }}>Clear filters</button>
             </div>
           )}
 
@@ -256,9 +280,13 @@ export function Storefront() {
           ) : visible.length === 0 ? (
             <div className="relative overflow-hidden panel p-12 max-w-xl mx-auto text-center my-8">
               <Viewfinder size={360} light />
+              {products.length > 0 && <img src="/art/video-concept/raccoon-picks-box-720.webp" alt="" width={604} height={720} loading="lazy" decoding="async" draggable={false} className="relative mx-auto h-36 w-auto mb-4 select-none" />}
               <p className="relative eyebrow text-muted-fg">{products.length ? 'No matches .' : 'Coming soon .'}</p>
-              <h3 className="relative text-5xl mt-3">{products.length ? 'No finds match these filters.' : text.emptyCatalog}</h3>
-              {products.length > 0 && <p className="relative text-sm text-muted-fg mt-4">Try a different search or clear the filters above.</p>}
+              <h3 className="relative text-5xl mt-3">{products.length ? 'The raccoon came back with an empty box.' : text.emptyCatalog}</h3>
+              {products.length > 0 && <>
+                <p className="relative text-sm text-muted-fg mt-4">No finds match these filters. Try a different search, clear the filters above, or let the raccoon choose.</p>
+                <button type="button" className="relative btn btn-primary mt-6" onClick={surprise}><Dices className="w-4 h-4" aria-hidden="true" /> Surprise me</button>
+              </>}
             </div>
           ) : (
             <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-6 gap-5">
@@ -276,7 +304,7 @@ export function Storefront() {
       <Footer />
       <Announcement />
 
-      <ProductOverlays quick={quick} onCloseQuick={closeQuick} outbound={outbound} />
+      <ProductOverlays quick={quick} onCloseQuick={closeQuick} outbound={outbound} surprise={inSurprise} onSurprise={canSurprise ? surprise : undefined} />
     </div>
     </HeroEntrance>
   );

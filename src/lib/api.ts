@@ -102,6 +102,7 @@ export const api = {
   duplicateProduct: (id: string) => request<Product>('POST', `/api/admin/products/${id}/duplicate`, {}),
   bulkProducts: (ids: string[], action: 'publish' | 'draft' | 'archive' | 'feature' | 'unfeature' | 'delete') =>
     request<{ affected: number }>('POST', '/api/admin/products/bulk', { ids, action }),
+  checkProductLinks: () => request<{ checked: number; ok: number; gone: number; unknown: number }>('POST', '/api/admin/products/check-links', {}, { timeoutMs: 90_000 }),
   signImageUpload: () => request<{ cloudName: string; apiKey: string; timestamp: number; signature: string; folder: string; uploadPreset: string }>('POST', '/api/admin/products/images/sign', {}),
 
   // ---- owner: collections

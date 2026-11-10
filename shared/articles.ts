@@ -24,6 +24,9 @@ export interface Article {
   draft: boolean;
 }
 
+/** The journal's RSS feed. */
+export const ARTICLES_FEED_PATH = '/articles/feed.xml';
+
 export const articlePath = (slug: string) => `/articles/${slug}`;
 
 export function formatArticleDate(iso: string) {

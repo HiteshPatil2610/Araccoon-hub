@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Rss } from 'lucide-react';
 import { ARTICLES } from '../../shared/generated/articles';
-import { articlePath, formatArticleDate, type Article } from '../../shared/articles';
+import { ARTICLES_FEED_PATH, articlePath, formatArticleDate, type Article } from '../../shared/articles';
 import type { PublicProduct } from '../../shared/types';
 import { formatProductCopy } from '../../shared/productCopy';
 import { api } from '../lib/api';
@@ -48,7 +48,11 @@ export function ArticleList() {
   return (
     <PublicPage>
       <SectionLabel>The journal</SectionLabel>
-      <h1 className="text-[clamp(56px,9vw,128px)] leading-[.86] mt-4 border-b border-line pb-6">Notes from the raccoon</h1>
+      <h1 className="text-[clamp(56px,9vw,128px)] leading-[.86] mt-4">Notes from the raccoon</h1>
+      <p className="border-b border-line pb-6 mt-4">
+        {/* A plain link (not a router Link): the feed is XML served by the Worker. */}
+        <a href={ARTICLES_FEED_PATH} className="inline-flex items-center gap-2 min-h-11 eyebrow text-muted-fg hover:text-fg"><Rss className="w-4 h-4" aria-hidden="true" /> Follow by RSS</a>
+      </p>
       {ARTICLES.length === 0 ? (
         <div className="relative overflow-hidden panel p-12 max-w-xl mx-auto text-center my-12">
           <Viewfinder size={360} light />

@@ -4,7 +4,7 @@ import { listProducts, toPublic } from '../repo/products';
 import { getSiteText } from '../repo/siteText';
 import { escapeHtml, renderPage, type PageMeta } from '../lib/html';
 import { ARTICLES } from '../../shared/generated/articles';
-import { articlePath, formatArticleDate, type Article } from '../../shared/articles';
+import { ARTICLES_FEED_PATH, articlePath, formatArticleDate, type Article } from '../../shared/articles';
 import { DEFAULT_SITE_TEXT, type SiteText } from '../../shared/siteText';
 import { findBySlug, findPath } from '../../shared/finds';
 import { COLLECTION_SLUG, collectionPath, type CollectionSummary, type PublicCollection } from '../../shared/collections';
@@ -237,6 +237,7 @@ pageRoutes.get('/articles', (c) => servePage(c, async () => {
     cacheable: true,
     meta: {
       title, description, url: `${siteOrigin(c)}/articles`, image: absolute(c, SHARE_IMAGE), imageAlt: SHARE_IMAGE_ALT, type: 'website', noindex: !isProduction(c),
+      feedUrl: absolute(c, ARTICLES_FEED_PATH),
       jsonLd: [{
         '@context': 'https://schema.org', '@type': 'Blog', name: 'Raccoon Hub journal', url: `${siteOrigin(c)}/articles`, publisher: organization(c),
         blogPost: ARTICLES.map(a => ({ '@type': 'BlogPosting', headline: a.title, url: absolute(c, articlePath(a.slug)), datePublished: a.date })),
@@ -246,6 +247,37 @@ pageRoutes.get('/articles', (c) => servePage(c, async () => {
     noscript: `<h1>Journal</h1><ul>${ARTICLES.map(a => `<li><a href="${articlePath(a.slug)}">${escapeHtml(a.title)}</a> — ${escapeHtml(a.description)}</li>`).join('')}</ul>`,
   };
 }));
+
+// RSS 2.0 feed of published articles, newest first. Registered before /articles/:slug so "feed.xml" is not read as a slug.
+// Items carry the summary only: article bodies use site-relative links that feed readers would not resolve.
+pageRoutes.get(ARTICLES_FEED_PATH, (c) => {
+  const published = ARTICLES.filter(a => !a.draft).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 50);
+  const rfc822 = (day: string) => new Date(`${day}T00:00:00Z`).toUTCString();
+  const latest = published.map(a => a.updated ?? a.date).sort().at(-1);
+  const feedUrl = absolute(c, ARTICLES_FEED_PATH);
+  const items = published.map(a => {
+    const url = escapeHtml(absolute(c, articlePath(a.slug)));
+    return `    <item>\n      <title>${escapeHtml(a.title)}</title>\n      <link>${url}</link>\n      <guid isPermaLink="true">${url}</guid>\n      <pubDate>${rfc822(a.date)}</pubDate>\n      <description>${escapeHtml(a.description)}</description>\n    </item>`;
+  });
+  const body = [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
+    '  <channel>',
+    '    <title>Raccoon Hub journal</title>',
+    `    <link>${escapeHtml(absolute(c, '/articles'))}</link>`,
+    '    <description>Roundups, notes from use and small-upgrade ideas from Raccoon Hub.</description>',
+    '    <language>en</language>',
+    `    <atom:link href="${escapeHtml(feedUrl)}" rel="self" type="application/rss+xml" />`,
+    latest ? `    <lastBuildDate>${rfc822(latest)}</lastBuildDate>` : '',
+    ...items,
+    '  </channel>',
+    '</rss>',
+  ].filter(Boolean).join('\n') + '\n';
+  c.header('Content-Type', 'application/rss+xml; charset=utf-8');
+  c.header('Cache-Control', 'public, max-age=3600');
+  if (!isProduction(c)) c.header('X-Robots-Tag', 'noindex');
+  return c.body(body);
+});
 
 pageRoutes.get('/articles/:slug', (c) => servePage(c, async () => {
   const article = ARTICLES.find(a => a.slug === c.req.param('slug'));
@@ -273,7 +305,7 @@ function articleMeta(c: Ctx, a: Article): PageMeta {
   const image = absolute(c, a.image ?? SHARE_IMAGE);
   return {
     title: `${a.title} — Raccoon Hub`, description: a.description, url, image, imageAlt: a.image ? a.imageAlt : SHARE_IMAGE_ALT,
-    type: 'article', noindex: a.draft || !isProduction(c),
+    type: 'article', noindex: a.draft || !isProduction(c), feedUrl: absolute(c, ARTICLES_FEED_PATH),
     publishedTime: a.date, modifiedTime: a.updated ?? undefined,
     jsonLd: [{
       '@context': 'https://schema.org', '@type': 'BlogPosting', headline: a.title, description: a.description,

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { ArrowRight, Eye } from 'lucide-react';
+import { ArrowRight, Bookmark, Eye } from 'lucide-react';
 import { IndexBadge, Sticker } from './cine';
 import type { PublicProduct } from '../../shared/types';
 import { descriptionSummary } from '../../shared/productCopy';
+import { useStash } from '../lib/stash';
 
 export function storeLabel(store: string) {
   return store === 'amazon.in' ? 'Amazon.in' : store === 'amazon.com' ? 'Amazon' : store;
@@ -15,6 +16,8 @@ export function ProductCard({ product, index, onOpen, onQuickView, pending }: {
 }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const stash = useStash();
+  const saved = stash.ids.includes(product.id);
 
   return (
     <motion.article
@@ -45,6 +48,11 @@ export function ProductCard({ product, index, onOpen, onQuickView, pending }: {
           )}
           <IndexBadge n={index + 1} className="absolute top-3 left-3 bg-white text-ink" />
           {product.featured && <Sticker text="Pick" className="absolute top-2 right-2 !w-16 !h-16 !text-lg" />}
+          <button type="button" onClick={() => stash.toggle(product.id)} aria-pressed={saved} title="Kept in this browser only"
+            className={`stash-btn absolute bottom-3 left-3 ${saved ? 'stash-btn--on' : ''}`}
+            aria-label={`${saved ? 'Remove from' : 'Save to'} your stash: ${product.title}`}>
+            <Bookmark className="w-4 h-4" aria-hidden="true" fill={saved ? 'currentColor' : 'none'} />
+          </button>
           <button type="button" onClick={() => onQuickView(product)}
             className="absolute bottom-3 right-3 inline-flex items-center gap-2 px-4 min-h-11 rounded-full bg-ink text-white eyebrow !tracking-[.2em] hover:bg-red transition-colors"
             aria-label={`Quick view: ${product.title}`}>

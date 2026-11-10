@@ -32,7 +32,7 @@ http.createServer(async(req,res)=>{
  if(u.pathname.startsWith('/api/')){
   if(u.pathname==='/api/auth/state') return json({owner:mode==='signed-out'?null:owner,setupOpen:false,turnstileSiteKey:null,devLogin:false});
   if(u.pathname==='/api/products') return mode==='catalog-failed'?json({error:'QA fixture request failure.'},503):json(mode==='empty'?[]:products.map(p=>({...p,featured:mode==='no-featured'?false:mode==='one-featured'?p.sortOrder===0:p.featured})));
-  if(u.pathname==='/api/admin/products' && req.method==='GET') return json(products);
+  if(u.pathname==='/api/admin/products' && req.method==='GET') return json(products.map((p,i)=>({...p,listing:{status:i===1?'gone':i===0?'ok':null,checkedAt:i<2?at:null}})));
   const collections=[{id:'10000000-0000-4000-8000-000000000001',slug:'fixture-desk-upgrades',title:'Fixture desk upgrades',description:'Browser QA fixture collection with a description long enough to wrap on a phone.',status:'published',sortOrder:0,productIds:[products[0].id,products[2].id,products[3].id],updatedAt:at},{id:'10000000-0000-4000-8000-000000000002',slug:'fixture-draft-collection-with-a-deliberately-long-title',title:'Fixture draft collection with a deliberately long title',description:'',status:'draft',sortOrder:1,productIds:[],updatedAt:at}];
   const summary=c=>({id:c.id,slug:c.slug,title:c.title,description:c.description,productCount:c.productIds.length,coverImageUrl:products.find(p=>p.id===c.productIds[0])?.imageUrl??null});
   if(u.pathname==='/api/admin/collections' && req.method==='GET') return json(collections);

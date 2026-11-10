@@ -17,6 +17,8 @@ export interface AppDeps {
   human: HumanCheck;
   images: ImageStore;
   productImporter?: ProductImportProvider;
+  /** Network access for the listing check (tests replace it); defaults to fetch. */
+  listingFetch?: typeof fetch;
   /** The built static site (Cloudflare's ASSETS binding); pages read index.html from it. */
   assets?: { fetch(request: Request): Promise<Response> };
   /** Edge cache for rendered pages (caches.default in production; absent in dev and tests). */

@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowUpRight, CheckCircle2, ExternalLink, Share2, X } from 'lucide-react';
+import { ArrowUpRight, Bookmark, CheckCircle2, Dices, ExternalLink, Share2, X } from 'lucide-react';
 import { Dialog } from './Dialog';
 import { ProductImage } from './ProductImage';
 import { storeLabel } from './ProductCard';
@@ -9,12 +9,16 @@ import type { OutboundSource, useOutbound } from '../lib/outbound';
 import type { PublicProduct } from '../../shared/types';
 import { findPath } from '../../shared/finds';
 import { useToast } from './Toasts';
+import { useStash } from '../lib/stash';
 
 /** Quick-view dialog and the "Opening Amazon" notice, shared by every page that lists products. */
-export function ProductOverlays({ quick, onCloseQuick, outbound, from }: {
+export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise = false, onSurprise }: {
   quick: PublicProduct | null; onCloseQuick: () => void; outbound: ReturnType<typeof useOutbound>; from?: OutboundSource;
+  /** The find was chosen by "Surprise me"; `onSurprise` swaps in another one. */
+  surprise?: boolean; onSurprise?: () => void;
 }) {
   const toast = useToast();
+  const stash = useStash();
   // Phones and tablets get the device share sheet; elsewhere the link is copied.
   const share = async (find: PublicProduct) => {
     const url = `${window.location.origin}${findPath(find)}`;
@@ -37,6 +41,12 @@ export function ProductOverlays({ quick, onCloseQuick, outbound, from }: {
           <div className="grid sm:grid-cols-2 gap-6 min-w-0">
             <div className="cd-still aspect-square"><ProductImage src={quick.imageUrl} title={quick.title} className="w-full h-full object-contain p-[8%]" /></div>
             <div className="flex flex-col min-w-0">
+              {surprise && (
+                <p className="surprise-note" role="status">
+                  <img src="/art/video-concept/raccoon-picks-box-720.webp" alt="" width={604} height={720} decoding="async" draggable={false} />
+                  <span className="eyebrow text-red">The raccoon dug this one out for you</span>
+                </p>
+              )}
               <SectionLabel className="text-muted-fg">{quick.category}</SectionLabel>
               {quick.pickNote && (
                 <figure className="pick-note">
@@ -49,7 +59,13 @@ export function ProductOverlays({ quick, onCloseQuick, outbound, from }: {
                 View on {storeLabel(quick.store)} <ArrowUpRight className="w-4 h-4" />
               </button>
               <p className="mt-2 text-xs text-muted-fg">Opens Amazon in a new tab. Prices are set by Amazon.</p>
-              <button type="button" className="btn mt-4 self-start" onClick={() => void share(quick)}><Share2 className="w-4 h-4" aria-hidden="true" /> Share this find</button>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" className={`btn ${stash.ids.includes(quick.id) ? 'btn-mint' : ''}`} aria-pressed={stash.ids.includes(quick.id)} title="Kept in this browser only" onClick={() => stash.toggle(quick.id)}>
+                  <Bookmark className="w-4 h-4" aria-hidden="true" fill={stash.ids.includes(quick.id) ? 'currentColor' : 'none'} /> {stash.ids.includes(quick.id) ? 'In your stash' : 'Save to stash'}
+                </button>
+                <button type="button" className="btn" onClick={() => void share(quick)}><Share2 className="w-4 h-4" aria-hidden="true" /> Share this find</button>
+                {surprise && onSurprise && <button type="button" className="btn" onClick={onSurprise}><Dices className="w-4 h-4" aria-hidden="true" /> Another one</button>}
+              </div>
             </div>
           </div>
         )}

@@ -646,6 +646,13 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 .collection-card { display: flex; align-items: center; gap: 14px; min-height: 88px; padding: 12px 16px 12px 12px; transition: border-color var(--dur-fast, 150ms) var(--ease-cine), transform var(--dur-fast, 150ms) var(--ease-cine); }
 .collection-card:hover { border-color: var(--cd-red-500); transform: translateY(-2px); }
 @media (prefers-reduced-motion: reduce) { .collection-card:hover { transform: none; } }
+/* Save-to-stash toggle on a product card: a 44px disc that fills crimson when saved. */
+.stash-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: #fff; color: var(--cd-ink-900, #0a0a0a); border: 1px solid rgb(0 0 0 / .18); transition: background-color var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
+.stash-btn:hover { border-color: var(--cd-red-500); color: var(--cd-red-500); }
+.stash-btn--on, .stash-btn--on:hover { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; }
+/* Quick View opened by "Surprise me": the box mascot beside a one-line caption. */
+.surprise-note { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
+.surprise-note img { height: 56px; width: auto; flex: none; user-select: none; }
 /* The owner's own note in Quick View: a quiet pull quote with the one crimson accent. */
 .pick-note { margin: 16px 0 0; padding-left: 14px; border-left: 2px solid var(--cd-red-500); min-width: 0; }
 .pick-note blockquote { margin: 0; font-size: 1.0625rem; line-height: 1.45; font-weight: 500; overflow-wrap: anywhere; }

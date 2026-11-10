@@ -10,6 +10,10 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Surprise me:** a random find with the mascot, plus mascot art on the empty-search panel and the 404 page.
+- **Your stash:** visitors can save finds; the list is kept only in their browser.
+- **Journal RSS feed** at `/articles/feed.xml`.
+- **Listing check:** a daily (and on-demand) check that flags finds whose Amazon listing returns "not found" in the owner hub (migration 9).
 - **Collections:** owner-made themed lists of finds with their own pages (`/collections/<slug>`), managed in a new owner hub page, linked from the storefront and listed in the sitemap (migration 8).
 - **Shareable finds:** every find has its own link (`/find/<title>-<id>`) that opens its quick view, with its own title, description and preview image, a Share button, and an entry in the sitemap.
 - **Why we picked it:** an optional owner note (up to 280 characters) on each find, edited in the product editor and shown at the top of Quick View (migration 7, `products.pick_note`).

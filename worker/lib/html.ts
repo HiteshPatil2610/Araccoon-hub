@@ -17,6 +17,8 @@ export interface PageMeta {
   modifiedTime?: string;
   /** Site path of an image the page shows first; fetched before the scripts that would otherwise discover it. */
   preloadImage?: string;
+  /** Absolute URL of an RSS feed that feed readers should discover from this page. */
+  feedUrl?: string;
   /** schema.org objects, written as JSON-LD. */
   jsonLd?: object[];
 }
@@ -32,6 +34,7 @@ function headTags(meta: PageMeta, initial: InitialData): string {
     tag('name', 'description', meta.description),
     `<link rel="canonical" href="${escapeHtml(meta.url)}">`,
     meta.noindex ? '<meta name="robots" content="noindex">' : '',
+    meta.feedUrl ? `<link rel="alternate" type="application/rss+xml" title="Raccoon Hub journal" href="${escapeHtml(meta.feedUrl)}">` : '',
     meta.preloadImage ? `<link rel="preload" as="image" href="${escapeHtml(meta.preloadImage)}" fetchpriority="high">` : '',
     tag('property', 'og:site_name', 'Raccoon Hub'),
     tag('property', 'og:type', meta.type),

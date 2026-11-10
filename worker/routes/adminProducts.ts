@@ -6,6 +6,7 @@ import { audit } from '../lib/audit';
 import { countImageRefs, getProduct, insertProduct, listProducts, toProduct, updateProduct } from '../repo/products';
 import { bulkActionSchema, productInputSchema, productPatchSchema, type ProductPatch } from '../../shared/schemas';
 import { prepareAffiliateLink } from '../lib/affiliateLinks';
+import { checkListings } from '../lib/linkCheck';
 
 export const adminProductRoutes = new Hono<AppEnv>();
 adminProductRoutes.use('*', requireOwner());
@@ -86,6 +87,14 @@ adminProductRoutes.patch('/:id', async (c) => {
   if (before.image_public_id && before.image_public_id !== row!.image_public_id) await releaseImage(c, before.image_public_id);
   await audit(c, 'product.update', 'success', before.id);
   return c.json(toProduct(row!, c.get('deps').config.allowedHosts));
+});
+
+// Runs one batch of the listing check now (the daily job does the same); a few runs cover a small catalog.
+adminProductRoutes.post('/check-links', async (c) => {
+  await limit(c, 'link-check', ownerKey(c), 6, 3600);
+  const result = await checkListings(c.get('db'), c.get('deps').listingFetch ?? ((...args) => fetch(...args)));
+  await audit(c, 'product.links_checked', 'success');
+  return c.json(result);
 });
 
 adminProductRoutes.post('/:id/duplicate', async (c) => {

@@ -151,6 +151,18 @@ describe('site text and Worker-rendered pages', { skip: integrationSkipReason },
     assert.equal(list.status, 200);
     assert.match(list.text, /<title>Journal — Raccoon Hub<\/title>/);
     assert.doesNotMatch(list.text, /rel="preload" as="image"/);
+    assert.ok(list.text.includes('<link rel="alternate" type="application/rss+xml" title="Raccoon Hub journal" href="http://localhost/articles/feed.xml">'));
+
+    const feed = await t.browser().get('/articles/feed.xml');
+    assert.equal(feed.status, 200);
+    assert.match(feed.headers.get('content-type') ?? '', /application\/rss\+xml/);
+    assert.match(feed.text, /^<\?xml version="1\.0" encoding="UTF-8"\?>\n<rss version="2\.0"/);
+    assert.ok(feed.text.includes('<atom:link href="http://localhost/articles/feed.xml" rel="self" type="application/rss+xml" />'));
+    const live = ARTICLES.filter(x => !x.draft);
+    assert.equal((feed.text.match(/<item>/g) ?? []).length, Math.min(live.length, 50));
+    for (const a of live) assert.ok(feed.text.includes(`<guid isPermaLink="true">http://localhost/articles/${a.slug}</guid>`), a.slug);
+    for (const a of ARTICLES.filter(x => x.draft)) assert.ok(!feed.text.includes(`/articles/${a.slug}<`), `draft ${a.slug} stays out of the feed`);
+    assert.doesNotMatch(feed.text, /<(?!\/?(?:rss|channel|title|link|description|language|atom:link|lastBuildDate|item|guid|pubDate)\b|\?xml)/, 'only feed elements, article text is escaped');
 
     const first = ARTICLES[0];
     if (first) {

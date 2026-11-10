@@ -222,6 +222,14 @@ ALTER TABLE product_content_sources ADD CONSTRAINT product_content_sources_provi
     );
     CREATE INDEX collection_products_product_idx ON collection_products (product_id);`,
   },
+  {
+    version: 9,
+    name: 'product_listing_check',
+    // Result of the periodic "does the Amazon listing still exist" check; NULL means not checked since the link last changed.
+    sql: `ALTER TABLE products
+      ADD COLUMN link_status text CHECK (link_status IN ('ok', 'gone', 'unknown')),
+      ADD COLUMN link_checked_at timestamptz;`,
+  },
 ];
 
 const LOCK_KEY = 4_204_201_337;

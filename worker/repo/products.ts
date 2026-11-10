@@ -1,5 +1,5 @@
 import type { Db } from '../db/db';
-import type { Product, PublicProduct, ProductStatus } from '../../shared/types';
+import type { ListingStatus, Product, PublicProduct, ProductStatus } from '../../shared/types';
 import type { ProductInput } from '../../shared/schemas';
 import { normalizeAffiliateUrl } from '../../shared/urlPolicy';
 
@@ -7,7 +7,7 @@ interface Row {
   id: string; title: string; description: string; category: string; rating: string; review_count: number;
   image_url: string; image_public_id: string | null; affiliate_url: string; affiliate_tag: string | null;
   sub_id: string | null; badge: string | null; pick_note: string | null; featured: boolean; status: ProductStatus; sort_order: number;
-  created_at: Date; updated_at: Date;
+  created_at: Date; updated_at: Date; link_status: ListingStatus | null; link_checked_at: Date | null;
 }
 
 function storeOf(url: string): string {
@@ -33,6 +33,7 @@ export function toProduct(r: Row, allowedHosts: readonly string[]): Product {
     imagePublicId: r.image_public_id, affiliateUrl: r.affiliate_url, affiliateTag: r.affiliate_tag,
     subId: r.sub_id, status: r.status, sortOrder: r.sort_order, updatedAt: r.updated_at.toISOString(),
     linkHealthy: normalizeAffiliateUrl(r.affiliate_url, allowedHosts) !== null,
+    listing: { status: r.link_status, checkedAt: r.link_checked_at ? r.link_checked_at.toISOString() : null },
   };
 }
 
@@ -86,6 +87,8 @@ export async function updateProduct(db: Db, id: string, patch: Partial<ProductIn
   const keys = (Object.keys(patch) as (keyof ProductInput)[]).filter(k => patch[k] !== undefined);
   if (!keys.length) return getProduct(db, id);
   const sets = keys.map((k, i) => `${COLUMNS[k]} = $${i + 2}`);
+  // A changed destination has not been checked yet; the old result must not carry over.
+  if (keys.includes('affiliateUrl')) sets.push('link_status = NULL', 'link_checked_at = NULL');
   const { rows } = await db.query<Row>(
     `UPDATE products SET ${sets.join(', ')}, updated_at = now() WHERE id = $1 RETURNING *`,
     [id, ...keys.map(k => patch[k])]
