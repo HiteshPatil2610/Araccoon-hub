@@ -95,7 +95,7 @@ adminProductRoutes.post('/:id/duplicate', async (c) => {
   const row = await insertProduct(c.get('db'), {
     title: `${src.title.slice(0, 190)} (copy)`, description: src.description, category: src.category,
     rating: Number(src.rating), reviewCount: src.review_count, imageUrl: src.image_url, imagePublicId: src.image_public_id,
-    affiliateUrl: src.affiliate_url, affiliateTag: src.affiliate_tag, subId: src.sub_id, badge: src.badge,
+    affiliateUrl: src.affiliate_url, affiliateTag: src.affiliate_tag, subId: src.sub_id, badge: src.badge, pickNote: src.pick_note,
     featured: false, status: 'draft', sortOrder: src.sort_order,
   });
   await audit(c, 'product.duplicate', 'success', row.id);

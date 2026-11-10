@@ -24,7 +24,7 @@ ImageDraw.Draw(glow).ellipse((700, 70, 1190, 560), fill=150)
 img.paste(Image.new('RGB', (W, H), RED), (0, 0), glow.filter(ImageFilter.GaussianBlur(60)))
 draw.ellipse((735, 105, 1155, 525), fill=RED)
 
-raccoon = Image.open('public/art/video-concept/raccoon-hero-crossed-arms.png').convert('RGBA')
+raccoon = Image.open('art/mascot/raccoon-hero-crossed-arms.png').convert('RGBA')
 raccoon = raccoon.crop(raccoon.getbbox())
 scale = 600 / raccoon.height
 raccoon = raccoon.resize((round(raccoon.width * scale), 600), Image.LANCZOS)

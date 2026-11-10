@@ -6,7 +6,7 @@ import { normalizeAffiliateUrl } from '../../shared/urlPolicy';
 interface Row {
   id: string; title: string; description: string; category: string; rating: string; review_count: number;
   image_url: string; image_public_id: string | null; affiliate_url: string; affiliate_tag: string | null;
-  sub_id: string | null; badge: string | null; featured: boolean; status: ProductStatus; sort_order: number;
+  sub_id: string | null; badge: string | null; pick_note: string | null; featured: boolean; status: ProductStatus; sort_order: number;
   created_at: Date; updated_at: Date;
 }
 
@@ -23,7 +23,7 @@ export function toPublic(r: Row): PublicProduct {
   return {
     id: r.id, title: r.title, description: r.description, category: r.category,
     rating: Number(r.rating), reviewCount: r.review_count, imageUrl: r.image_url,
-    badge: r.badge, featured: r.featured, store: storeOf(r.affiliate_url), createdAt: r.created_at.toISOString(),
+    badge: r.badge, pickNote: r.pick_note, featured: r.featured, store: storeOf(r.affiliate_url), createdAt: r.created_at.toISOString(),
   };
 }
 
@@ -69,7 +69,7 @@ export async function getProduct(db: Db, id: string): Promise<Row | undefined> {
 const COLUMNS: Record<keyof ProductInput, string> = {
   title: 'title', description: 'description', category: 'category', rating: 'rating', reviewCount: 'review_count',
   imageUrl: 'image_url', imagePublicId: 'image_public_id', affiliateUrl: 'affiliate_url', affiliateTag: 'affiliate_tag',
-  subId: 'sub_id', badge: 'badge', featured: 'featured', status: 'status', sortOrder: 'sort_order',
+  subId: 'sub_id', badge: 'badge', pickNote: 'pick_note', featured: 'featured', status: 'status', sortOrder: 'sort_order',
 };
 
 export async function insertProduct(db: Db, input: ProductInput): Promise<Row> {

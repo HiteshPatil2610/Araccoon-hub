@@ -29,7 +29,8 @@ function Byline({ article }: { article: Article }) {
   );
 }
 
-function Page({ children }: { children: React.ReactNode }) {
+/** Nav, footer and the padded main column shared by the journal and collection pages. */
+export function PublicPage({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen flex flex-col">
       <Navbar />
@@ -45,7 +46,7 @@ function Page({ children }: { children: React.ReactNode }) {
 export function ArticleList() {
   usePageMeta('Journal — Raccoon Hub', 'Roundups, notes from use and small-upgrade ideas from Raccoon Hub.');
   return (
-    <Page>
+    <PublicPage>
       <SectionLabel>The journal</SectionLabel>
       <h1 className="text-[clamp(56px,9vw,128px)] leading-[.86] mt-4 border-b border-line pb-6">Notes from the raccoon</h1>
       {ARTICLES.length === 0 ? (
@@ -73,7 +74,7 @@ export function ArticleList() {
           ))}
         </ul>
       )}
-    </Page>
+    </PublicPage>
   );
 }
 
@@ -110,7 +111,7 @@ function ArticleView({ article }: { article: Article }) {
   const open = (p: PublicProduct) => outbound.open(p, FROM_ARTICLE);
 
   return (
-    <Page>
+    <PublicPage>
       <article className="max-w-[72ch] mx-auto">
         <Link to="/articles" className="inline-flex items-center gap-2 min-h-11 eyebrow text-muted-fg hover:text-fg"><ArrowLeft className="w-4 h-4" aria-hidden="true" /> All articles</Link>
         <header className="mt-4 border-b border-line pb-6">
@@ -139,6 +140,6 @@ function ArticleView({ article }: { article: Article }) {
 
       <p className="mt-16 text-xs text-muted-fg max-w-[72ch] mx-auto">As an Amazon Associate, Raccoon Hub earns from qualifying purchases.</p>
       <ProductOverlays quick={quick} onCloseQuick={() => setQuick(null)} outbound={outbound} from={FROM_ARTICLE} />
-    </Page>
+    </PublicPage>
   );
 }

@@ -41,18 +41,34 @@ describe('store: products, outbound links, analytics, exports, conversions', { s
   };
 
   it('publishing and editing one field preserve omitted copy, ratings, tags and catalog settings', async () => {
-    const product = await create({description:'Material: Steel',rating:4.2,reviewCount:27,badge:'Useful',featured:true,status:'draft',sortOrder:42,affiliateTag:'custom-21',subId:'desk'});
+    const product = await create({description:'Material: Steel',rating:4.2,reviewCount:27,badge:'Useful',pickNote:'Sturdy.',featured:true,status:'draft',sortOrder:42,affiliateTag:'custom-21',subId:'desk'});
     const published = await owner.patch(`/api/admin/products/${product.id}`, {status:'published'});
     assert.equal(published.status, 200, published.text);
-    for (const key of ['description', 'rating', 'reviewCount', 'badge', 'featured', 'sortOrder', 'affiliateTag', 'subId', 'imageUrl', 'imagePublicId', 'affiliateUrl']) {
+    for (const key of ['description', 'rating', 'reviewCount', 'badge', 'pickNote', 'featured', 'sortOrder', 'affiliateTag', 'subId', 'imageUrl', 'imagePublicId', 'affiliateUrl']) {
       assert.equal(published.body[key], product[key], key);
     }
     const edited = await owner.patch(`/api/admin/products/${product.id}`, {description:'Material: Alloy steel'});
     assert.equal(edited.status, 200, edited.text);
     assert.equal(edited.body.description, 'Material: Alloy steel');
-    for (const key of ['status', 'rating', 'reviewCount', 'badge', 'featured', 'sortOrder', 'affiliateTag', 'subId', 'imageUrl', 'imagePublicId', 'affiliateUrl']) {
+    for (const key of ['status', 'rating', 'reviewCount', 'badge', 'pickNote', 'featured', 'sortOrder', 'affiliateTag', 'subId', 'imageUrl', 'imagePublicId', 'affiliateUrl']) {
       assert.equal(edited.body[key], published.body[key], key);
     }
+  });
+
+  it('keeps the pick note optional, bounded, clearable and copied on duplicate', async () => {
+    assert.equal((await create()).pickNote, null);
+    assert.equal((await create({ pickNote: '   ' })).pickNote, null);
+    const tooLong = await owner.post('/api/admin/products', { ...VALID_PRODUCT, pickNote: 'x'.repeat(281) });
+    assert.equal(tooLong.status, 400, tooLong.text);
+    assert.ok(tooLong.body.fields.pickNote);
+    const product = await create({ pickNote: 'x'.repeat(280) });
+    const copy = await owner.post(`/api/admin/products/${product.id}/duplicate`, {});
+    assert.equal(copy.body.pickNote, product.pickNote);
+    const retitled = await owner.patch(`/api/admin/products/${product.id}`, { title: 'Renamed' });
+    assert.equal(retitled.body.pickNote, product.pickNote);
+    const cleared = await owner.patch(`/api/admin/products/${product.id}`, { pickNote: '' });
+    assert.equal(cleared.status, 200, cleared.text);
+    assert.equal(cleared.body.pickNote, null);
   });
 
   it('accepts .com and .in Amazon links (incl. short links) and normalizes to https', async test => {
@@ -80,12 +96,13 @@ describe('store: products, outbound links, analytics, exports, conversions', { s
   });
 
   it('serves only published products to visitors and never exposes affiliate URLs', async () => {
-    const pub = await create({ title: 'Visible' });
+    const pub = await create({ title: 'Visible', pickNote: '  I keep one on my desk.  ' });
     await create({ title: 'Hidden draft', status: 'draft' });
     const list = await t.browser().get('/api/products');
     assert.deepEqual(list.body.map((p: any) => p.title), ['Visible']);
     assert.ok(!('affiliateUrl' in list.body[0]));
     assert.equal(list.body[0].store, 'amazon.in');
+    assert.equal(list.body[0].pickNote, 'I keep one on my desk.');
     assert.equal((await t.browser().get(`/api/products/${pub.id}`)).status, 200);
     const search = await t.browser().get(`/api/products?search=${encodeURIComponent("%_' OR 1=1 --")}`);
     assert.equal(search.body.length, 0);

@@ -1,9 +1,11 @@
 import { describe, it, before, after, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { createTestContext, integrationSkipReason, VALID_PRODUCT, type TestContext, type Browser } from '../support/testApp';
 import { INITIAL_DATA_ID, type InitialData } from '../../shared/initialData';
 import { DEFAULT_SITE_TEXT } from '../../shared/siteText';
 import { ARTICLES } from '../../shared/generated/articles';
+import { findPath } from '../../shared/finds';
 
 function embedded(html: string): InitialData {
   const m = new RegExp(`<script type="application/json" id="${INITIAL_DATA_ID}">([\\s\\S]*?)</script>`).exec(html);
@@ -89,6 +91,9 @@ describe('site text and Worker-rendered pages', { skip: integrationSkipReason },
     assert.match(html, /<title>Finds &amp; &quot;oddities&quot; &lt;today&gt;<\/title>/);
     assert.ok(!html.includes('static description'));
     assert.match(html, /<link rel="canonical" href="http:\/\/localhost\/">/);
+    // The hero art is preloaded on the home page only, and the file must exist.
+    assert.match(html, /<link rel="preload" as="image" href="\/art\/video-concept\/raccoon-hero-crossed-arms\.webp" fetchpriority="high">/);
+    assert.ok(fs.existsSync(new URL('../../public/art/video-concept/raccoon-hero-crossed-arms.webp', import.meta.url)));
     assert.match(html, /<meta property="og:image" content="http:\/\/localhost\/og-image\.jpg">/);
     assert.match(html, /<meta name="robots" content="noindex">/, 'non-production pages stay out of search');
     assert.match(html, /application\/ld\+json/);
@@ -102,10 +107,50 @@ describe('site text and Worker-rendered pages', { skip: integrationSkipReason },
     assert.ok(!('affiliateUrl' in (data.products?.[0] ?? {})), 'visitors never see affiliate URLs');
   });
 
+  it('gives each published find its own page with its title, note, image and a tracked link', async () => {
+    const made = await owner.post('/api/admin/products', { ...VALID_PRODUCT, title: 'Desk Lamp <b>Pro</b>', pickNote: 'Bright & "clever" <i>enough</i>.' });
+    assert.equal(made.status, 201, made.text);
+    const draft = await owner.post('/api/admin/products', { ...VALID_PRODUCT, title: 'Secret draft', status: 'draft' });
+    const path = findPath(made.body);
+    assert.match(path, /^\/find\/[a-z0-9-]+-[0-9a-f]{8}$/);
+
+    const res = await t.browser().get(`${path}?utm_source=share`);
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get('content-security-policy') ?? '', /script-src 'self'/);
+    const html = res.text;
+    assert.equal((html.match(/<title>/g) ?? []).length, 1);
+    assert.ok(html.includes(`<link rel="canonical" href="http://localhost${path}">`), 'canonical has no query string');
+    assert.ok(html.includes(`<meta property="og:image" content="${made.body.imageUrl}">`), 'the preview image is the find, not the site share image');
+    assert.ok(html.includes('<meta name="description" content="Bright &amp; &quot;clever&quot; &lt;i&gt;enough&lt;/i&gt;.">'));
+    assert.ok(html.includes(`<a href="/r/${made.body.id}" rel="nofollow sponsored">View on Amazon</a>`));
+    assert.ok(!html.includes('<i>enough</i>') && !html.includes('<b>Pro</b>'), 'owner text is escaped');
+    assert.ok(!html.includes('amazon.in/dp'), 'no affiliate URL in the page');
+    assert.doesNotMatch(html, /rel="preload" as="image"/);
+    assert.equal((html.match(/<\/script>/g) ?? []).length, (html.match(/<script/g) ?? []).length);
+    assert.deepEqual(embedded(html).products?.map(p => p.id), [made.body.id]);
+
+    // An edited title keeps old links working; the canonical link names the current address.
+    const old = await t.browser().get(`/find/an-older-title-${made.body.id.slice(0, 8)}`);
+    assert.equal(old.status, 200);
+    assert.ok(old.text.includes(`<link rel="canonical" href="http://localhost${path}">`));
+
+    for (const gone of [findPath(draft.body), '/find/nothing-deadbeef', '/find/no-id-here', `/find/${'a'.repeat(200)}`]) {
+      const missing = await t.browser().get(gone);
+      assert.equal(missing.status, 404, gone);
+      assert.match(missing.text, /<meta name="robots" content="noindex">/);
+      assert.ok(!missing.text.includes('Secret draft'));
+    }
+
+    const sitemap = await t.browser().get('/sitemap.xml');
+    assert.ok(sitemap.text.includes(`<loc>http://localhost${path}</loc>`));
+    assert.ok(!sitemap.text.includes(findPath(draft.body)));
+  });
+
   it('serves articles, a 404 for unknown ones, robots.txt and the sitemap', async () => {
     const list = await t.browser().get('/articles');
     assert.equal(list.status, 200);
     assert.match(list.text, /<title>Journal — Raccoon Hub<\/title>/);
+    assert.doesNotMatch(list.text, /rel="preload" as="image"/);
 
     const first = ARTICLES[0];
     if (first) {

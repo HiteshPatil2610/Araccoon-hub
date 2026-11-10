@@ -3,6 +3,7 @@
 import type { AnalyticsSummary, AuditEntry, OwnerProfile, PasskeyInfo, Product, PublicProduct } from '../../shared/types';
 import type { ProductInput, ProductPatch } from '../../shared/schemas';
 import type { SiteText, SiteTextPatch, SiteTextState } from '../../shared/siteText';
+import type { Collection, CollectionInput, CollectionPatch, CollectionSummary, PublicCollection } from '../../shared/collections';
 import { productImportPreviewSchema, type ProductImportRequest, type ProductImportPreview, type OwnerContentSource } from '../../shared/productImport';
 
 export class HttpError extends Error {
@@ -58,6 +59,8 @@ export const api = {
     if (q.search) p.set('search', q.search);
     return request<PublicProduct[]>('GET', `/api/products${p.size ? `?${p}` : ''}`);
   },
+  collections: () => request<CollectionSummary[]>('GET', '/api/collections', undefined, { timeoutMs: 5000 }),
+  collection: (slug: string) => request<PublicCollection>('GET', `/api/collections/${encodeURIComponent(slug)}`),
   stats: () => request<{ clicksToday: number }>('GET', '/api/stats', undefined, { timeoutMs: 5000 }),
   track: (b: { productId: string; clickKey: string; utmSource?: string; utmMedium?: string; referrer?: string }) =>
     request<{ clickId: string; destinationUrl: string }>('POST', '/api/track', b, { timeoutMs: 4000 }),
@@ -100,6 +103,12 @@ export const api = {
   bulkProducts: (ids: string[], action: 'publish' | 'draft' | 'archive' | 'feature' | 'unfeature' | 'delete') =>
     request<{ affected: number }>('POST', '/api/admin/products/bulk', { ids, action }),
   signImageUpload: () => request<{ cloudName: string; apiKey: string; timestamp: number; signature: string; folder: string; uploadPreset: string }>('POST', '/api/admin/products/images/sign', {}),
+
+  // ---- owner: collections
+  adminCollections: () => request<Collection[]>('GET', '/api/admin/collections'),
+  createCollection: (b: CollectionInput) => request<Collection>('POST', '/api/admin/collections', b),
+  updateCollection: (id: string, b: CollectionPatch) => request<Collection>('PATCH', `/api/admin/collections/${id}`, b),
+  deleteCollection: (id: string) => request<{ ok: true }>('DELETE', `/api/admin/collections/${id}`, {}),
 
   // ---- owner: site text
   adminSiteText: () => request<SiteTextState>('GET', '/api/admin/site-text'),

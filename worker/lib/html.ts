@@ -15,6 +15,8 @@ export interface PageMeta {
   noindex?: boolean;
   publishedTime?: string;
   modifiedTime?: string;
+  /** Site path of an image the page shows first; fetched before the scripts that would otherwise discover it. */
+  preloadImage?: string;
   /** schema.org objects, written as JSON-LD. */
   jsonLd?: object[];
 }
@@ -30,6 +32,7 @@ function headTags(meta: PageMeta, initial: InitialData): string {
     tag('name', 'description', meta.description),
     `<link rel="canonical" href="${escapeHtml(meta.url)}">`,
     meta.noindex ? '<meta name="robots" content="noindex">' : '',
+    meta.preloadImage ? `<link rel="preload" as="image" href="${escapeHtml(meta.preloadImage)}" fetchpriority="high">` : '',
     tag('property', 'og:site_name', 'Raccoon Hub'),
     tag('property', 'og:type', meta.type),
     tag('property', 'og:title', meta.title),

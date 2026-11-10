@@ -22,6 +22,8 @@ export const productInputSchema = z.strictObject({
   affiliateTag: token(64).nullable().default(null),
   subId: token(64).nullable().default(null),
   badge: text(40).nullable().default(null),
+  // The owner's own words on why this find made the cut; empty means none.
+  pickNote: text(280).transform(v => v || null).nullable().default(null),
   featured: z.boolean().default(false),
   status: z.enum(['draft', 'published', 'archived']).default('published'),
   sortOrder: z.number().int().min(-1_000_000).max(1_000_000).default(0),

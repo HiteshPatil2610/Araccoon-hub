@@ -7,5 +7,9 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Cross-Origin-Opener-Policy: same-origin-allow-popups
 
+# Mascot art is not fingerprinted, so cache it for a day rather than forever.
+/art/*
+  Cache-Control: public, max-age=86400
+
 /assets/*
   Cache-Control: public, max-age=31536000, immutable

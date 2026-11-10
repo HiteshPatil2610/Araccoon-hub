@@ -15,9 +15,8 @@ Reference material:
 
 - [Public-repo checklist](../docs/OPEN_SOURCE_CHECKLIST.md) — what is in place and the maintainer's remaining GitHub steps
 
-- [Screenshot manifest](ui-screenshots/README.md)
 - [Product URL import implementation plan](product-url-import-plan.md) — scraping provider isolation, future API adapter, and manual cutover runbook (proposal)
 - [Implemented product URL assistance](product-url-assistance.md) — owner-supplied content flow and current API preparation boundary
-- [Responsive QA report](responsive-qa-report.md), [security audit (6 Oct 2026)](security-audit-2026-10-06.md), [video-inspired UI changes](video-inspired-ui-changes.md), [reference frame analysis](reference-frame-analysis/)
+- [Security audit (6 Oct 2026)](security-audit-2026-10-06.md), [reference frame analysis](reference-frame-analysis/) (hero entrance and scroll handoff contracts)
 
 The current source, shared schemas, API services and server authorization are authoritative. If a document disagrees with the code, fix the document.

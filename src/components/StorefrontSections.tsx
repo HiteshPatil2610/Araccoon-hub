@@ -16,7 +16,7 @@ const added = (iso: string) => new Date(iso).toLocaleDateString('en', { month: '
 
 const MASCOT_ART = {
   hero: 'raccoon-hero-crossed-arms',
-  box: 'raccoon-picks-box',
+  box: 'raccoon-picks-box-720', // never shown taller than 300 CSS px
   presenter: 'raccoon-story-card-presenter',
   heart: 'raccoon-closing-heart',
 } as const;

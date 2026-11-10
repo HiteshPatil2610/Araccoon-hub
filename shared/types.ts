@@ -21,6 +21,7 @@ export interface PublicProduct {
   reviewCount: number;
   imageUrl: string;
   badge: string | null;
+  pickNote: string | null; // the owner's reason for choosing it, in their own words
   featured: boolean;
   store: string; // e.g. "amazon.in", for the "View on Amazon.in" label
   createdAt: string;

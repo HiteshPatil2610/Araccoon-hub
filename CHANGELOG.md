@@ -10,6 +10,10 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Collections:** owner-made themed lists of finds with their own pages (`/collections/<slug>`), managed in a new owner hub page, linked from the storefront and listed in the sitemap (migration 8).
+- **Shareable finds:** every find has its own link (`/find/<title>-<id>`) that opens its quick view, with its own title, description and preview image, a Share button, and an entry in the sitemap.
+- **Why we picked it:** an optional owner note (up to 280 characters) on each find, edited in the product editor and shown at the top of Quick View (migration 7, `products.pick_note`).
+- The home page preloads the hero mascot image and the two first-screen fonts.
 - Code of conduct, issue and pull request templates, CODEOWNERS, Dependabot config and this changelog.
 - [Public-repo checklist](docs/OPEN_SOURCE_CHECKLIST.md) with the maintainer's remaining manual steps.
 

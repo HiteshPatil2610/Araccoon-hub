@@ -65,6 +65,7 @@ npm run dev                           # http://localhost:5173
 | What | Where | How it reaches the site |
 |---|---|---|
 | Products | Owner hub → **Products** | Database; live within a minute |
+| Collections (themed lists of finds) | Owner hub → **Collections** | Database; live within a minute once published with at least one published find |
 | Short storefront text (hero, story, footer, search title and description) | Owner hub → **Site text** | Database; live within a minute. Reset any field to its original text |
 | Articles | Markdown files in [`content/articles/`](content/articles/README.md) | Compiled at build; publish by committing and deploying |
 
@@ -72,7 +73,7 @@ Article rules (front matter, alt text, no direct Amazon links: list product ids 
 
 ## Pages, search and sharing
 
-The Worker serves `/`, `/articles` and `/articles/<slug>` itself (`worker/routes/pages.ts`). It fills the built `index.html` with the page's title, description, canonical link, Open Graph/Twitter share tags (image: `public/og-image.jpg`, made by `art/og/make_og.py`), JSON-LD, a `<noscript>` text version, and the page's data (site text and products), so the first render needs no API call. Rendered pages are cached at the edge for 60 seconds in production. It also serves `/robots.txt` and `/sitemap.xml`; outside production both pages and robots.txt tell search engines to stay away.
+The Worker serves `/`, `/articles`, `/articles/<slug>`, each find's share link `/find/<slug>` and each collection page `/collections/<slug>` itself (`worker/routes/pages.ts`). It fills the built `index.html` with the page's title, description, canonical link, Open Graph/Twitter share tags (image: `public/og-image.jpg`, made by `art/og/make_og.py`), JSON-LD, a `<noscript>` text version, and the page's data (site text and products), so the first render needs no API call. Rendered pages are cached at the edge for 60 seconds in production. It also serves `/robots.txt` and `/sitemap.xml`; outside production both pages and robots.txt tell search engines to stay away.
 
 | Command | What it does |
 |---|---|

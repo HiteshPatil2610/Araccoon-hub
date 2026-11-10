@@ -6,7 +6,7 @@ import path from 'node:path';
 const root = path.resolve('dist/client');
 const port = Number(process.env.PORT || 5174);
 const names = ['Fixture desk object', 'Fixture keyboard accessory', 'Fixture home object with a deliberately long title for responsive checks', 'Fixture missing photo'];
-const products = names.map((title,i) => ({ id:`00000000-0000-4000-8000-00000000000${i}`, title, description:'Browser QA fixture only. This is not a real product listing or a business metric.', category: i%2 ? 'Tech & Gadgets':'Desk & Office', rating:0, reviewCount:0, imageUrl:i===3?'/missing-fixture.png':'/favicon.svg', badge:null, featured:i<3, store:'amazon.in', createdAt:'2026-10-03T00:00:00Z', updatedAt:'2026-10-03T00:00:00Z', imagePublicId:null, affiliateUrl:'https://www.amazon.in/dp/B000000000', affiliateTag:null, subId:null, status:'published', sortOrder:i, linkHealthy:true }));
+const products = names.map((title,i) => ({ id:`00000000-0000-4000-8000-00000000000${i}`, title, description:'Browser QA fixture only. This is not a real product listing or a business metric.', category: i%2 ? 'Tech & Gadgets':'Desk & Office', rating:0, reviewCount:0, imageUrl:i===3?'/missing-fixture.png':'/favicon.svg', badge:null, pickNote:i===0?'QA fixture note: shown only to check the layout of the owner note.':null, featured:i<3, store:'amazon.in', createdAt:'2026-10-03T00:00:00Z', updatedAt:'2026-10-03T00:00:00Z', imagePublicId:null, affiliateUrl:'https://www.amazon.in/dp/B000000000', affiliateTag:null, subId:null, status:'published', sortOrder:i, linkHealthy:true }));
 let mode='normal'; let saves=0;
 products[2].description = [
  'Compatibility: QA fixture for a long specification value that wraps over multiple lines on a phone without escaping its container.',
@@ -33,6 +33,11 @@ http.createServer(async(req,res)=>{
   if(u.pathname==='/api/auth/state') return json({owner:mode==='signed-out'?null:owner,setupOpen:false,turnstileSiteKey:null,devLogin:false});
   if(u.pathname==='/api/products') return mode==='catalog-failed'?json({error:'QA fixture request failure.'},503):json(mode==='empty'?[]:products.map(p=>({...p,featured:mode==='no-featured'?false:mode==='one-featured'?p.sortOrder===0:p.featured})));
   if(u.pathname==='/api/admin/products' && req.method==='GET') return json(products);
+  const collections=[{id:'10000000-0000-4000-8000-000000000001',slug:'fixture-desk-upgrades',title:'Fixture desk upgrades',description:'Browser QA fixture collection with a description long enough to wrap on a phone.',status:'published',sortOrder:0,productIds:[products[0].id,products[2].id,products[3].id],updatedAt:at},{id:'10000000-0000-4000-8000-000000000002',slug:'fixture-draft-collection-with-a-deliberately-long-title',title:'Fixture draft collection with a deliberately long title',description:'',status:'draft',sortOrder:1,productIds:[],updatedAt:at}];
+  const summary=c=>({id:c.id,slug:c.slug,title:c.title,description:c.description,productCount:c.productIds.length,coverImageUrl:products.find(p=>p.id===c.productIds[0])?.imageUrl??null});
+  if(u.pathname==='/api/admin/collections' && req.method==='GET') return json(collections);
+  if(u.pathname==='/api/collections') return json(mode==='empty'?[]:collections.filter(c=>c.status==='published').map(summary));
+  if(u.pathname.startsWith('/api/collections/')){ const c=collections.find(c=>c.status==='published'&&`/api/collections/${c.slug}`===u.pathname); return c?json({...summary(c),products:c.productIds.map(id=>products.find(p=>p.id===id))}):json({error:'Collection not found.'},404); }
   if(u.pathname==='/api/admin/product-imports/preview') return json(importPreview);
   // No write from this QA server is ever persisted or forwarded.
   if(req.method!=='GET') { saves++; return json({error:'QA fixture write failed; values should remain.'},503); }

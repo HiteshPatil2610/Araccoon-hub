@@ -1,9 +1,9 @@
 """Lay out the two RACCOON triptychs (three A4 panels each) from the website's mascot cut-outs.
 
-  python art/posters/compose.py [--src public/art/video-concept] [--only spec|drop|signature]
+  python art/posters/compose.py [--src art/mascot] [--only spec|drop|signature]
 
 Uses raccoon-hero-crossed-arms.png (spec sheet), raccoon-picks-box.png (streetwear drop) and
-raccoon-story-card-presenter.png (signature) from the site, and writes,
+raccoon-story-card-presenter.png (signature) from art/mascot, and writes,
 per set, panel-1..3.png and .pdf (A4 at 300 DPI plus 3 mm bleed), full.png and a framed wall preview.
 The artwork is one continuous 7440x3508 image; each panel is a slice of it, so the raccoon crosses the seams.
 """
@@ -772,7 +772,7 @@ def preview(panels, pw=620, gap=46, margin=150):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--src', default=os.path.join(ROOT, 'public', 'art', 'video-concept'))
+    ap.add_argument('--src', default=os.path.join(ROOT, 'art', 'mascot'))
     ap.add_argument('--only', choices=['spec', 'drop', 'signature', 'trio', 'ink', 'splash', 'arms', 'noir',
                                        'noir-mono'])
     a = ap.parse_args()

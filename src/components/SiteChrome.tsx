@@ -173,7 +173,7 @@ export function Footer() {
             <Link to="/admin" className="inline-flex min-h-11 items-center mt-1 eyebrow text-white/60 hover:text-white">Owner sign-in ↗</Link>
           </div>
           <Reveal effect="rise" distance={24} once className="cd-footer__mascot" morph="move">
-            <img src="/art/video-concept/raccoon-closing-heart.webp" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} />
+            <img src="/art/video-concept/raccoon-closing-heart.webp" srcSet="/art/video-concept/raccoon-closing-heart-720.webp 676w, /art/video-concept/raccoon-closing-heart.webp 1200w" sizes="(max-width: 639px) 270px, (max-width: 1023px) 340px, 31vw" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} />
           </Reveal>
         </div>
       </div>

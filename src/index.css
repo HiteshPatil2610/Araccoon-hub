@@ -642,6 +642,13 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 }
 
 /* Product tile image: always on white so Amazon packshots read cleanly in both themes */
+/* A collection link on the storefront: thumbnail, name and count in one tappable row. */
+.collection-card { display: flex; align-items: center; gap: 14px; min-height: 88px; padding: 12px 16px 12px 12px; transition: border-color var(--dur-fast, 150ms) var(--ease-cine), transform var(--dur-fast, 150ms) var(--ease-cine); }
+.collection-card:hover { border-color: var(--cd-red-500); transform: translateY(-2px); }
+@media (prefers-reduced-motion: reduce) { .collection-card:hover { transform: none; } }
+/* The owner's own note in Quick View: a quiet pull quote with the one crimson accent. */
+.pick-note { margin: 16px 0 0; padding-left: 14px; border-left: 2px solid var(--cd-red-500); min-width: 0; }
+.pick-note blockquote { margin: 0; font-size: 1.0625rem; line-height: 1.45; font-weight: 500; overflow-wrap: anywhere; }
 .cd-still { position: relative; overflow: hidden; border-radius: var(--radius-m); background: #fff; }
 .cd-still img { transition: transform var(--dur-slow) var(--ease-cine); }
 .group:hover .cd-still img { transform: scale(1.04); }

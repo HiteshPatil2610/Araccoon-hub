@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link, useLocation, useMatch, useNavigate, useSearchParams } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowDown, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpDown, RefreshCw } from 'lucide-react';
 import { api } from '../lib/api';
-import { takeInitialProducts } from '../lib/initialData';
+import { initialData, takeInitialProducts } from '../lib/initialData';
 import { useSiteText } from '../lib/siteText';
 import { usePageMeta } from '../lib/pageMeta';
 import { featuredProducts } from '../lib/catalog';
@@ -17,6 +17,10 @@ import { Cutout, PicksSection, StorySection } from '../components/StorefrontSect
 import { CATEGORIES, type PublicProduct } from '../../shared/types';
 import { formatProductCopy } from '../../shared/productCopy';
 import { ProductOverlays } from '../components/ProductOverlays';
+import { useToast } from '../components/Toasts';
+import { findBySlug, findPath } from '../../shared/finds';
+import { collectionPath, type CollectionSummary } from '../../shared/collections';
+import { ProductImage } from '../components/ProductImage';
 
 type Sort = 'curated' | 'popular' | 'recent' | 'title';
 
@@ -28,11 +32,39 @@ export function Storefront() {
   const [search, setSearch] = useState(params.get('q') ?? '');
   const [sort, setSort] = useState<Sort>('curated');
   const text = useSiteText();
-  usePageMeta(text.seoTitle, text.seoDescription);
   // The Worker embeds the catalog in the page, so the first render needs no fetch.
   const [products, setProducts] = useState<PublicProduct[] | null>(() => withCopy(takeInitialProducts()));
   const [error, setError] = useState('');
-  const [quick, setQuick] = useState<PublicProduct | null>(null);
+  // Collections are an extra: if they cannot be loaded the catalog simply shows without them.
+  const [collections, setCollections] = useState<CollectionSummary[] | null>(() => initialData().collections ?? null);
+  useEffect(() => {
+    if (collections) return;
+    let live = true;
+    api.collections().then(list => { if (live) setCollections(list); }).catch(() => { if (live) setCollections([]); });
+    return () => { live = false; };
+  }, [collections]);
+  // Quick view lives in the address (/find/<slug>), so an open find can be shared, reloaded and closed with Back.
+  const findSlugParam = useMatch('/find/:slug')?.params.slug;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const quick = useMemo(() => (findSlugParam && products ? findBySlug(products, findSlugParam) : null), [findSlugParam, products]);
+  usePageMeta(quick ? `${quick.title} — Raccoon Hub` : text.seoTitle, quick ? quick.pickNote || text.seoDescription : text.seoDescription);
+  const setQuick = useCallback((p: PublicProduct) => {
+    navigate({ pathname: findPath(p), search: location.search }, { state: { inApp: true }, preventScrollReset: true });
+  }, [navigate, location.search]);
+  const closeQuick = useCallback(() => {
+    // Opened from this page: Back returns to where the visitor was. Arrived by link: the storefront replaces it.
+    if ((location.state as { inApp?: boolean } | null)?.inApp) navigate(-1);
+    else navigate({ pathname: '/', search: location.search }, { replace: true, preventScrollReset: true });
+  }, [navigate, location.state, location.search]);
+  const missingFind = useRef<string | null>(null); // say it once per address, even if the effect re-runs
+  useEffect(() => {
+    if (!findSlugParam || !products || quick) return;
+    if (missingFind.current !== findSlugParam) toast('error', 'That find is no longer available.');
+    missingFind.current = findSlugParam;
+    navigate({ pathname: '/', search: location.search }, { replace: true, preventScrollReset: true });
+  }, [findSlugParam, products, quick, toast, navigate, location.search]);
   const handoffRef = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
   useHeroHandoff(handoffRef, reducedMotion);
@@ -154,6 +186,26 @@ export function Storefront() {
             </span>
           </div>
 
+          {collections && collections.length > 0 && (
+            <nav aria-labelledby="collections-heading" className="mt-8" data-morph="move">
+              <h3 id="collections-heading" className="eyebrow text-muted-fg">Collections</h3>
+              <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {collections.map(col => (
+                  <li key={col.id}>
+                    <Link to={collectionPath(col.slug)} className="collection-card panel">
+                      {col.coverImageUrl && <ProductImage src={col.coverImageUrl} title={col.title} compact className="w-16 h-16 shrink-0 rounded-[var(--radius-m)] bg-white object-contain p-1" />}
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-display text-2xl leading-none break-words">{col.title}</span>
+                        <span className="block text-sm text-muted-fg mt-1">{col.productCount} {col.productCount === 1 ? 'find' : 'finds'}</span>
+                      </span>
+                      <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
+
           <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
             <div className="min-w-0 max-w-2xl" data-morph="move">
               <label htmlFor="catalog-search" className="field-label">Search products</label>
@@ -224,7 +276,7 @@ export function Storefront() {
       <Footer />
       <Announcement />
 
-      <ProductOverlays quick={quick} onCloseQuick={() => setQuick(null)} outbound={outbound} />
+      <ProductOverlays quick={quick} onCloseQuick={closeQuick} outbound={outbound} />
     </div>
     </HeroEntrance>
   );

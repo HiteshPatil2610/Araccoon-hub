@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowUpRight, CheckCircle2, ExternalLink, X } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, ExternalLink, Share2, X } from 'lucide-react';
 import { Dialog } from './Dialog';
 import { ProductImage } from './ProductImage';
 import { storeLabel } from './ProductCard';
@@ -7,11 +7,29 @@ import { ProductDescription } from './ProductDescription';
 import { SectionLabel } from './cine';
 import type { OutboundSource, useOutbound } from '../lib/outbound';
 import type { PublicProduct } from '../../shared/types';
+import { findPath } from '../../shared/finds';
+import { useToast } from './Toasts';
 
 /** Quick-view dialog and the "Opening Amazon" notice, shared by every page that lists products. */
 export function ProductOverlays({ quick, onCloseQuick, outbound, from }: {
   quick: PublicProduct | null; onCloseQuick: () => void; outbound: ReturnType<typeof useOutbound>; from?: OutboundSource;
 }) {
+  const toast = useToast();
+  // Phones and tablets get the device share sheet; elsewhere the link is copied.
+  const share = async (find: PublicProduct) => {
+    const url = `${window.location.origin}${findPath(find)}`;
+    try {
+      if (typeof navigator.share === 'function' && matchMedia('(pointer: coarse)').matches) {
+        await navigator.share({ title: find.title, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      toast('success', 'Link copied. Paste it anywhere to share this find.');
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return; // the visitor closed the share sheet
+      toast('error', `Could not copy the link: ${url}`);
+    }
+  };
   return (
     <>
       <Dialog open={quick !== null} onClose={onCloseQuick} title={quick?.title ?? ''} wide animated>
@@ -20,11 +38,18 @@ export function ProductOverlays({ quick, onCloseQuick, outbound, from }: {
             <div className="cd-still aspect-square"><ProductImage src={quick.imageUrl} title={quick.title} className="w-full h-full object-contain p-[8%]" /></div>
             <div className="flex flex-col min-w-0">
               <SectionLabel className="text-muted-fg">{quick.category}</SectionLabel>
+              {quick.pickNote && (
+                <figure className="pick-note">
+                  <figcaption className="eyebrow text-red">Why we picked it</figcaption>
+                  <blockquote className="mt-2">{quick.pickNote}</blockquote>
+                </figure>
+              )}
               <ProductDescription text={quick.description} className="mt-4 mb-6" />
               <button type="button" disabled={outbound.state?.status === 'opening'} className="btn btn-primary btn-bar mt-auto" onClick={() => { void outbound.open(quick, from); onCloseQuick(); }}>
                 View on {storeLabel(quick.store)} <ArrowUpRight className="w-4 h-4" />
               </button>
               <p className="mt-2 text-xs text-muted-fg">Opens Amazon in a new tab. Prices are set by Amazon.</p>
+              <button type="button" className="btn mt-4 self-start" onClick={() => void share(quick)}><Share2 className="w-4 h-4" aria-hidden="true" /> Share this find</button>
             </div>
           </div>
         )}
