@@ -4,6 +4,10 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Changed (colour balance)
+
+- **Colour balance:** about 60% page colour, 30% its opposite and 10% crimson in both themes. In light mode the hero, picks and footer are now white; in dark mode product cards and the story section are white; the footer wordmark sits on a crimson band.
+
 ### Changed (licence)
 
 - **Code licence changed from MIT to PolyForm Noncommercial 1.0.0.** Commercial use now needs a licence from the author. Copies taken before this change (up to commit `75551df`) remain under MIT. Contributors grant the author the right to use their contributions commercially (see CONTRIBUTING.md).

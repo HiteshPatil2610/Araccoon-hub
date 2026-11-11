@@ -26,7 +26,7 @@ export function ProductCard({ product, index, onOpen, onQuickView, pending }: {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
       transition={{ duration: 0.9, delay: (index % 4) * 0.12, ease: [0.7, 0, 0.2, 1] }}
-      className="group panel relative flex flex-col justify-between p-3 min-w-0"
+      className="group panel paper relative flex flex-col justify-between p-3 min-w-0"
       data-morph
       aria-labelledby={`p-${product.id}`}
     >

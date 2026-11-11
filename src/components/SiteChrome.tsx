@@ -149,16 +149,21 @@ function MenuButton({ current }: { current: string }) {
 export function Footer() {
   const text = useSiteText();
   return (
-    <footer className="mt-auto bg-ink text-white relative" data-morph-root>
+    <footer className="mt-auto bg-[var(--stage-bg)] text-[var(--stage-fg)] relative" data-morph-root>
       <div className="h-[3px]" style={{ background: 'var(--gradient-section-edge)' }} aria-hidden="true" />
-      <div className="max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)] pt-14">
-        <TrackingReveal from="0.3em" once className="overflow-hidden" morph="type">
-          <p className="font-display text-[clamp(64px,15vw,220px)] leading-[.8] whitespace-nowrap text-center">Raccoon<span className="text-red"> Hub</span></p>
-        </TrackingReveal>
-        <div className="cd-footer__details mt-12 border-t border-white/10">
+      {/* The crimson wordmark band carries most of the page's 10% accent. */}
+      <div className="cd-footer__brand">
+        <div className="max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)]">
+          <TrackingReveal from="0.3em" once className="overflow-hidden" morph="type">
+            <p className="font-display text-[clamp(64px,15vw,220px)] leading-[.8] whitespace-nowrap text-center">Raccoon<span className="cd-footer__hub"> Hub</span></p>
+          </TrackingReveal>
+        </div>
+      </div>
+      <div className="max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)]">
+        <div className="cd-footer__details">
           <div data-morph="move">
             <SectionLabel>The idea</SectionLabel>
-            <p className="mt-4 text-sm text-[var(--cd-gray-300)] max-w-xs">{text.footerIdea}</p>
+            <p className="mt-4 text-sm text-[var(--stage-muted)] max-w-xs">{text.footerIdea}</p>
           </div>
           <nav aria-label="Categories" data-morph="move">
             <SectionLabel>Browse</SectionLabel>
@@ -166,20 +171,20 @@ export function Footer() {
               {CATEGORIES.map(c => <li key={c}><Link to={`/?category=${encodeURIComponent(c)}`} className="inline-flex min-h-11 items-center font-display text-xl hover:text-red transition-colors">{c}</Link></li>)}
             </ul>
           </nav>
-          <div className="text-sm text-[var(--cd-gray-300)]" data-morph="move">
-            <SectionLabel className="text-white">Good to know</SectionLabel>
+          <div className="text-sm text-[var(--stage-muted)]" data-morph="move">
+            <SectionLabel className="text-[var(--stage-fg)]">Good to know</SectionLabel>
             <p className="mt-4">Prices and availability are shown on Amazon and may change.</p>
-            <Link to="/articles" className="inline-flex min-h-11 items-center mt-1 mr-4 eyebrow text-white/60 hover:text-white">Journal ↗</Link>
-            <Link to="/admin" className="inline-flex min-h-11 items-center mt-1 eyebrow text-white/60 hover:text-white">Owner sign-in ↗</Link>
+            <Link to="/articles" className="inline-flex min-h-11 items-center mt-1 mr-4 eyebrow text-[var(--stage-muted)] hover:text-[var(--stage-fg)]">Journal ↗</Link>
+            <Link to="/admin" className="inline-flex min-h-11 items-center mt-1 eyebrow text-[var(--stage-muted)] hover:text-[var(--stage-fg)]">Owner sign-in ↗</Link>
           </div>
           <Reveal effect="rise" distance={24} once className="cd-footer__mascot" morph="move">
             <img src="/art/video-concept/raccoon-closing-heart.webp" srcSet="/art/video-concept/raccoon-closing-heart-720.webp 676w, /art/video-concept/raccoon-closing-heart.webp 1200w" sizes="(max-width: 639px) 270px, (max-width: 1023px) 340px, 31vw" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} />
           </Reveal>
         </div>
       </div>
-      <div className="border-t border-white/10">
-        <p className="max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)] py-5 text-xs text-[var(--cd-gray-300)]">
-          <strong className="text-white font-semibold">Disclosure:</strong> As an Amazon Associate I earn from qualifying purchases.
+      <div className="border-t border-[var(--stage-line)]">
+        <p className="max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)] py-5 text-xs text-[var(--stage-muted)]">
+          <strong className="text-[var(--stage-fg)] font-semibold">Disclosure:</strong> As an Amazon Associate I earn from qualifying purchases.
           {' '}· © {new Date().getFullYear()} Raccoon Hub
         </p>
       </div>

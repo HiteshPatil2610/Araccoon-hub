@@ -124,10 +124,10 @@ export function PicksSection({ total, picks, index, onIndex, onQuick }: Carousel
             <>
               <Swap id={pick.id} dir={dir}>
                 <ScrollCue start={.28} className="cd-scroll-cue--focus"><p className="cd-quote__text">{pick.title}</p></ScrollCue>
-                <ScrollCue start={.45} className="cd-scroll-cue--focus"><p className="mt-3 text-xs text-[var(--cd-gray-300)] line-clamp-3">{descriptionSummary(pick.description)}</p></ScrollCue>
+                <ScrollCue start={.45} className="cd-scroll-cue--focus"><p className="mt-3 text-xs text-[var(--stage-muted)] line-clamp-3">{descriptionSummary(pick.description)}</p></ScrollCue>
               </Swap>
               <ScrollCue start={.55}>
-              <button type="button" className="mt-3 inline-flex items-center gap-1 min-h-11 eyebrow text-white hover:text-[var(--cd-red-300)]" onClick={() => onQuick(pick)}>
+              <button type="button" className="mt-3 inline-flex items-center gap-1 min-h-11 eyebrow text-[var(--stage-fg)] hover:text-[var(--cd-red-500)]" onClick={() => onQuick(pick)}>
                 View details <ArrowUpRight className="w-4 h-4" aria-hidden="true" /><span className="sr-only">: {pick.title}</span>
               </button>
               {picks.length > 1 && (
@@ -201,7 +201,7 @@ export function StorySection({ picks, index, onIndex, onQuick, onOpen, pending }
   const others = picks.filter((_, i) => i !== index);
   const step = (d: number) => picks.length && onIndex((index + d + picks.length) % picks.length);
   return (
-    <section ref={sectionRef} id="story" className="cd-story" data-nav-tone="light" data-morph-root aria-labelledby="story-title">
+    <section ref={sectionRef} id="story" className="cd-story inverse" data-nav-tone="light" data-morph-root aria-labelledby="story-title">
       <Viewfinder size="min(760px, 96vw)" top="62%" />
       <div className="cd-story__directed" ref={titleRef}>
         <h2 id="story-title">

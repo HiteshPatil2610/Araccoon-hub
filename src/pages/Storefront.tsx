@@ -210,7 +210,7 @@ export function Storefront() {
               <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {collections.map(col => (
                   <li key={col.id}>
-                    <Link to={collectionPath(col.slug)} className="collection-card panel">
+                    <Link to={collectionPath(col.slug)} className="collection-card panel paper">
                       {col.coverImageUrl && <ProductImage src={col.coverImageUrl} title={col.title} compact className="w-16 h-16 shrink-0 rounded-[var(--radius-m)] bg-white object-contain p-1" />}
                       <span className="min-w-0 flex-1">
                         <span className="block font-display text-2xl leading-none break-words">{col.title}</span>
