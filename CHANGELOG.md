@@ -6,6 +6,8 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 
 ### Changed (colour balance)
 
+- **Theme switch:** the new theme now bleeds out from the toggle like ink in water, replacing the expanding circle.
+- **Menu button:** on phones it stays in place and its two lines fold into a cross.
 - **Colour balance:** about 60% page colour, 30% its opposite and 10% crimson in both themes. In light mode the hero, picks and footer are now white; in dark mode product cards and the story section are white; the footer wordmark sits on a crimson band.
 
 ### Changed (licence)

@@ -90,17 +90,29 @@ export function Navbar() {
 
 const EASE = [0.83, 0, 0.17, 1] as const; // --ease-curtain
 
+// The menu disc's two lines (long over short) fold into a cross; they sit 5.6px apart (1.6px line + 4px gap).
+const LINE_TOP = { closed: { width: 20, y: 0, rotate: 0 }, open: { width: 20, y: 2.8, rotate: 45 } };
+const LINE_BOTTOM = { closed: { width: 13, y: 0, rotate: 0 }, open: { width: 20, y: -2.8, rotate: -45 } };
+
 /** Phone/tablet navigation: the design system's solid menu disc opens a full-screen black curtain that
-    grows out of the button as a circle; links rise in one after another. Desktop keeps the inline links. */
+    grows out of the button as a circle; links rise in one after another. Desktop keeps the inline links.
+    The curtain's close button is drawn in exactly the same place and colours as the menu disc, so the
+    disc appears to stay put while its two lines turn into a cross (and back on close). */
 function MenuButton({ current }: { current: string }) {
   const [open, setOpen] = useState(false);
   const btn = useRef<HTMLButtonElement>(null);
   const [origin, setOrigin] = useState('100% 0%');
+  const [from, setFrom] = useState({ bg: '#fff', fg: '#0A0A0A' });
   const panel = useDialog(open, () => setOpen(false));
 
   const show = () => {
-    const r = btn.current?.getBoundingClientRect();
-    if (r) setOrigin(`${r.left + r.width / 2}px ${r.top + r.height / 2}px`);
+    const el = btn.current;
+    if (el) {
+      const r = el.getBoundingClientRect();
+      setOrigin(`${r.left + r.width / 2}px ${r.top + r.height / 2}px`);
+      const style = getComputedStyle(el);
+      setFrom({ bg: style.backgroundColor, fg: style.color });
+    }
     setOpen(true);
   };
   const go = (id: string) => {
@@ -123,7 +135,12 @@ function MenuButton({ current }: { current: string }) {
             transition={{ duration: 0.7, ease: EASE }}>
             <div className="cd-menu__top">
               <span className="font-display text-[26px] sm:text-[32px] leading-none pt-1">Raccoon<span className="text-red"> Hub</span></span>
-              <button type="button" className="icon-btn !border-white/70" onClick={() => setOpen(false)} aria-label="Close menu" data-initial-focus><X className="w-5 h-5" /></button>
+              <motion.button type="button" className="cd-menu-btn cd-menu-btn--close" onClick={() => setOpen(false)} aria-label="Close menu" data-initial-focus
+                initial={{ backgroundColor: from.bg, color: from.fg }} animate={{ backgroundColor: '#FFFFFF', color: '#0A0A0A' }} exit={{ backgroundColor: from.bg, color: from.fg }}
+                transition={{ duration: 0.45, ease: EASE }}>
+                <motion.span initial={LINE_TOP.closed} animate={LINE_TOP.open} exit={LINE_TOP.closed} transition={{ duration: 0.45, ease: EASE }} />
+                <motion.span initial={LINE_BOTTOM.closed} animate={LINE_BOTTOM.open} exit={LINE_BOTTOM.closed} transition={{ duration: 0.45, ease: EASE }} />
+              </motion.button>
             </div>
             <nav aria-label="Site" className="cd-menu__links">
               {[...LINKS.map(l => ({ ...l, to: '' })), { id: 'articles', label: 'Journal', to: '/articles' }, { id: 'admin', label: 'Owner hub', to: '/admin' }].map((l, i) => (

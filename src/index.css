@@ -231,17 +231,26 @@
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-track { background: var(--background); }
 ::-webkit-scrollbar-thumb { background: var(--cd-red-500); border-radius: 999px; }
+/* The page itself scrolls without a visible scrollbar (wheel, touch, keyboard and the scroll position all still work).
+   Inner scroll areas such as dialogs and tables keep the slim red bar above. */
+html { scrollbar-width: none; }
+html::-webkit-scrollbar { display: none; }
 
 canvas[aria-hidden="true"] { opacity: .4; }
 
-/* Circular theme transition (View Transitions API) */
+/* Ink-bleed theme transition (View Transitions API). The new snapshot sits on top and is masked by an
+   animated SVG (src/lib/inkReveal.ts) that spreads like ink from the toggle. The SVG animates itself;
+   the hold animation only keeps the transition open for the same length of time. */
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
-html.theme-going-dark::view-transition-new(root) { z-index: 9999; animation: theme-circle-expand 520ms var(--ease-cine) forwards; }
-html.theme-going-light::view-transition-old(root) { z-index: 9999; animation: theme-circle-shrink 520ms var(--ease-cine) forwards; }
+html.theme-transitioning::view-transition-new(root) {
+  z-index: 9999;
+  -webkit-mask: var(--theme-ink) 0 0 / 100% 100% no-repeat;
+  mask: var(--theme-ink) 0 0 / 100% 100% no-repeat;
+  animation: theme-ink-hold var(--theme-ink-duration, 1100ms) linear both;
+}
 html.theme-transitioning *,
 html.theme-transitioning .cd-nav::before { transition: none !important; }
-@keyframes theme-circle-expand { from { clip-path: circle(0 at var(--x, 50%) var(--y, 50%)); } to { clip-path: circle(150vmax at var(--x, 50%) var(--y, 50%)); } }
-@keyframes theme-circle-shrink { from { clip-path: circle(150vmax at var(--x, 50%) var(--y, 50%)); } to { clip-path: circle(0 at var(--x, 50%) var(--y, 50%)); } }
+@keyframes theme-ink-hold { from { opacity: 1; } to { opacity: 1; } }
 
 /* ---- Cine Daily editorial pieces ---- */
 .section-label { display: inline-flex; align-items: center; gap: 12px; }
@@ -341,6 +350,9 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 .cd-menu-btn span { display: block; height: 1.6px; border-radius: 2px; background: currentColor; }
 .cd-menu-btn span:first-child { width: 20px; } .cd-menu-btn span:last-child { width: 13px; }
 @media (max-width: 1023px) { .cd-menu-btn { display: inline-flex; } }
+/* The curtain's copy of the disc: always shown while the curtain is open; motion drives its lines into a cross. */
+.cd-menu-btn--close { display: inline-flex; }
+.cd-menu-btn--close:hover { transform: none; }
 .cd-menu { position: fixed; inset: 0; z-index: 60; background: var(--cd-black); color: #fff; display: flex; flex-direction: column; padding: 0 var(--page-gutter) 28px; overflow-y: auto; }
 .cd-menu::before { content: ""; position: absolute; left: 50%; top: 55%; width: min(560px, 120vw, 80svh); aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid rgba(255,255,255,.07); pointer-events: none; }
 .cd-menu__top { position: sticky; top: 0; z-index: 1; background: var(--cd-black); height: var(--nav-height); flex: none; display: flex; align-items: center; justify-content: space-between; }
