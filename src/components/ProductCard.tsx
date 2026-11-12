@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { ArrowRight, Bookmark, Eye } from 'lucide-react';
 import type { PublicProduct } from '../../shared/types';
 import { descriptionSummary } from '../../shared/productCopy';
-import { useStash } from '../lib/stash';
+import { ListPicker, useSaveToList } from './ListPicker';
 
 export function storeLabel(store: string) {
   return store === 'amazon.in' ? 'Amazon.in' : store === 'amazon.com' ? 'Amazon' : store;
@@ -12,17 +12,15 @@ export function storeLabel(store: string) {
 /**
  * Catalog card. The whole card opens Quick View (the Amazon link lives there, so visitors see the find first):
  * the "Quick view" button's ::after covers the card, so a click anywhere lands on one real, focusable button.
- * Save to stash sits above that layer and works on its own.
+ * The save button sits above that layer and opens "Save to a list" without opening Quick View.
  */
-export function ProductCard({ product, index, onQuickView, isNew = false }: {
+export function ProductCard({ product, index, onQuickView }: {
   product: PublicProduct; index: number; onQuickView: (p: PublicProduct) => void;
-  /** Added since this browser's last visit. */
-  isNew?: boolean;
 }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
-  const stash = useStash();
-  const saved = stash.ids.includes(product.id);
+  const save = useSaveToList(product);
+  const pickerId = `save-${product.id}`;
 
   return (
     <motion.article
@@ -31,7 +29,7 @@ export function ProductCard({ product, index, onQuickView, isNew = false }: {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
       transition={{ duration: 0.9, delay: (index % 4) * 0.12, ease: [0.7, 0, 0.2, 1] }}
-      className="group panel paper product-card relative flex flex-col p-3 min-w-0"
+      className={`group panel paper product-card relative flex flex-col p-3 min-w-0 ${save.open ? 'product-card--picking' : ''}`}
       data-morph
       aria-labelledby={`p-${product.id}`}
     >
@@ -50,15 +48,20 @@ export function ProductCard({ product, index, onQuickView, isNew = false }: {
             className={`w-full h-full object-contain p-[8%] ${loaded ? 'opacity-100' : 'opacity-0'}`}
           />
         )}
-        <button type="button" onClick={e => { e.stopPropagation(); stash.toggle(product.id); }} aria-pressed={saved} title="Kept in this browser only"
-          className={`stash-btn product-card__save absolute top-3 right-3 ${saved ? 'stash-btn--on' : ''}`}
-          aria-label={`${saved ? 'Remove from' : 'Save to'} your stash: ${product.title}`}>
-          <Bookmark className="w-4 h-4" aria-hidden="true" fill={saved ? 'currentColor' : 'none'} />
+        <button ref={save.trigger} type="button" onClick={e => { e.stopPropagation(); save.press(); }} aria-expanded={save.open} aria-controls={save.open ? pickerId : undefined}
+          title="Lists are kept in this browser only"
+          className={`stash-btn product-card__save absolute top-3 right-3 ${save.saved ? 'stash-btn--on' : ''}`}
+          aria-label={save.saved ? `Saved in ${save.inLists.length === 1 ? `“${save.inLists[0]!.name}”` : `${save.inLists.length} lists`}. Change lists: ${product.title}` : `Save to a list: ${product.title}`}>
+          <Bookmark className="w-4 h-4" aria-hidden="true" fill={save.saved ? 'currentColor' : 'none'} />
         </button>
       </div>
+      {save.open && (
+        <div id={pickerId} className="product-card__picker">
+          <ListPicker product={product} onClose={save.close} trigger={save.trigger} status={save.status} className="paper" />
+        </div>
+      )}
       <div className="flex items-center gap-2 mb-2 flex-wrap px-1">
         <span className="eyebrow text-muted-fg">{product.category} .</span>
-        {isNew && <span className="chip chip-new">New</span>}
         {product.badge && <span className="chip !bg-red !border-red !text-white">{product.badge}</span>}
       </div>
       <h3 id={`p-${product.id}`} className="px-1 line-clamp-2 text-[28px]">

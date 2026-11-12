@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { featuredProducts, neighbours, pickSurprise, relatedFinds } from '../../src/lib/catalog';
+import { featuredProducts, findOfTheDay, neighbours, pickSurprise, relatedFinds, siteDay } from '../../src/lib/catalog';
 import type { PublicProduct } from '../../shared/types';
 
 const product = (id: string, overrides: Partial<PublicProduct> = {}): PublicProduct => ({
@@ -60,4 +60,18 @@ test('more like this puts the same category first, tops up with other finds and 
   const lonely = relatedFinds([open, product('tech', { category: 'Tech & Gadgets' })], open);
   assert.deepEqual([lonely.finds.map(p => p.id), lonely.similar], [['tech'], false]);
   assert.deepEqual(relatedFinds([open], open).finds, []);
+});
+test('the site day follows India time, not the visitor clock', () => {
+  assert.equal(siteDay(new Date('2026-11-12T18:29:00Z')), '2026-11-12');
+  assert.equal(siteDay(new Date('2026-11-12T18:31:00Z')), '2026-11-13', 'after midnight in India');
+});
+test('find of the day: same for a given day, every find has a turn before any repeats, image required', () => {
+  const finds = ['a', 'b', 'c', 'd', 'e'].map(id => product(id));
+  assert.equal(findOfTheDay([], '2026-11-12'), null);
+  assert.equal(findOfTheDay([product('x', { imageUrl: ' ' })], '2026-11-12'), null);
+  assert.equal(findOfTheDay(finds, '2026-11-12'), findOfTheDay([...finds].reverse(), '2026-11-12'), 'display order does not matter');
+  const days = ['2026-11-12', '2026-11-13', '2026-11-14', '2026-11-15', '2026-11-16'];
+  const picks = days.map(d => findOfTheDay(finds, d)!.id);
+  assert.equal(new Set(picks).size, 5, 'five days, five different finds');
+  assert.equal(findOfTheDay(finds, '2026-11-17')!.id, picks[0], 'then the cycle starts again');
 });

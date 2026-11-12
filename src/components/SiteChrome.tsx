@@ -74,6 +74,8 @@ export function Navbar() {
             <li aria-hidden="true" className="cd-nav__dot" />
             <li><Link to="/articles">Journal</Link></li>
             <li aria-hidden="true" className="cd-nav__dot" />
+            <li><Link to="/stash">Stash</Link></li>
+            <li aria-hidden="true" className="cd-nav__dot" />
             <li><Link to="/admin">Owner hub</Link></li>
           </ul>
         </nav>
@@ -143,7 +145,7 @@ function MenuButton({ current }: { current: string }) {
               </motion.button>
             </div>
             <nav aria-label="Site" className="cd-menu__links">
-              {[...LINKS.map(l => ({ ...l, to: '' })), { id: 'articles', label: 'Journal', to: '/articles' }, { id: 'admin', label: 'Owner hub', to: '/admin' }].map((l, i) => (
+              {[...LINKS.map(l => ({ ...l, to: '' })), { id: 'articles', label: 'Journal', to: '/articles' }, { id: 'stash', label: 'Your stash', to: '/stash' }, { id: 'admin', label: 'Owner hub', to: '/admin' }].map((l, i) => (
                 <motion.div key={l.id} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20, transition: { duration: 0.2 } }}
                   transition={{ duration: 0.7, delay: 0.18 + i * 0.07, ease: [0.7, 0, 0.2, 1] }}>
                   {l.to

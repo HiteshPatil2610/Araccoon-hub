@@ -1,6 +1,6 @@
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowUpRight, Bookmark, CheckCircle2, ChevronLeft, ChevronRight, Dices, ExternalLink, Share2, X } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, ChevronLeft, ChevronRight, Dices, ExternalLink, Share2, X } from 'lucide-react';
 import { Dialog } from './Dialog';
 import { ProductImage } from './ProductImage';
 import { storeLabel } from './ProductCard';
@@ -10,9 +10,9 @@ import type { OutboundSource, useOutbound } from '../lib/outbound';
 import type { PublicProduct } from '../../shared/types';
 import { findPath } from '../../shared/finds';
 import { useToast } from './Toasts';
-import { useStash } from '../lib/stash';
+import { QuickViewSave } from './ListPicker';
+import { shareLink } from '../lib/share';
 import { neighbours, relatedFinds } from '../lib/catalog';
-import { useRecent } from '../lib/visits';
 
 /** Quick-view dialog and the "Opening Amazon" notice, shared by every page that lists products. */
 export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise = false, onSurprise, browse, pool, onShow }: {
@@ -25,7 +25,6 @@ export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise 
   onShow?: (find: PublicProduct) => void;
 }) {
   const toast = useToast();
-  const stash = useStash();
   const root = useRef<HTMLDivElement>(null);
   const nav = quick && onShow && browse ? neighbours(browse, quick.id) : null;
   const more = quick && onShow ? relatedFinds(pool ?? browse ?? [], quick) : null;
@@ -35,9 +34,6 @@ export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise 
   const jumped = useRef(false);
   const show = (find: PublicProduct, jump = false) => { jumped.current = jump; requested.current.push(find.id); onShow?.(find); };
   const quickId = quick?.id;
-  // Every find opened here is remembered (in this browser only) for "Pick up where you left off".
-  const { record } = useRecent();
-  useEffect(() => { if (quickId) record(quickId); }, [quickId, record]);
   useEffect(() => {
     const at = quickId ? requested.current.indexOf(quickId) : -1;
     requested.current = at < 0 ? [] : requested.current.slice(at + 1); // anything else (Back, Another one) starts afresh
@@ -76,21 +72,7 @@ export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise 
     const dx = e.clientX - start.x, dy = e.clientY - start.y;
     if (Math.abs(dx) >= 48 && Math.abs(dx) > Math.abs(dy) * 1.5) step.current(dx > 0 ? -1 : 1);
   };
-  // Phones and tablets get the device share sheet; elsewhere the link is copied.
-  const share = async (find: PublicProduct) => {
-    const url = `${window.location.origin}${findPath(find)}`;
-    try {
-      if (typeof navigator.share === 'function' && matchMedia('(pointer: coarse)').matches) {
-        await navigator.share({ title: find.title, url });
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      toast('success', 'Link copied. Paste it anywhere to share this find.');
-    } catch (e) {
-      if (e instanceof DOMException && e.name === 'AbortError') return; // the visitor closed the share sheet
-      toast('error', `Could not copy the link: ${url}`);
-    }
-  };
+  const share = (find: PublicProduct) => shareLink(`${window.location.origin}${findPath(find)}`, find.title, toast, 'Link copied. Paste it anywhere to share this find.');
   return (
     <>
       <Dialog open={quick !== null} onClose={onCloseQuick} title={quick?.title ?? ''} wide animated>
@@ -123,9 +105,7 @@ export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise 
                   <p className="mt-2 text-xs text-muted-fg">Opens Amazon in a new tab. Prices are set by Amazon.</p>
                 </div>
                 <div className="quick-view__actions">
-                  <button type="button" className={`btn ${stash.ids.includes(quick.id) ? 'btn-mint' : ''}`} aria-pressed={stash.ids.includes(quick.id)} title="Kept in this browser only" onClick={() => stash.toggle(quick.id)}>
-                    <Bookmark className="w-4 h-4" aria-hidden="true" fill={stash.ids.includes(quick.id) ? 'currentColor' : 'none'} /> {stash.ids.includes(quick.id) ? 'In your stash' : 'Save to stash'}
-                  </button>
+                  <QuickViewSave key={quick.id} product={quick} />
                   <button type="button" className="btn" onClick={() => void share(quick)}><Share2 className="w-4 h-4" aria-hidden="true" /> Share this find</button>
                   {surprise && onSurprise && <button type="button" className="btn" onClick={onSurprise}><Dices className="w-4 h-4" aria-hidden="true" /> Another one</button>}
                 </div>

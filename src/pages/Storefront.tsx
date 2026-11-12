@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useMatch, useNavigate, useSearchParams } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowDown, ArrowRight, ArrowUpDown, Bookmark, Dices, RefreshCw, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpDown, Bookmark, Dices, RefreshCw } from 'lucide-react';
 import { api } from '../lib/api';
 import { initialData, takeInitialProducts } from '../lib/initialData';
 import { useSiteText } from '../lib/siteText';
@@ -18,9 +18,8 @@ import { CATEGORIES, type PublicProduct } from '../../shared/types';
 import { formatProductCopy } from '../../shared/productCopy';
 import { ProductOverlays } from '../components/ProductOverlays';
 import { useToast } from '../components/Toasts';
-import { useStash } from '../lib/stash';
-import { newSince, previousVisit, useRecent } from '../lib/visits';
-import { DailyFind, RecentStrip } from '../components/ReturnVisit';
+import { useStashLists } from '../lib/stash';
+import { DailyFind } from '../components/DailyFind';
 import { findBySlug, findPath } from '../../shared/finds';
 import { collectionPath, type CollectionSummary } from '../../shared/collections';
 import { ProductImage } from '../components/ProductImage';
@@ -34,15 +33,8 @@ export function Storefront() {
   const category = params.get('category') ?? 'All';
   const [search, setSearch] = useState(params.get('q') ?? '');
   const [sort, setSort] = useState<Sort>('curated');
-  // The visitor's saved finds (this browser only). Ids of finds that are no longer published simply match nothing.
-  const stash = useStash();
-  const [stashOnly, setStashOnly] = useState(false);
-  // Return-visit extras, all kept in this browser only: finds added since the last visit, and finds opened on earlier visits.
-  const [since] = useState(previousVisit);
-  const [newOnly, setNewOnly] = useState(false);
-  const recent = useRecent();
-  // Fixed when the page loads, so opening finds now does not push the catalog down behind the Quick View.
-  const [recentAtLoad, setRecentAtLoad] = useState(() => recent.ids);
+  // The visitor's saved lists (this browser only). Ids of finds that are no longer published simply match nothing.
+  const stash = useStashLists();
   const text = useSiteText();
   // The Worker embeds the catalog in the page, so the first render needs no fetch.
   const [products, setProducts] = useState<PublicProduct[] | null>(() => withCopy(takeInitialProducts()));
@@ -107,26 +99,20 @@ export function Storefront() {
     h?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
   };
 
-  const newIds = useMemo(() => new Set(newSince(products ?? [], since).map(p => p.id)), [products, since]);
-  useEffect(() => { if (newOnly && products && newIds.size === 0) setNewOnly(false); }, [newOnly, products, newIds]);
   const day = useMemo(() => siteDay(), []);
   const daily = useMemo(() => findOfTheDay(products ?? [], day), [products, day]);
-  const recentFinds = useMemo(() => recentAtLoad.map(id => products?.find(p => p.id === id)).filter((p): p is PublicProduct => Boolean(p)).slice(0, 4), [recentAtLoad, products]);
   const visible = useMemo(() => {
     if (!products) return [];
     const q = search.trim().toLowerCase();
     const list = products.filter(p =>
-      (!stashOnly || stash.ids.includes(p.id)) &&
-      (!newOnly || newIds.has(p.id)) &&
       (category === 'All' || p.category.toLowerCase() === category.toLowerCase()) &&
       (!q || `${p.title} ${p.description} ${p.category}`.toLowerCase().includes(q)));
     if (sort === 'popular') return [...list].sort((a, b) => b.reviewCount - a.reviewCount);
     if (sort === 'recent') return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     if (sort === 'title') return [...list].sort((a, b) => a.title.localeCompare(b.title));
     return list; // curated order from the owner (featured, sort order, newest)
-  }, [products, category, search, sort, stashOnly, stash.ids, newOnly, newIds]);
-  const stashCount = useMemo(() => (products ?? []).filter(p => stash.ids.includes(p.id)).length, [products, stash.ids]);
-  useEffect(() => { if (stashOnly && products && stashCount === 0) setStashOnly(false); }, [stashOnly, products, stashCount]); // emptied: back to the full catalog
+  }, [products, category, search, sort]);
+  const stashCount = useMemo(() => (products ?? []).filter(p => stash.saved.has(p.id)).length, [products, stash.saved]);
 
   // "Surprise me": a random find from what the filters show (or the whole catalog when they show nothing).
   const surprised = useRef(new Set<string>());
@@ -225,10 +211,9 @@ export function Storefront() {
             </span>
           </div>
 
-          {(daily || recentFinds.length > 0) && (
-            <div className={`catalog-extras ${daily && recentFinds.length ? 'catalog-extras--two' : ''}`} data-morph="move">
-              {daily && <DailyFind find={daily} day={day} onOpen={setQuick} />}
-              {recentFinds.length > 0 && <RecentStrip finds={recentFinds} onOpen={setQuick} onClear={() => { recent.clear(); setRecentAtLoad([]); }} />}
+          {daily && (
+            <div className="catalog-extras" data-morph="move">
+              <DailyFind find={daily} day={day} onOpen={setQuick} />
             </div>
           )}
 
@@ -272,15 +257,10 @@ export function Storefront() {
                 </select>
               </label>
               <button type="button" className="btn" disabled={!products?.length} onClick={surprise}><Dices className="w-4 h-4" aria-hidden="true" /> Surprise me</button>
-              {(newIds.size > 0 || newOnly) && (
-                <button type="button" className={`btn ${newOnly ? 'btn-mint' : ''}`} aria-pressed={newOnly} title="Added since your last visit (remembered in this browser only)" onClick={() => setNewOnly(v => !v)}>
-                  <Sparkles className="w-4 h-4" aria-hidden="true" /> New since last visit <span className="opacity-70">{newIds.size}</span>
-                </button>
-              )}
-              {(stashCount > 0 || stashOnly) && (
-                <button type="button" className={`btn ${stashOnly ? 'btn-mint' : ''}`} aria-pressed={stashOnly} title="Finds you saved, kept in this browser only" onClick={() => setStashOnly(v => !v)}>
-                  <Bookmark className="w-4 h-4" aria-hidden="true" fill={stashOnly ? 'currentColor' : 'none'} /> Your stash <span className="opacity-70">{stashCount}</span>
-                </button>
+              {stashCount > 0 && (
+                <Link to="/stash" className="btn" title="Your saved lists, kept in this browser only">
+                  <Bookmark className="w-4 h-4" aria-hidden="true" fill="currentColor" /> Your stash <span className="opacity-70">{stashCount}</span>
+                </Link>
               )}
             </div>
           </div>
@@ -293,10 +273,10 @@ export function Storefront() {
               </button>
             ))}
           </div>
-          {(search || category !== 'All' || stashOnly || newOnly) && (
+          {(search || category !== 'All') && (
             <div className="flex flex-wrap items-center gap-3 pb-5 text-sm">
-              <p className="text-muted-fg">Filters: {newOnly && 'New since last visit · '}{stashOnly && 'Your stash · '}{category}{search && ` · “${search}”`}</p>
-              <button type="button" className="btn btn-ghost !text-lg !px-2" onClick={() => { setSearch(''); setCategory('All'); setStashOnly(false); setNewOnly(false); }}>Clear filters</button>
+              <p className="text-muted-fg">Filters: {category}{search && ` · “${search}”`}</p>
+              <button type="button" className="btn btn-ghost !text-lg !px-2" onClick={() => { setSearch(''); setCategory('All'); }}>Clear filters</button>
             </div>
           )}
 
@@ -325,7 +305,7 @@ export function Storefront() {
             <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-6 gap-5">
               <AnimatePresence mode="popLayout">
                 {visible.map((p, i) => (
-                  <ProductCard key={p.id} product={p} index={i} onQuickView={setQuick} isNew={newIds.has(p.id)} />
+                  <ProductCard key={p.id} product={p} index={i} onQuickView={setQuick} />
                 ))}
               </AnimatePresence>
             </motion.div>
