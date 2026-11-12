@@ -1,37 +1,53 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "araccoon-hub",
-  "main": "./worker/index.ts",
-  "compatibility_date": "2026-10-02",
-  // pg (node-postgres) needs Node.js APIs; Hyperdrive gives it pooled Neon connections.
-  "compatibility_flags": ["nodejs_compat"],
-  "assets": {
-    // Pages read the built index.html through this binding before filling it in.
-    "binding": "ASSETS",
-    // React routes are served as static assets (free, never invoke the Worker)…
-    "not_found_handling": "single-page-application",
-    // …except the API, the short outbound redirect links, and the public pages the
-    // Worker renders with their data, titles and share tags (worker/routes/pages.ts),
-    // including each find's shareable /find/<slug> address and each collection page.
-    "run_worker_first": ["/api/*", "/r/*", "/", "/articles", "/articles/*", "/find/*", "/collections/*", "/robots.txt", "/sitemap.xml"]
-  },
-  "hyperdrive": [
-    {
-      "binding": "HYPERDRIVE",
-      // Replaced after `npx wrangler hyperdrive create araccoon-hub-db --connection-string=<Neon URL>`.
-      // Local dev uses CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE from .env instead.
-      "id": "00000000000000000000000000000000"
-    }
-  ],
-  "triggers": {
-    // Daily maintenance (retention purge, expired sessions/challenges). Free plan: max once per day.
-    "crons": ["30 20 * * *"]
-  },
-  "vars": {
-    "ENVIRONMENT": "production",
-    "REPORT_TIMEZONE": "Asia/Kolkata",
-    "AFFILIATE_ALLOWED_HOSTS": "amazon.com,amazon.in,amzn.to,amzn.in",
-    "CLICK_RETENTION_DAYS": "90"
-  },
-  "observability": { "enabled": true }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "araccoon-hub",
+	"main": "./worker/index.ts",
+	"compatibility_date": "2026-10-02",
+	// pg (node-postgres) needs Node.js APIs; Hyperdrive gives it pooled Neon connections.
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"assets": {
+		// Pages read the built index.html through this binding before filling it in.
+		"binding": "ASSETS",
+		// React routes are served as static assets (free, never invoke the Worker)…
+		"not_found_handling": "single-page-application",
+		// …except the API, the short outbound redirect links, and the public pages the
+		// Worker renders with their data, titles and share tags (worker/routes/pages.ts),
+		// including each find's shareable /find/<slug> address and each collection page.
+		"run_worker_first": [
+			"/api/*",
+			"/r/*",
+			"/",
+			"/articles",
+			"/articles/*",
+			"/find/*",
+			"/collections/*",
+			"/robots.txt",
+			"/sitemap.xml"
+		]
+	},
+	"hyperdrive": [
+		{
+			"binding": "HYPERDRIVE",
+			// Replaced after `npx wrangler hyperdrive create araccoon-hub-db --connection-string=<Neon URL>`.
+			// Local dev uses CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE from .env instead.
+			"id": "8e1b9a4683c54e6eb5a7469c2bf55859"
+		}
+	],
+	"triggers": {
+		// Daily maintenance (retention purge, expired sessions/challenges). Free plan: max once per day.
+		"crons": [
+			"30 20 * * *"
+		]
+	},
+	"vars": {
+		"ENVIRONMENT": "production",
+		"REPORT_TIMEZONE": "Asia/Kolkata",
+		"AFFILIATE_ALLOWED_HOSTS": "amazon.com,amazon.in,amzn.to,amzn.in",
+		"CLICK_RETENTION_DAYS": "90"
+	},
+	"observability": {
+		"enabled": true
+	}
 }
