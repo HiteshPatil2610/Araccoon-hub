@@ -697,6 +697,20 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 .stash-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: #fff; color: var(--cd-ink-900, #0a0a0a); border: 1px solid rgb(0 0 0 / .18); transition: background-color var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
 .stash-btn:hover { border-color: var(--cd-red-500); color: var(--cd-red-500); }
 .stash-btn--on, .stash-btn--on:hover { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; }
+/* Product card: a click anywhere opens Quick View. The real control is the "Quick view" button; its ::after
+   covers the card, so there is one focusable control (plus Save, layered above it). */
+.product-card { transition: border-color var(--dur-fast) var(--ease-cine); }
+.product-card:hover { border-color: var(--cd-red-500); }
+.product-card__save { z-index: 2; }
+.product-card__open { background: var(--foreground); border-color: var(--foreground); color: var(--background); }
+.product-card__open::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: var(--radius-l); }
+.product-card:hover .product-card__open, .product-card__open:hover:not(:disabled), .product-card__open:focus-visible { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; }
+/* A transform would make the button the ::after's containing block mid-press, shrinking the hit area so the click is lost. */
+.product-card__open:active:not(:disabled) { transform: none; }
+@supports selector(:has(*)) {
+  .product-card__open:focus-visible { outline: none; }
+  .product-card:has(.product-card__open:focus-visible) { outline: 2px solid var(--primary); outline-offset: 3px; }
+}
 /* Quick View opened by "Surprise me": the box mascot beside a one-line caption. */
 /* Quick view: image + actions on the left (sticky inside the dialog's scroll area), details on the right.
    On phones it stacks image, actions, details so the Amazon button is reached before long spec lists. */
