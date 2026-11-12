@@ -14,6 +14,12 @@
       "port": 5173
     },
     {
+      "name": "web-alt",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "5175", "--strictPort"],
+      "port": 5175
+    },
+    {
       "name": "ui-fixtures",
       "runtimeExecutable": "node",
       "runtimeArgs": ["scripts/ui-fixture-preview.mjs"],
