@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ArrowUpRight, Bookmark, CheckCircle2, Dices, ExternalLink, Share2, X } from 'lucide-react';
 import { Dialog } from './Dialog';
@@ -10,6 +11,7 @@ import type { PublicProduct } from '../../shared/types';
 import { findPath } from '../../shared/finds';
 import { useToast } from './Toasts';
 import { useStash } from '../lib/stash';
+import { useRecent } from '../lib/visits';
 
 /** Quick-view dialog and the "Opening Amazon" notice, shared by every page that lists products. */
 export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise = false, onSurprise }: {
@@ -19,6 +21,10 @@ export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise 
 }) {
   const toast = useToast();
   const stash = useStash();
+  // Every find opened here is remembered (in this browser only) for "Pick up where you left off".
+  const { record } = useRecent();
+  const quickId = quick?.id;
+  useEffect(() => { if (quickId) record(quickId); }, [quickId, record]);
   // Phones and tablets get the device share sheet; elsewhere the link is copied.
   const share = async (find: PublicProduct) => {
     const url = `${window.location.origin}${findPath(find)}`;
