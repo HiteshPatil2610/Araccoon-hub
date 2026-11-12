@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { featuredProducts, pickSurprise } from '../../src/lib/catalog';
+import { featuredProducts, neighbours, pickSurprise, relatedFinds } from '../../src/lib/catalog';
 import type { PublicProduct } from '../../shared/types';
 
 const product = (id: string, overrides: Partial<PublicProduct> = {}): PublicProduct => ({
@@ -35,4 +35,29 @@ test('surprise picks skip the open find and do not repeat until every other find
   assert.equal(pickSurprise(pool, new Set(), null, () => 0)!.id, 'a');
   assert.equal(pickSurprise(pool, new Set(), null, () => 0.999999)!.id, 'd');
   assert.equal(pickSurprise(pool, new Set(), null, () => 1)!.id, 'd', 'an out-of-range random value stays in bounds');
+});
+
+test('previous and next follow the browsing order and wrap at both ends', () => {
+  const list = ['a', 'b', 'c'].map(id => product(id));
+  const first = neighbours(list, 'a')!;
+  assert.deepEqual([first.prev.id, first.next.id, first.position, first.total], ['c', 'b', 1, 3]);
+  const last = neighbours(list, 'c')!;
+  assert.deepEqual([last.prev.id, last.next.id, last.position], ['b', 'a', 3]);
+  assert.equal(neighbours(list, 'missing'), null, 'a find outside the list gets no arrows');
+  assert.equal(neighbours([list[0]!], 'a'), null, 'nothing to step to');
+  const pair = neighbours(list.slice(0, 2), 'a')!;
+  assert.deepEqual([pair.prev.id, pair.next.id], ['b', 'b']);
+});
+test('more like this puts the same category first, tops up with other finds and never repeats the open one', () => {
+  const open = product('open', { category: 'Desk & Office' });
+  const list = [
+    product('tech', { category: 'Tech & Gadgets' }), open, product('desk1', { category: 'desk & office' }),
+    product('home', { category: 'Home & Living' }), product('desk2', { category: 'Desk & Office' }), product('fun', { category: 'Fun & Novelty' }),
+  ];
+  const more = relatedFinds(list, open);
+  assert.deepEqual(more.finds.map(p => p.id), ['desk1', 'desk2', 'tech', 'home']);
+  assert.equal(more.similar, true);
+  const lonely = relatedFinds([open, product('tech', { category: 'Tech & Gadgets' })], open);
+  assert.deepEqual([lonely.finds.map(p => p.id), lonely.similar], [['tech'], false]);
+  assert.deepEqual(relatedFinds([open], open).finds, []);
 });

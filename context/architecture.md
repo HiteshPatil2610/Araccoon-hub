@@ -41,6 +41,7 @@ Each published find has an address `/find/<title-slug>-<first 8 id characters>` 
 ## Visitor extras
 
 - **Surprise me** (`pickSurprise` in `src/lib/catalog.ts`): a random find from the filtered list (or the whole catalog when the filters match nothing), never the open one and none twice until all were shown; it opens the find's `/find/` address with `surprise` in the navigation state.
+- **Browsing in Quick View** (`neighbours`, `relatedFinds` in `src/lib/catalog.ts`, wired in `ProductOverlays` through `browse`, `pool` and `onShow`): previous/next through the list the page shows, wrapping, and a "More like this" row from the page's finds (the whole catalog on the storefront). On the storefront each step replaces the `/find/` address and keeps the `inApp` navigation state, so closing still returns in one step.
 - **Stash** (`src/lib/stash.ts`): saved find ids in `localStorage` (`araccoon_stash`, at most 100, validated on read), shared between components through `useSyncExternalStore` and between tabs through the `storage` event. Nothing is sent to the server.
 - **Journal feed**: `GET /articles/feed.xml` (RSS 2.0, published articles, summaries only), advertised with a `<link rel="alternate">` on journal pages (`PageMeta.feedUrl`).
 

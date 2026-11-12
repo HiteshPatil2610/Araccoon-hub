@@ -17,6 +17,7 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Browse inside Quick View:** previous/next arrows on the photo, arrow keys and swipes step through the finds the page shows, with a count, and a "More like this" row of up to four other finds (same category first) opens them in place.
 - **Surprise me:** a random find with the mascot, plus mascot art on the empty-search panel and the 404 page.
 - **Your stash:** visitors can save finds; the list is kept only in their browser.
 - **Journal RSS feed** at `/articles/feed.xml`.

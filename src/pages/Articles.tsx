@@ -142,7 +142,7 @@ function ArticleView({ article }: { article: Article }) {
       )}
 
       <p className="mt-16 text-xs text-muted-fg max-w-[72ch] mx-auto">As an Amazon Associate, Raccoon Hub earns from qualifying purchases.</p>
-      <ProductOverlays quick={quick} onCloseQuick={() => setQuick(null)} outbound={outbound} from={FROM_ARTICLE} />
+      <ProductOverlays quick={quick} onCloseQuick={() => setQuick(null)} outbound={outbound} from={FROM_ARTICLE} browse={products} onShow={setQuick} />
     </PublicPage>
   );
 }
