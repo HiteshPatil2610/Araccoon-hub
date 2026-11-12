@@ -711,6 +711,35 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
   .product-card__open:focus-visible { outline: none; }
   .product-card:has(.product-card__open:focus-visible) { outline: 2px solid var(--primary); outline-offset: 3px; }
 }
+/* "New since last visit" tag on a product card: the inverted chip, so it never reads as the owner's crimson badge. */
+.chip-new { background: var(--foreground); border-color: var(--foreground); color: var(--background); }
+/* Return-visit row at the top of the catalog: find of the day and, beside it from 1024px, finds opened on earlier visits. */
+.catalog-extras { display: grid; gap: 16px; margin-top: 32px; }
+@media (min-width: 1024px) { .catalog-extras--two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; } }
+.daily-find { position: relative; display: flex; align-items: center; gap: 16px; padding: 12px; min-width: 0; overflow: hidden; transition: border-color var(--dur-fast) var(--ease-cine); }
+.daily-find:hover { border-color: var(--cd-red-500); }
+.daily-find__image { flex: none; width: 120px; aspect-ratio: 1; }
+.daily-find__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.daily-find__title { font-size: clamp(26px, 3vw, 34px); line-height: .95; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.daily-find__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 4px; }
+/* One button for the whole panel: its ::after covers it, like the product card. */
+.daily-find__open { background: var(--foreground); border-color: var(--foreground); color: var(--background); min-height: 40px; font-size: 1.1rem; }
+.daily-find__open::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: var(--radius-l); }
+.daily-find:hover .daily-find__open, .daily-find__open:hover:not(:disabled), .daily-find__open:focus-visible { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; }
+.daily-find__open:active:not(:disabled) { transform: none; }
+@supports selector(:has(*)) {
+  .daily-find__open:focus-visible { outline: none; }
+  .daily-find:has(.daily-find__open:focus-visible) { outline: 2px solid var(--primary); outline-offset: 3px; }
+}
+.daily-find__mascot { display: none; flex: none; height: 112px; width: auto; align-self: flex-end; margin-bottom: -12px; user-select: none; }
+@media (min-width: 640px) { .daily-find__mascot { display: block; } .daily-find__image { width: 136px; } }
+@media (max-width: 379px) { .daily-find { align-items: flex-start; } .daily-find__image { width: 88px; } }
+.recent-finds { min-width: 0; }
+.recent-finds__list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0 0; padding: 0; list-style: none; }
+.recent-finds__tile { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; min-height: 64px; padding: 6px 10px 6px 6px; border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--card); color: inherit; text-align: left; cursor: pointer; transition: border-color var(--dur-fast) var(--ease-cine); }
+.recent-finds__tile:hover { border-color: var(--cd-red-500); }
+.recent-finds__image { flex: none; width: 52px; height: 52px; border-radius: calc(var(--radius-m) - 4px); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .06); }
+.recent-finds__title { min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--font-display); font-size: 18px; line-height: 1; text-transform: uppercase; letter-spacing: var(--ls-display); overflow-wrap: anywhere; }
 /* Quick View opened by "Surprise me": the box mascot beside a one-line caption. */
 /* Quick view: image + actions on the left (sticky inside the dialog's scroll area), details on the right.
    On phones it stacks image, actions, details so the Amazon button is reached before long spec lists. */

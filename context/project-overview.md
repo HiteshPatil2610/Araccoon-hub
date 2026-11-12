@@ -30,7 +30,7 @@ The project is public and source-available: code under PolyForm Noncommercial 1.
 | Journal (`/articles`, `/articles/<slug>`) | Markdown articles with cover image, reading time, and cards for listed products |
 | Outbound links | `/r/:id` redirect and `/api/track` beacon; Associates tag rules; trusted Amazon hosts only |
 | Owner hub (`/admin`) | Email + password or passkey sign-in, recovery codes, invites; Products (create, import from an Amazon link, edit, bulk, duplicate, images); Collections (create, order finds, publish); listing check (daily and on demand: flags finds whose Amazon listing returns "not found"); Site text; Analytics, CSV export, conversions; Activity log; Account and sessions |
-| Discovery extras | "Surprise me" random find with the mascot; "Your stash" of saved finds (browser only); journal RSS feed (`/articles/feed.xml`) |
+| Discovery extras | "Surprise me" random find with the mascot; "Your stash" of saved finds (browser only); the raccoon's find of the day; "New since last visit" tags and filter and "Pick up where you left off" (both browser only); journal RSS feed (`/articles/feed.xml`) |
 | Collections (`/collections/<slug>`) | Owner-made themed lists of finds, each with its own page, linked from the storefront above the catalog and listed in the sitemap |
 | Shareable finds (`/find/<slug>`) | A link per find that opens its quick view on the storefront; Share button (device share sheet or copy link); Worker-rendered title, description and the find's image for link previews; listed in the sitemap |
 | Search and sharing | Worker-rendered titles, descriptions, canonical links, Open Graph/Twitter tags, JSON-LD, `robots.txt`, `sitemap.xml`, share image |

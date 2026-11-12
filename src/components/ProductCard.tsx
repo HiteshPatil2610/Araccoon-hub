@@ -14,8 +14,10 @@ export function storeLabel(store: string) {
  * the "Quick view" button's ::after covers the card, so a click anywhere lands on one real, focusable button.
  * Save to stash sits above that layer and works on its own.
  */
-export function ProductCard({ product, index, onQuickView }: {
+export function ProductCard({ product, index, onQuickView, isNew = false }: {
   product: PublicProduct; index: number; onQuickView: (p: PublicProduct) => void;
+  /** Added since this browser's last visit. */
+  isNew?: boolean;
 }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -56,6 +58,7 @@ export function ProductCard({ product, index, onQuickView }: {
       </div>
       <div className="flex items-center gap-2 mb-2 flex-wrap px-1">
         <span className="eyebrow text-muted-fg">{product.category} .</span>
+        {isNew && <span className="chip chip-new">New</span>}
         {product.badge && <span className="chip !bg-red !border-red !text-white">{product.badge}</span>}
       </div>
       <h3 id={`p-${product.id}`} className="px-1 line-clamp-2 text-[28px]">

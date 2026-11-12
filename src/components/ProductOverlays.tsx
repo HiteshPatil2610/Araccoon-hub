@@ -12,6 +12,7 @@ import { findPath } from '../../shared/finds';
 import { useToast } from './Toasts';
 import { useStash } from '../lib/stash';
 import { neighbours, relatedFinds } from '../lib/catalog';
+import { useRecent } from '../lib/visits';
 
 /** Quick-view dialog and the "Opening Amazon" notice, shared by every page that lists products. */
 export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise = false, onSurprise, browse, pool, onShow }: {
@@ -34,6 +35,9 @@ export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise 
   const jumped = useRef(false);
   const show = (find: PublicProduct, jump = false) => { jumped.current = jump; requested.current.push(find.id); onShow?.(find); };
   const quickId = quick?.id;
+  // Every find opened here is remembered (in this browser only) for "Pick up where you left off".
+  const { record } = useRecent();
+  useEffect(() => { if (quickId) record(quickId); }, [quickId, record]);
   useEffect(() => {
     const at = quickId ? requested.current.indexOf(quickId) : -1;
     requested.current = at < 0 ? [] : requested.current.slice(at + 1); // anything else (Back, Another one) starts afresh
