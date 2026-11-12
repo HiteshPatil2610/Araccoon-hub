@@ -238,19 +238,21 @@ html::-webkit-scrollbar { display: none; }
 
 canvas[aria-hidden="true"] { opacity: .4; }
 
-/* Ink-bleed theme transition (View Transitions API). The new snapshot sits on top and is masked by an
-   animated SVG (src/lib/inkReveal.ts) that spreads like ink from the toggle. The SVG animates itself;
-   the hold animation only keeps the transition open for the same length of time. */
-::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
-html.theme-transitioning::view-transition-new(root) {
-  z-index: 9999;
-  -webkit-mask: var(--theme-ink) 0 0 / 100% 100% no-repeat;
-  mask: var(--theme-ink) 0 0 / 100% 100% no-repeat;
-  animation: theme-ink-hold var(--theme-ink-duration, 1100ms) linear both;
+/* Theme switch: crimson curtain (src/lib/themeCurtain.ts). A fixed crimson panel with the wordmark
+   sweeps in from the left, the theme flips while it covers the screen, and it sweeps out to the right.
+   Colour transitions are off meanwhile so nothing eases behind the curtain. */
+.theme-curtain {
+  position: fixed; inset: 0; z-index: 2147483000; pointer-events: none;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  background: var(--cd-red-500); clip-path: inset(0 100% 0 0);
 }
+.theme-curtain__mark {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase; letter-spacing: var(--ls-display);
+  font-size: clamp(64px, 15vw, 220px); line-height: .8; padding-top: .08em; white-space: nowrap; color: #fff;
+}
+.theme-curtain__hub { color: var(--cd-black); }
 html.theme-transitioning *,
 html.theme-transitioning .cd-nav::before { transition: none !important; }
-@keyframes theme-ink-hold { from { opacity: 1; } to { opacity: 1; } }
 
 /* ---- Cine Daily editorial pieces ---- */
 .section-label { display: inline-flex; align-items: center; gap: 12px; }
