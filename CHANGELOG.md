@@ -17,6 +17,8 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 
 ### Added
 
+- **Stash button in the nav:** a bookmark beside the theme toggle with the number of saved finds leads to Your lists; saving a find makes it flash crimson, flip its bookmark and roll the count up (just the count under reduced motion). It replaces the "Your stash n" pill beside Surprise me.
+- **Ribbon into and out of Your lists:** a crimson bookmark ribbon unrolls from the stash button to cover the screen while the page changes, and rolls back into it on the way out.
 - **Find of the day:** the raccoon's pick at the top of the catalog, the same find for everyone, a new one daily. ("New since last visit" and "Pick up where you left off" were added and removed again the same day.)
 - **Stash lists:** visitors can keep several named lists of finds ("Gift ideas", "Desk setup"…), put a find in more than one, and share a list as a link; the recipient can save a copy. All kept only in the visitor's browser (`/stash`, `/stash/shared`).
 - **Browse inside Quick View:** previous/next arrows on the photo, arrow keys and swipes step through the finds the page shows, with a count, and a "More like this" row of up to four other finds (same category first) opens them in place.
