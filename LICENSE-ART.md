@@ -9,13 +9,13 @@ Copyright (c) 2026 Hitesh Patil
 
 ## What counts as artwork
 
-- `art/`: the 3D model, textures, renders, posters and the scripts' image outputs
-- `public/art/`, `public/raccoon-mascot.jpg` and `public/og-image.jpg`
+- `art/`: posters, the share image and the scripts' image outputs
+- `public/art/` and `public/og-image.jpg`
 - `video/araccoon-promo/assets/` and `video/araccoon-promo/araccoon-promo.mp4`
 - Any other image, video or 3D file that shows the Araccoon mascot
 
 Scripts that *generate* artwork (for example `art/posters/*.py` or
-`art/araccoon/scripts/*.py`) are code, so they are covered by the code licence ([PolyForm Noncommercial 1.0.0](LICENSE)). The images they
+`art/og/make_og.py`) are code, so they are covered by the code licence ([PolyForm Noncommercial 1.0.0](LICENSE)). The images they
 produce are artwork.
 
 ## What you may do

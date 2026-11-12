@@ -77,22 +77,31 @@ publicRoutes.get('/api/products/:id', async (c) => {
   return c.json(toPublic(row));
 });
 
+// Shown to a visitor who opens a short link to a find that was removed or hidden.
+// Plain HTML with no scripts or styles, so the locked-down API headers still apply.
+const UNAVAILABLE_PAGE = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Find not available — Raccoon Hub</title></head>
+<body><main><h1>This find is no longer available</h1><p>It may have been removed or sold out.</p><p><a href="/">See the current finds on Raccoon Hub</a></p></main></body></html>`;
+
 // Short outbound link: records the click, then 302s to Amazon. Also the
 // fallback when the browser beacon fails (same clickKey → counted once).
 publicRoutes.get('/r/:id', async (c) => {
   await limit(c, 'redirect', ipKey(c), 60, 60);
   const row = await getProduct(c.get('db'), c.req.param('id'));
   const { config } = c.get('deps');
-  const destination = row && row.status === 'published'
-    ? await buildDestination(row, config, { source: utmParam.parse(c.req.query('utm_source')), medium: utmParam.parse(c.req.query('utm_medium')), campaign: utmParam.parse(c.req.query('utm_campaign')) })
-    : null;
-  if (!row || !destination) fail(404, 'This link is not available.');
+  const utm = { source: utmParam.parse(c.req.query('utm_source')), medium: utmParam.parse(c.req.query('utm_medium')), campaign: utmParam.parse(c.req.query('utm_campaign')) };
+  const destination = row && row.status === 'published' ? await buildDestination(row, config, utm) : null;
+  if (!row || !destination) {
+    c.header('Cache-Control', 'no-store');
+    return c.html(UNAVAILABLE_PAGE, 404);
+  }
   const ck = z.uuid().safeParse(c.req.query('ck'));
   await recordClick(c, row, destination, {
     referrer: normalizeReferrer(c.req.header('referer')),
-    utmSource: utmParam.parse(c.req.query('utm_source')),
-    utmMedium: utmParam.parse(c.req.query('utm_medium')),
-    utmCampaign: utmParam.parse(c.req.query('utm_campaign')),
+    utmSource: utm.source,
+    utmMedium: utm.medium,
+    utmCampaign: utm.campaign,
     clickKey: ck.success ? ck.data : undefined,
   });
   c.header('Cache-Control', 'no-store');

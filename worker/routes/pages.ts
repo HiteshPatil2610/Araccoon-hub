@@ -182,7 +182,6 @@ pageRoutes.get('/robots.txt', (c) => {
     'Disallow: /admin',
     'Disallow: /api/',
     'Disallow: /r/',
-    'Disallow: /raccoon-preview',
     '',
     `Sitemap: ${siteOrigin(c)}/sitemap.xml`,
     '',

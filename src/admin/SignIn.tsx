@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { browserSupportsWebAuthn, startAuthentication, startRegistration } from '@simplewebauthn/browser';
-import { Fingerprint, KeyRound, LifeBuoy, ShieldCheck, Sparkles } from 'lucide-react';
+import { Fingerprint, KeyRound, LifeBuoy, LogIn, ShieldCheck, Sparkles, Terminal } from 'lucide-react';
 import { api, HttpError } from '../lib/api';
 import { useAuth } from './auth';
 import { useTheme } from '../lib/theme';
@@ -27,7 +27,7 @@ function Shell({ children, title, subtitle }: { children: React.ReactNode; title
         <div className="relative">
           <SectionLabel>Owner hub</SectionLabel>
           <TrackingReveal from="0.3em" once><h2 className="text-[clamp(88px,9vw,140px)] leading-[.82] mt-5">Curate.<br />Track.<br />Repeat.</h2></TrackingReveal>
-          <p className="mt-6 max-w-sm text-sm text-[var(--cd-gray-300)]">Sign in with a passkey: your fingerprint, face or device PIN. No passwords to leak or forget.</p>
+          <p className="mt-6 max-w-sm text-sm text-[var(--cd-gray-300)]">Sign in with your email and password, or with a passkey: your fingerprint, face or device PIN.</p>
         </div>
         <p className="relative eyebrow text-white/60">Private catalog workspace .</p>
       </section>
@@ -48,13 +48,14 @@ export function SignIn() {
   const { state, setOwner } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [mode, setMode] = useState<'passkey' | 'recover' | 'setup'>(state?.setupOpen ? 'setup' : 'passkey');
+  const [mode, setMode] = useState<'password' | 'passkey' | 'recover' | 'setup'>(state?.setupOpen ? 'setup' : 'password');
   const [turnstile, setTurnstile] = useState<string>();
   const [resetKey, setResetKey] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [email, setEmail] = useState('');
   const [secret, setSecret] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [codes, setCodes] = useState<string[] | null>(null);
   const lock = useRef(false);
   const supported = browserSupportsWebAuthn();
@@ -86,6 +87,17 @@ export function SignIn() {
     navigate(next, { replace: true });
   });
 
+  const passwordLogin = (e: FormEvent) => {
+    e.preventDefault();
+    void run(async () => {
+      const { owner } = await api.passwordLogin({ email, password: secret, turnstileToken: turnstile });
+      setOwner(owner);
+      navigate(next, { replace: true });
+    });
+  };
+
+  const switchTo = (m: typeof mode) => { setMode(m); setError(''); setSecret(''); };
+
   const recover = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
@@ -95,8 +107,17 @@ export function SignIn() {
     });
   };
 
-  const setup = (e: FormEvent) => {
+  const setupWithPassword = (e: FormEvent) => {
     e.preventDefault();
+    void run(async () => {
+      if (newPassword.length < 12) throw new Error('Use at least 12 characters for the password.');
+      const res = await api.setupPassword({ email, setupToken: secret, password: newPassword, turnstileToken: turnstile });
+      setCodes(res.recoveryCodes);
+      setOwner(res.owner);
+    });
+  };
+
+  const setup = () => {
     void run(async () => {
       const { challengeId, options } = await api.setupOptions({ email, setupToken: secret, turnstileToken: turnstile });
       const response = await startRegistration({ optionsJSON: options });
@@ -108,7 +129,7 @@ export function SignIn() {
 
   if (codes) {
     return (
-      <Shell title="Save your recovery codes" subtitle="Each code works once if you lose access to your passkey.">
+      <Shell title="Save your recovery codes" subtitle="Each code works once if you forget your password or lose your passkey.">
         <RecoveryCodes codes={codes} />
         <button type="button" className="btn btn-primary w-full mt-5" onClick={() => navigate('/admin', { replace: true })}>I saved them — open the hub</button>
       </Shell>
@@ -118,12 +139,42 @@ export function SignIn() {
   return (
     <Shell
       title={mode === 'setup' ? 'Set up the owner account' : mode === 'recover' ? 'Use a recovery code' : 'Welcome back'}
-      subtitle={mode === 'setup' ? 'First run: create the owner passkey. This closes after the first passkey is added.' : mode === 'recover' ? 'Lost your device? Sign in once with a code, then add a new passkey.' : 'Sign in to manage finds and review recorded catalog activity.'}
+      subtitle={mode === 'setup' ? 'First run: create the owner account with a password or a passkey. This closes once the account has a sign-in method.' : mode === 'recover' ? 'Sign in once with a recovery code, then set a new password or add a new passkey.' : 'Sign in to manage finds and review recorded catalog activity.'}
     >
-      {!supported && <p role="alert" className="panel-sm !bg-coral text-on-coral p-3 text-sm font-bold mb-4">This browser doesn't support passkeys. Try an up-to-date Chrome, Edge, Safari or Firefox.</p>}
+      {(mode === 'password' || mode === 'passkey') && (
+        <div role="tablist" aria-label="Sign-in method" className="grid grid-cols-2 gap-2 mb-5">
+          <button type="button" role="tab" aria-selected={mode === 'password'} className={`btn ${mode === 'password' ? 'btn-sun' : ''}`} onClick={() => switchTo('password')}>
+            <KeyRound className="w-4 h-4" /> Email &amp; password
+          </button>
+          <button type="button" role="tab" aria-selected={mode === 'passkey'} className={`btn ${mode === 'passkey' ? 'btn-sun' : ''}`} onClick={() => switchTo('passkey')}>
+            <Fingerprint className="w-4 h-4" /> Passkey
+          </button>
+        </div>
+      )}
+
+      {(mode === 'passkey' || mode === 'setup') && !supported && <p role="alert" className="panel-sm !bg-coral text-on-coral p-3 text-sm font-bold mb-4">This browser doesn't support passkeys. Try an up-to-date Chrome, Edge, Safari or Firefox.</p>}
+
+      {mode === 'password' && (
+        <form onSubmit={passwordLogin} className="space-y-4">
+          <div>
+            <label htmlFor="pw-email" className="field-label">Email</label>
+            <input id="pw-email" aria-describedby={error ? 'auth-error' : undefined} type="email" autoComplete="username" className="field" value={email} onChange={e => setEmail(e.target.value)} required maxLength={254} />
+          </div>
+          <div>
+            <label htmlFor="pw-password" className="field-label">Password</label>
+            <input id="pw-password" aria-describedby={error ? 'auth-error' : undefined} type="password" autoComplete="current-password" className="field" value={secret} onChange={e => setSecret(e.target.value)} required maxLength={128} />
+          </div>
+          <Turnstile siteKey={state?.turnstileSiteKey ?? null} onToken={setTurnstile} resetKey={resetKey} />
+          <button type="submit" className="btn btn-primary w-full !py-3" disabled={busy || !email || !secret}>
+            <LogIn className="w-4 h-4" /> {busy ? 'Signing in…' : 'Sign in'}
+          </button>
+          <p className="text-xs text-muted-fg">No password yet? Sign in another way, then set one under Account.</p>
+        </form>
+      )}
 
       {mode === 'passkey' && (
         <div className="space-y-4">
+          <p className="text-sm text-muted-fg">Use the fingerprint, face or PIN prompt on this device, or scan a QR code with your phone.</p>
           <Turnstile siteKey={state?.turnstileSiteKey ?? null} onToken={setTurnstile} resetKey={resetKey} />
           <button type="button" className="btn btn-primary w-full !py-3" disabled={busy || !supported} onClick={passkeyLogin}>
             <Fingerprint className="w-5 h-5" /> {busy ? 'Waiting for your passkey…' : 'Sign in with a passkey'}
@@ -131,8 +182,8 @@ export function SignIn() {
         </div>
       )}
 
-      {mode !== 'passkey' && (
-        <form onSubmit={mode === 'setup' ? setup : recover} className="space-y-4">
+      {(mode === 'recover' || mode === 'setup') && (
+        <form onSubmit={mode === 'setup' ? setupWithPassword : recover} className="space-y-4">
           <div>
             <label htmlFor="email" className="field-label">Owner email</label>
             <input id="email" aria-describedby={error ? 'auth-error' : undefined} type="email" autoComplete="username" className="field" value={email} onChange={e => setEmail(e.target.value)} required maxLength={254} />
@@ -142,19 +193,37 @@ export function SignIn() {
             <input id="secret" aria-describedby={error ? 'auth-error' : undefined} className="field font-mono" autoComplete="off" spellCheck={false} value={secret} onChange={e => setSecret(e.target.value)} required
               placeholder={mode === 'setup' ? 'From OWNER_SETUP_TOKEN' : 'XXXX-XXXX-XXXX'} maxLength={200} />
           </div>
+          {mode === 'setup' && (
+            <div>
+              <label htmlFor="setup-password" className="field-label">Choose a password</label>
+              <input id="setup-password" type="password" autoComplete="new-password" aria-describedby="setup-password-hint" className="field" minLength={12} maxLength={128} value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+              <p id="setup-password-hint" className="text-xs text-muted-fg mt-1">At least 12 characters. Leave empty if you only want a passkey.</p>
+            </div>
+          )}
           <Turnstile siteKey={state?.turnstileSiteKey ?? null} onToken={setTurnstile} resetKey={resetKey} />
-          <button type="submit" className="btn btn-primary w-full !py-3" disabled={busy || !email || !secret || (mode === 'setup' && !supported)}>
-            {mode === 'setup' ? <><Sparkles className="w-4 h-4" /> Create owner passkey</> : <><LifeBuoy className="w-4 h-4" /> Sign in with code</>}
-          </button>
+          {mode === 'setup' ? (
+            <div className="grid gap-2">
+              <button type="submit" className="btn btn-primary w-full !py-3" disabled={busy || !email || !secret || !newPassword}>
+                <Sparkles className="w-4 h-4" /> Create account with password
+              </button>
+              <button type="button" className="btn w-full" disabled={busy || !email || !secret || !supported} onClick={setup}>
+                <Fingerprint className="w-4 h-4" /> Create with a passkey instead
+              </button>
+            </div>
+          ) : (
+            <button type="submit" className="btn btn-primary w-full !py-3" disabled={busy || !email || !secret}>
+              <LifeBuoy className="w-4 h-4" /> Sign in with code
+            </button>
+          )}
         </form>
       )}
 
       {error && <p id="auth-error" role="alert" className="field-error mt-4">{error}</p>}
 
       <div className="mt-6 pt-4 border-t border-line flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold">
-        {mode !== 'passkey' && <button type="button" className="inline-flex min-h-11 items-center gap-1 underline" onClick={() => { setMode('passkey'); setError(''); }}><KeyRound className="w-3.5 h-3.5" /> Use a passkey</button>}
-        {mode !== 'recover' && <button type="button" className="inline-flex min-h-11 items-center gap-1 underline" onClick={() => { setMode('recover'); setError(''); }}><LifeBuoy className="w-3.5 h-3.5" /> Lost your device?</button>}
-        {state?.setupOpen && mode !== 'setup' && <button type="button" className="inline-flex min-h-11 items-center gap-1 underline" onClick={() => setMode('setup')}><ShieldCheck className="w-3.5 h-3.5" /> First-time setup</button>}
+        {(mode === 'recover' || mode === 'setup') && <button type="button" className="inline-flex min-h-11 items-center gap-1 underline" onClick={() => switchTo('password')}><LogIn className="w-3.5 h-3.5" /> Back to sign in</button>}
+        {mode !== 'recover' && <button type="button" className="inline-flex min-h-11 items-center gap-1 underline" onClick={() => switchTo('recover')}><LifeBuoy className="w-3.5 h-3.5" /> Forgot password or lost your device?</button>}
+        {state?.setupOpen && mode !== 'setup' && <button type="button" className="inline-flex min-h-11 items-center gap-1 underline" onClick={() => switchTo('setup')}><ShieldCheck className="w-3.5 h-3.5" /> First-time setup</button>}
       </div>
 
       {state?.devLogin && <DevLogin onDone={() => navigate(next, { replace: true })} />}
@@ -168,8 +237,9 @@ function DevLogin({ onDone }: { onDone: () => void }) {
   const [token, setToken] = useState('');
   const [error, setError] = useState('');
   return (
-    <form className="mt-6 p-3 rounded-[var(--radius-m)] border border-dashed border-line" onSubmit={async e => {
+    <form aria-labelledby="dev-login-title" className="mt-6 p-4 rounded-[var(--radius-m)] border-2 border-dashed border-line bg-muted" onSubmit={async e => {
       e.preventDefault();
+      setError('');
       try {
         setOwner((await api.devLogin(token)).owner);
         onDone();
@@ -177,12 +247,17 @@ function DevLogin({ onDone }: { onDone: () => void }) {
         setError(err instanceof Error ? err.message : 'Failed');
       }
     }}>
-      <p className="eyebrow mb-2">Local development sign-in</p>
+      <h2 id="dev-login-title" className="flex items-center gap-2 text-[22px] leading-none"><Terminal className="w-4 h-4" aria-hidden="true" /> Developer sign-in</h2>
+      <p className="text-xs text-muted-fg mt-2 mb-3">
+        Only shown on this computer while <code>ENVIRONMENT=development</code>. Open <code>.env.local</code> in the project folder,
+        copy the value after <code>DEV_LOGIN_TOKEN=</code> and paste it here. The live site never shows this.
+      </p>
+      <label htmlFor="dev-token" className="field-label">Development token</label>
       <div className="flex gap-2">
-        <input aria-label="Development token" type="password" className="field !min-h-11" value={token} onChange={e => setToken(e.target.value)} />
-        <button type="submit" className="btn btn-sun !min-h-11">Enter</button>
+        <input id="dev-token" type="password" autoComplete="off" className="field !min-h-11" value={token} onChange={e => setToken(e.target.value)} required />
+        <button type="submit" className="btn btn-sun !min-h-11" disabled={!token}>Sign in</button>
       </div>
-      {error && <p className="field-error">{error}</p>}
+      {error && <p role="alert" className="field-error">{error}</p>}
     </form>
   );
 }

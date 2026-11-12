@@ -12,6 +12,7 @@ import { body, fail, ipKey, limit, type AppEnv, type Ctx } from '../app';
 import { createSession, endSession, readSession, revokeAllSessions } from '../auth/sessions';
 import { audit } from '../lib/audit';
 import { generateRecoveryCode, hmacHex, normalizeRecoveryCode, safeEqual, sha256Hex } from '../lib/crypto';
+import { hashPassword, PASSWORD_MAX, PASSWORD_MIN, verifyPassword } from '../lib/password';
 import { clientIp } from '../lib/request';
 import type { Db } from '../db/db';
 import type { OwnerProfile } from '../../shared/types';
@@ -77,7 +78,7 @@ export async function finishRegistration(c: Ctx, challengeId: string, response: 
     if (context === 'setup') {
       // Serialize first-owner completion, including attempts created before setup closed.
       await db.query('SELECT pg_advisory_xact_lock($1)', [4204201338]);
-      if (!config.ownerEmail || !config.ownerSetupToken || await passkeyCount(db) > 0) fail(403, 'Setup is closed.');
+      if (!config.ownerEmail || !config.ownerSetupToken || await signInMethodCount(db) > 0) fail(403, 'Setup is closed.');
     }
     const challenge = await consumeChallenge(db, challengeId, 'register', context);
     if (!challenge.owner_id) fail(400, 'Invalid registration.');
@@ -135,15 +136,18 @@ export async function issueRecoveryCodes(c: Ctx, ownerId: string): Promise<strin
 }
 
 export async function ownerProfile(db: Db, ownerId: string, needsPasskey: boolean): Promise<OwnerProfile> {
-  const { rows } = await db.query<{ id: string; email: string; display_name: string }>(
-    'SELECT id, email, display_name FROM owners WHERE id = $1', [ownerId]
+  const { rows } = await db.query<{ id: string; email: string; display_name: string; has_password: boolean }>(
+    'SELECT id, email, display_name, password_hash IS NOT NULL AS has_password FROM owners WHERE id = $1', [ownerId]
   );
   const o = rows[0]!;
-  return { id: o.id, email: o.email, displayName: o.display_name, needsPasskey };
+  return { id: o.id, email: o.email, displayName: o.display_name, needsPasskey, hasPassword: o.has_password };
 }
 
-async function passkeyCount(db: Db): Promise<number> {
-  const { rows } = await db.query<{ n: string }>('SELECT count(*) AS n FROM passkeys');
+/** Passkeys plus owner passwords. First-owner setup stays open only while this is zero. */
+async function signInMethodCount(db: Db): Promise<number> {
+  const { rows } = await db.query<{ n: string }>(
+    'SELECT (SELECT count(*) FROM passkeys) + (SELECT count(*) FROM owners WHERE password_hash IS NOT NULL) AS n'
+  );
   return Number(rows[0]!.n);
 }
 
@@ -156,7 +160,7 @@ authRoutes.get('/state', async (c) => {
   await limit(c, 'auth-state', ipKey(c), 120, 60);
   const { config } = c.get('deps');
   const session = await readSession(c);
-  const setupOpen = Boolean(config.ownerEmail && config.ownerSetupToken) && (await passkeyCount(c.get('db'))) === 0;
+  const setupOpen = Boolean(config.ownerEmail && config.ownerSetupToken) && (await signInMethodCount(c.get('db'))) === 0;
   return c.json({
     owner: session ? await ownerProfile(c.get('db'), session.ownerId, session.needsPasskey) : null,
     setupOpen,
@@ -174,7 +178,7 @@ authRoutes.post('/setup/options', async (c) => {
   await humanCheck(c, input.turnstileToken);
   const { config } = c.get('deps');
   const db = c.get('db');
-  if (!config.ownerEmail || !config.ownerSetupToken || (await passkeyCount(db)) > 0) fail(403, 'Setup is closed.');
+  if (!config.ownerEmail || !config.ownerSetupToken || (await signInMethodCount(db)) > 0) fail(403, 'Setup is closed.');
   if (input.email !== config.ownerEmail || !safeEqual(input.setupToken, config.ownerSetupToken)) {
     await audit(c, 'auth.setup', 'failure');
     fail(403, 'Email or setup token is incorrect.');
@@ -191,11 +195,39 @@ const finishBody = z.strictObject({ challengeId: z.uuid(), response: responseJso
 authRoutes.post('/setup/verify', async (c) => {
   await limit(c, 'setup', ipKey(c), 5, 900);
   const input = await body(c, finishBody);
-  if ((await passkeyCount(c.get('db'))) > 0) fail(403, 'Setup is closed.');
+  if ((await signInMethodCount(c.get('db'))) > 0) fail(403, 'Setup is closed.');
   const ownerId = await finishRegistration(c, input.challengeId, input.response, input.name, 'setup');
   const recoveryCodes = await issueRecoveryCodes(c, ownerId);
   await createSession(c, ownerId);
   await audit(c, 'auth.setup', 'success', null, ownerId);
+  return c.json({ owner: await ownerProfile(c.get('db'), ownerId, false), recoveryCodes });
+});
+
+// First-owner setup with a password instead of a passkey (same token and lock as above).
+authRoutes.post('/setup/password', async (c) => {
+  await limit(c, 'setup', ipKey(c), 5, 900);
+  const input = await body(c, setupStart.extend({ password: z.string().min(PASSWORD_MIN, `Use at least ${PASSWORD_MIN} characters.`).max(PASSWORD_MAX) }));
+  await humanCheck(c, input.turnstileToken);
+  const { config } = c.get('deps');
+  if (input.email !== config.ownerEmail || !config.ownerSetupToken || !safeEqual(input.setupToken, config.ownerSetupToken)) {
+    await audit(c, 'auth.setup', 'failure');
+    fail(403, 'Email or setup token is incorrect.');
+  }
+  if (input.password.trim().toLowerCase() === input.email) fail(400, 'Choose a password that is not your email address.');
+  const hash = await hashPassword(input.password, config.recoveryPepper);
+  const ownerId = await c.get('db').tx(async (db) => {
+    await db.query('SELECT pg_advisory_xact_lock($1)', [4204201338]);
+    if (await signInMethodCount(db) > 0) fail(403, 'Setup is closed.');
+    const { rows } = await db.query<{ id: string }>(
+      `INSERT INTO owners (email, password_hash, password_updated_at) VALUES ($1, $2, now())
+       ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, password_updated_at = now() RETURNING id`,
+      [input.email, hash]
+    );
+    return rows[0]!.id;
+  });
+  const recoveryCodes = await issueRecoveryCodes(c, ownerId);
+  await createSession(c, ownerId);
+  await audit(c, 'auth.setup', 'success', 'password', ownerId);
   return c.json({ owner: await ownerProfile(c.get('db'), ownerId, false), recoveryCodes });
 });
 
@@ -286,7 +318,30 @@ authRoutes.post('/login/verify', async (c) => {
   return c.json({ owner: await ownerProfile(db, key.owner_id, false) });
 });
 
-// ---- recovery code sign-in (lost device). The session can only add a new passkey.
+// ---- email + password sign-in (only for owners who set a password under Account)
+authRoutes.post('/password-login', async (c) => {
+  const input = await body(c, z.strictObject({ email, password: z.string().min(1).max(PASSWORD_MAX), turnstileToken: z.string().max(4096).optional() }));
+  await limit(c, 'password-ip', ipKey(c), 10, 900);
+  await limit(c, 'password-acct', input.email, 10, 3600);
+  await humanCheck(c, input.turnstileToken);
+  const { config } = c.get('deps');
+  const db = c.get('db');
+  const { rows } = await db.query<{ id: string; password_hash: string | null; disabled_at: Date | null }>(
+    'SELECT id, password_hash, disabled_at FROM owners WHERE email = $1', [input.email]
+  );
+  const owner = rows[0];
+  // Always run one hash so an unknown email takes as long as a wrong password.
+  const ok = await verifyPassword(input.password, owner?.password_hash ?? null, config.recoveryPepper);
+  if (!owner || !ok || owner.disabled_at) {
+    await audit(c, 'auth.password_login', 'failure', null, owner?.id ?? null);
+    fail(401, 'Email or password is incorrect.');
+  }
+  await createSession(c, owner.id);
+  await audit(c, 'auth.password_login', 'success', null, owner.id);
+  return c.json({ owner: await ownerProfile(db, owner.id, false) });
+});
+
+// ---- recovery code sign-in (lost device). The session can only add a new passkey or set a new password.
 authRoutes.post('/recover', async (c) => {
   const input = await body(c, z.strictObject({ email, code: z.string().max(40), turnstileToken: z.string().max(4096).optional() }));
   await limit(c, 'recover-ip', ipKey(c), 5, 900);

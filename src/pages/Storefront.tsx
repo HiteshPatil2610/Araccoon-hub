@@ -10,7 +10,7 @@ import { featuredProducts } from '../lib/catalog';
 import { useOutbound } from '../lib/outbound';
 import { useLayoutMorph } from '../lib/useLayoutMorph';
 import { useHeroHandoff } from '../lib/useHeroHandoff';
-import { Navbar, Footer } from '../components/SiteChrome';
+import { Navbar, Footer, Announcement } from '../components/SiteChrome';
 import { ProductCard } from '../components/ProductCard';
 import { Blurb, CharacterStagger, FilmStrip, HERO_CUES, HeroDisc, HeroEntrance, HeroMetadata, PosterTitle, Reveal, SectionLabel, Sticker, TrackingReveal, Viewfinder, usePrefersReducedMotion } from '../components/cine';
 import { Cutout, PicksSection, StorySection } from '../components/StorefrontSections';
@@ -110,8 +110,8 @@ export function Storefront() {
                 <div className="cd-hero__stage">
                   <HeroDisc />
                   <div className="cd-hero__numeral" data-morph="type" aria-hidden="true"><CharacterStagger text="Hub" delay={HERO_CUES.hub} stagger={100} followWave /></div>
-                  <div className="cd-hero__flank cd-hero__flank--l" data-morph="move"><CharacterStagger text="Small finds." delay={HERO_CUES.captions} stagger={48} /><CharacterStagger text="Hand-picked." delay={HERO_CUES.captions + 80} stagger={48} /></div>
-                  <div className="cd-hero__flank cd-hero__flank--r" data-morph="move"><CharacterStagger text="Clever objects." delay={HERO_CUES.captions + 160} stagger={48} /><CharacterStagger text="Everyday upgrades." delay={HERO_CUES.captions + 240} stagger={48} /></div>
+                  <div className="cd-hero__flank cd-hero__flank--l" data-morph="move"><CharacterStagger text={text.heroLineA} delay={HERO_CUES.captions} stagger={48} /><CharacterStagger text={text.heroLineB} delay={HERO_CUES.captions + 80} stagger={48} /></div>
+                  <div className="cd-hero__flank cd-hero__flank--r" data-morph="move"><CharacterStagger text={text.heroLineC} delay={HERO_CUES.captions + 160} stagger={48} /><CharacterStagger text={text.heroLineD} delay={HERO_CUES.captions + 240} stagger={48} /></div>
                   <div className="cd-hero__title" data-morph="type">
                     <PosterTitle id="hero-title" text="Raccoon" label="Raccoon Hub: small finds, big everyday upgrades." />
                   </div>
@@ -205,7 +205,7 @@ export function Storefront() {
             <div className="relative overflow-hidden panel p-12 max-w-xl mx-auto text-center my-8">
               <Viewfinder size={360} light />
               <p className="relative eyebrow text-muted-fg">{products.length ? 'No matches .' : 'Coming soon .'}</p>
-              <h3 className="relative text-5xl mt-3">{products.length ? 'No finds match these filters.' : 'New finds are on the way.'}</h3>
+              <h3 className="relative text-5xl mt-3">{products.length ? 'No finds match these filters.' : text.emptyCatalog}</h3>
               {products.length > 0 && <p className="relative text-sm text-muted-fg mt-4">Try a different search or clear the filters above.</p>}
             </div>
           ) : (
@@ -222,6 +222,7 @@ export function Storefront() {
       </main>
 
       <Footer />
+      <Announcement />
 
       <ProductOverlays quick={quick} onCloseQuick={() => setQuick(null)} outbound={outbound} />
     </div>

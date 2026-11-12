@@ -79,7 +79,8 @@ export interface OwnerProfile {
   id: string;
   email: string;
   displayName: string;
-  needsPasskey: boolean; // signed in via recovery code — must add a passkey
+  needsPasskey: boolean; // signed in via recovery code — must add a passkey or set a new password
+  hasPassword: boolean;
 }
 
 export interface PasskeyInfo {

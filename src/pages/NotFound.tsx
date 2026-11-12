@@ -1,7 +1,10 @@
 import { Link } from 'react-router';
 import { ScrambleText, SectionLabel, Viewfinder } from '../components/cine';
+import { useNoIndex, usePageMeta } from '../lib/pageMeta';
 
 export function NotFound() {
+  usePageMeta('Page not found — Raccoon Hub');
+  useNoIndex();
   return (
     <main className="relative min-h-screen overflow-hidden flex items-center justify-center p-6 bg-ink text-white text-center">
       <Viewfinder size="min(640px, 90vw)" />

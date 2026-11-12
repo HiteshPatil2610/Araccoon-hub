@@ -185,6 +185,14 @@ ALTER TABLE product_content_sources ADD CONSTRAINT product_content_sources_provi
       updated_at timestamptz NOT NULL DEFAULT now()
     );`,
   },
+  {
+    version: 6,
+    name: 'owner_passwords',
+    // Optional email + password sign-in next to passkeys. Only the PBKDF2 hash is stored.
+    sql: `ALTER TABLE owners
+      ADD COLUMN password_hash text CHECK (password_hash IS NULL OR char_length(password_hash) <= 200),
+      ADD COLUMN password_updated_at timestamptz;`,
+  },
 ];
 
 const LOCK_KEY = 4_204_201_337;

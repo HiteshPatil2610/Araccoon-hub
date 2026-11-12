@@ -75,7 +75,7 @@ After the changes in the Unreleased section are merged:
 
 - **Code licence:** PolyForm Noncommercial 1.0.0. Others may use the code only non-commercially; the owner keeps commercial rights and may sell commercial licences. Earlier copies (up to commit `75551df`) stay MIT. Because of this the project is "source-available", not OSI "open source".
 - **Art licence:** stays CC BY-NC 4.0. Companies may not use the mascot commercially.
-- **`art/araccoon/reference_raccoon.webp`:** the owner's own generated image; stays in the repo.
+- **`art/araccoon/` (3D Blender mascot) and `art/samurai/`:** removed on 9 November 2026 as unused by the site; still in older commits.
 - **`video/araccoon-promo/design-system/`:** kept private. Removed from the repo and ignored; the local copy stays on the owner's machine. It is still in older commits unless history is rewritten.
 - **Email:** this repo's git config now uses the GitHub no-reply address, so new commits don't show a personal email. Old commits keep the old one.
 

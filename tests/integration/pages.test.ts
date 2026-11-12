@@ -60,6 +60,15 @@ describe('site text and Worker-rendered pages', { skip: integrationSkipReason },
     assert.equal(reset.status, 200, reset.text);
     assert.equal(reset.body.values.heroBlurb, DEFAULT_SITE_TEXT.heroBlurb);
     assert.deepEqual(reset.body.customized, ['seoTitle']);
+
+    assert.equal((await owner.request('PUT', '/api/admin/site-text', { body: { announcementLink: 'javascript:alert(1)' } })).status, 400);
+    const shown = await owner.request('PUT', '/api/admin/site-text', { body: { announcement: 'Prime Day picks are live', announcementLink: '/articles' } });
+    assert.equal(shown.status, 200, shown.text);
+    assert.equal((await t.browser().get('/api/site-text')).body.announcement, 'Prime Day picks are live');
+    const cleared = await owner.request('PUT', '/api/admin/site-text', { body: { announcement: '', announcementLink: '' } });
+    assert.equal(cleared.status, 200, cleared.text);
+    assert.equal(cleared.body.values.announcement, '');
+    assert.deepEqual(cleared.body.customized, ['seoTitle']);
   });
 
   it('renders the home page with its title, share tags, page headers and the published catalog', async () => {

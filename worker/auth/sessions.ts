@@ -66,13 +66,13 @@ export async function revokeAllSessions(db: Db, ownerId: string, exceptIdHash?: 
   return rowCount;
 }
 
-/** Owner routes: valid session required. Recovery sessions may only add a passkey. */
+/** Owner routes: valid session required. Recovery sessions may only add a passkey or set a password. */
 export function requireOwner(opts: { allowRecoverySession?: boolean } = {}): MiddlewareHandler<AppEnv> {
   return async (c, next) => {
     const session = await readSession(c);
     if (!session) fail(401, 'Please sign in.');
     if (session.needsPasskey && !opts.allowRecoverySession) {
-      fail(403, 'Add a new passkey to finish account recovery.');
+      fail(403, 'Set a new password or add a passkey to finish account recovery.');
     }
     c.set('session', session);
     await next();

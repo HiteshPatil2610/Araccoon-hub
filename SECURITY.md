@@ -13,7 +13,7 @@ welcome to be credited in the advisory.
 
 ## Scope
 
-In scope: the Worker API (`worker/`), owner authentication (passkeys, sessions,
+In scope: the Worker API (`worker/`), owner authentication (passwords, passkeys, sessions,
 recovery codes, invites), affiliate link and redirect handling, rate limits, and
 the security headers in `public/_headers`.
 

@@ -13,13 +13,13 @@ The project is public and source-available: code under PolyForm Noncommercial 1.
 - A fast, distinctive storefront that makes finds easy to browse and open on Amazon.
 - Honest affiliate behaviour: every outbound click is tracked, tagged and disclosed; no fake prices, ratings, stock or urgency.
 - An owner hub one person can run without a CMS or paid editor.
-- Secure by default (passkeys, strict CSP, rate limits) and free-tier friendly to host.
+- Secure by default (hashed passwords or passkeys, strict CSP, rate limits) and free-tier friendly to host.
 - Search-engine and link-preview friendly public pages.
 
 ## Users
 
 - **Visitors**: anonymous, no accounts. They browse, search, filter, open quick views, read articles and go to Amazon.
-- **Owners**: one or more people with passkeys who manage products, site text and settings, and read reports.
+- **Owners**: one or more people who sign in with a password or passkey and manage products, site text and settings, and read reports.
 - **Writers**: anyone with repo access who adds Markdown articles in `content/articles/`.
 
 ## Features in scope
@@ -29,7 +29,7 @@ The project is public and source-available: code under PolyForm Noncommercial 1.
 | Storefront (`/`) | Hero, featured picks carousel, story section, catalog with search, category filter and sort, quick view, outbound notice |
 | Journal (`/articles`, `/articles/<slug>`) | Markdown articles with cover image, reading time, and cards for listed products |
 | Outbound links | `/r/:id` redirect and `/api/track` beacon; Associates tag rules; trusted Amazon hosts only |
-| Owner hub (`/admin`) | Passkey sign-in, recovery codes, invites; Products (create, import from an Amazon link, edit, bulk, duplicate, images); Site text; Analytics, CSV export, conversions; Activity log; Account and sessions |
+| Owner hub (`/admin`) | Email + password or passkey sign-in, recovery codes, invites; Products (create, import from an Amazon link, edit, bulk, duplicate, images); Site text; Analytics, CSV export, conversions; Activity log; Account and sessions |
 | Search and sharing | Worker-rendered titles, descriptions, canonical links, Open Graph/Twitter tags, JSON-LD, `robots.txt`, `sitemap.xml`, share image |
 
 ## Out of scope (deliberately)

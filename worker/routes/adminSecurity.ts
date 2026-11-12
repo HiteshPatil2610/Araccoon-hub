@@ -4,6 +4,7 @@ import { body, fail, limit, type AppEnv, type Ctx } from '../app';
 import { requireOwner, revokeAllSessions, endSession } from '../auth/sessions';
 import { audit } from '../lib/audit';
 import { randomToken, sha256Hex } from '../lib/crypto';
+import { hashPassword, PASSWORD_MAX, PASSWORD_MIN, verifyPassword } from '../lib/password';
 import { finishRegistration, issueRecoveryCodes, ownerProfile, registrationOptions } from './auth';
 import type { AuditEntry, PasskeyInfo } from '../../shared/types';
 
@@ -63,15 +64,60 @@ adminSecurityRoutes.delete('/passkeys/:id', requireOwner(), async (c) => {
   const db = c.get('db');
   const result = await db.tx(async (t) => {
     await t.query('SELECT id FROM owners WHERE id = $1 FOR UPDATE', [ownerId(c)]);
-    const { rows } = await t.query<{ n: string }>('SELECT count(*) AS n FROM passkeys WHERE owner_id = $1', [ownerId(c)]);
-    if (Number(rows[0]!.n) <= 1) return 'last' as const;
+    const { rows } = await t.query<{ n: string; has_password: boolean }>(
+      `SELECT (SELECT count(*) FROM passkeys WHERE owner_id = $1) AS n,
+              (SELECT password_hash IS NOT NULL FROM owners WHERE id = $1) AS has_password`, [ownerId(c)]
+    );
+    if (Number(rows[0]!.n) <= 1 && !rows[0]!.has_password) return 'last' as const;
     const del = await t.query('DELETE FROM passkeys WHERE id = $1 AND owner_id = $2', [c.req.param('id'), ownerId(c)]);
     return del.rowCount ? ('ok' as const) : ('missing' as const);
   });
-  if (result === 'last') fail(409, 'You cannot remove your only passkey. Add another one first.');
+  if (result === 'last') fail(409, 'You cannot remove your only sign-in method. Set a password or add another passkey first.');
   if (result === 'missing') fail(404, 'Passkey not found.');
   await audit(c, 'security.passkey_removed', 'success');
   return c.json({ ok: true });
+});
+
+// ---- password. Setting one needs the current password if one exists, except in a
+// recovery-code session, where a new password completes recovery (like a new passkey).
+adminSecurityRoutes.put('/password', requireOwner({ allowRecoverySession: true }), async (c) => {
+  await limit(c, 'password-set', ownerId(c), 10, 900);
+  const input = await body(c, z.strictObject({
+    currentPassword: z.string().max(PASSWORD_MAX).optional(),
+    newPassword: z.string().min(PASSWORD_MIN, `Use at least ${PASSWORD_MIN} characters.`).max(PASSWORD_MAX),
+  }));
+  const { config } = c.get('deps');
+  const session = c.get('session')!;
+  const db = c.get('db');
+  const { rows } = await db.query<{ email: string; password_hash: string | null }>('SELECT email, password_hash FROM owners WHERE id = $1', [session.ownerId]);
+  const owner = rows[0]!;
+  if (input.newPassword.trim().toLowerCase() === owner.email) fail(400, 'Choose a password that is not your email address.');
+  if (owner.password_hash && !session.needsPasskey) {
+    if (!(await verifyPassword(input.currentPassword ?? '', owner.password_hash, config.recoveryPepper))) {
+      await audit(c, 'security.password_changed', 'failure');
+      fail(400, 'Your current password is incorrect.');
+    }
+  }
+  await db.query('UPDATE owners SET password_hash = $2, password_updated_at = now() WHERE id = $1',
+    [session.ownerId, await hashPassword(input.newPassword, config.recoveryPepper)]);
+  if (session.needsPasskey) await db.query('UPDATE sessions SET needs_passkey = false WHERE id_hash = $1', [session.idHash]);
+  await revokeAllSessions(db, session.ownerId, session.idHash);
+  await audit(c, owner.password_hash ? 'security.password_changed' : 'security.password_set', 'success');
+  return c.json(await ownerProfile(db, session.ownerId, false));
+});
+
+adminSecurityRoutes.delete('/password', requireOwner(), async (c) => {
+  const db = c.get('db');
+  const removed = await db.tx(async (t) => {
+    await t.query('SELECT id FROM owners WHERE id = $1 FOR UPDATE', [ownerId(c)]);
+    const { rows } = await t.query<{ n: string }>('SELECT count(*) AS n FROM passkeys WHERE owner_id = $1', [ownerId(c)]);
+    if (Number(rows[0]!.n) === 0) return false;
+    await t.query('UPDATE owners SET password_hash = NULL, password_updated_at = now() WHERE id = $1', [ownerId(c)]);
+    return true;
+  });
+  if (!removed) fail(409, 'Add a passkey before removing your password, or you would be locked out.');
+  await audit(c, 'security.password_removed', 'success');
+  return c.json(await ownerProfile(db, ownerId(c), false));
 });
 
 // ---- recovery codes (old set is invalidated; new codes are shown once)
