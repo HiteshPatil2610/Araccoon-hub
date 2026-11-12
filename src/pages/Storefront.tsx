@@ -138,6 +138,13 @@ export function Storefront() {
     navigate({ pathname: findPath(pick), search: location.search }, { state: { inApp: true, surprise: true }, replace: quick !== null, preventScrollReset: true });
   }, [visible, products, quick, navigate, location.search]);
   const canSurprise = (products?.length ?? 0) > (quick ? 1 : 0);
+  // Previous / next follow what the catalog shows; a find opened from outside it (a link, a surprise) steps through the whole catalog.
+  const browse = useMemo(() => (quick && visible.some(p => p.id === quick.id) ? visible : products ?? []), [quick, visible, products]);
+  // Swaps the open find in place, keeping how it was opened, so Back and close still leave Quick View in one step.
+  const showFind = useCallback((p: PublicProduct) => {
+    const inApp = Boolean((location.state as { inApp?: boolean } | null)?.inApp);
+    navigate({ pathname: findPath(p), search: location.search }, { state: { inApp }, replace: true, preventScrollReset: true });
+  }, [navigate, location.state, location.search]);
 
   // Picks and Story share one carousel: the owner's featured finds, else the first few in curated order.
   const picks = useMemo(() => {
@@ -330,7 +337,7 @@ export function Storefront() {
       <Footer />
       <Announcement />
 
-      <ProductOverlays quick={quick} onCloseQuick={closeQuick} outbound={outbound} surprise={inSurprise} onSurprise={canSurprise ? surprise : undefined} />
+      <ProductOverlays quick={quick} onCloseQuick={closeQuick} outbound={outbound} surprise={inSurprise} onSurprise={canSurprise ? surprise : undefined} browse={browse} pool={products ?? []} onShow={showFind} />
     </div>
     </HeroEntrance>
   );

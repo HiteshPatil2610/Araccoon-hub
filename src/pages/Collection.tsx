@@ -79,7 +79,7 @@ function CollectionView({ slug }: { slug: string }) {
           <p className="mt-16 text-xs text-muted-fg">As an Amazon Associate, Raccoon Hub earns from qualifying purchases.</p>
         </>
       )}
-      <ProductOverlays quick={quick} onCloseQuick={() => setQuick(null)} outbound={outbound} from={FROM_COLLECTION} />
+      <ProductOverlays quick={quick} onCloseQuick={() => setQuick(null)} outbound={outbound} from={FROM_COLLECTION} browse={products} onShow={setQuick} />
     </PublicPage>
   );
 }

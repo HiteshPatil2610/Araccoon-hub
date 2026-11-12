@@ -23,6 +23,24 @@ export function pickSurprise<T extends { id: string }>(pool: readonly T[], seen:
   return pick;
 }
 
+/** The finds before and after the open one in the list the visitor is browsing, wrapping at the ends. */
+export function neighbours<T extends { id: string }>(list: readonly T[], currentId: string): { prev: T; next: T; position: number; total: number } | null {
+  const i = list.findIndex(p => p.id === currentId);
+  if (i < 0 || list.length < 2) return null;
+  return { prev: list[(i - 1 + list.length) % list.length]!, next: list[(i + 1) % list.length]!, position: i + 1, total: list.length };
+}
+
+/**
+ * "More like this" for the open find: others from its category first, then other finds, in list order.
+ * `similar` says whether any of them share the category, so the heading can stay honest.
+ */
+export function relatedFinds<T extends { id: string; category: string }>(list: readonly T[], current: T, limit = 4): { finds: T[]; similar: boolean } {
+  const others = list.filter(p => p.id !== current.id);
+  const same = (p: T) => p.category.toLowerCase() === current.category.toLowerCase();
+  const finds = [...others.filter(same), ...others.filter(p => !same(p))].slice(0, limit);
+  return { finds, similar: finds.some(same) };
+}
+
 /** Today's date (YYYY-MM-DD) in the site's timezone, so every visitor shares the same "today". */
 export function siteDay(now = new Date(), timeZone = 'Asia/Kolkata'): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);

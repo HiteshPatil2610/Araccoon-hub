@@ -18,6 +18,7 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 ### Added
 
 - **Return-visit extras** (kept only in the visitor's browser): the raccoon's find of the day at the top of the catalog (the same find for everyone, a new one daily); a "New" tag and a "New since last visit" filter for finds added since the visitor was last here; and "Pick up where you left off", the finds they opened on earlier visits.
+- **Browse inside Quick View:** previous/next arrows on the photo, arrow keys and swipes step through the finds the page shows, with a count, and a "More like this" row of up to four other finds (same category first) opens them in place.
 - **Surprise me:** a random find with the mascot, plus mascot art on the empty-search panel and the 404 page.
 - **Your stash:** visitors can save finds; the list is kept only in their browser.
 - **Journal RSS feed** at `/articles/feed.xml`.

@@ -758,6 +758,26 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
   .quick-view__aside .cd-still { max-height: 44vh; max-height: 44dvh; }
   .quick-view__body { align-self: stretch; padding-left: 28px; border-left: 1px solid var(--line); margin-left: -1px; }
 }
+/* Stepping through finds in Quick View: white discs on the photo's edges, a count at its foot. Swipes stay horizontal-only here. */
+.quick-view__frame--steps { touch-action: pan-y; }
+.quick-view__frame img { animation: quick-view-in var(--dur-base, 240ms) var(--ease-cine) both; }
+@keyframes quick-view-in { from { opacity: 0; } }
+.quick-view__step { position: absolute; top: 50%; translate: 0 -50%; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: #fff; color: var(--cd-black); border: 1px solid rgb(0 0 0 / .18); cursor: pointer; transition: background-color var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
+.quick-view__step--prev { left: 10px; }
+.quick-view__step--next { right: 10px; }
+.quick-view__step:hover { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; }
+.quick-view__count { position: absolute; bottom: 10px; left: 50%; translate: -50% 0; padding: 4px 10px 2px; border-radius: 999px; background: rgb(10 10 10 / .78); color: #fff; font-family: var(--font-display); font-size: 15px; line-height: 1.1; letter-spacing: .04em; pointer-events: none; }
+/* "More like this": a row of small tiles under the details; each one opens that find in place. */
+.quick-view__more { min-width: 0; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+.quick-view__more-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 12px 0 0; padding: 0; list-style: none; }
+.quick-view__tile { display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0; padding: 6px 6px 10px; border: 1px solid var(--line); border-radius: var(--radius-m); background: transparent; color: inherit; text-align: left; cursor: pointer; transition: border-color var(--dur-fast) var(--ease-cine); }
+.quick-view__tile:hover { border-color: var(--cd-red-500); }
+.quick-view__tile:hover img { transform: scale(1.04); }
+.quick-view__tile-image { display: block; aspect-ratio: 1; border-radius: calc(var(--radius-m) - 4px); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .06); }
+.quick-view__tile-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; padding: 0 4px; font-family: var(--font-display); font-size: 18px; line-height: 1; text-transform: uppercase; letter-spacing: var(--ls-display); overflow-wrap: anywhere; }
+@media (min-width: 640px) {
+  .quick-view__more-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 .surprise-note { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
 .surprise-note img { height: 56px; width: auto; flex: none; user-select: none; }
 /* The owner's own note in Quick View: a quiet pull quote with the one crimson accent. */
