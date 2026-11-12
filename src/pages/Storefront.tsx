@@ -292,7 +292,7 @@ export function Storefront() {
             <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-6 gap-5">
               <AnimatePresence mode="popLayout">
                 {visible.map((p, i) => (
-                  <ProductCard key={p.id} product={p} index={i} onOpen={outbound.open} onQuickView={setQuick} pending={outbound.state?.status === 'opening'} />
+                  <ProductCard key={p.id} product={p} index={i} onQuickView={setQuick} />
                 ))}
               </AnimatePresence>
             </motion.div>

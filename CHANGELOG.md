@@ -8,6 +8,7 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 
 - **Theme switch:** the new theme now bleeds out from the toggle like ink in water, replacing the expanding circle.
 - **Menu button:** on phones it stays in place and its two lines fold into a cross.
+- **Product cards:** simpler cards that open Quick View first. A click anywhere on a card opens its Quick View, where the Amazon button now lives; the card's save button moved to the image's top-right; the "Pick" sticker, number badges and the card's Amazon button were removed.
 - **Colour balance:** about 60% page colour, 30% its opposite and 10% crimson in both themes. In light mode the hero, picks and footer are now white; in dark mode product cards and the story section are white; the footer wordmark sits on a crimson band.
 
 ### Changed (licence)

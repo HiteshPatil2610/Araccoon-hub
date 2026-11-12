@@ -112,7 +112,6 @@ function ArticleView({ article }: { article: Article }) {
   const products = useArticleProducts(article.products);
   const outbound = useOutbound();
   const [quick, setQuick] = useState<PublicProduct | null>(null);
-  const open = (p: PublicProduct) => outbound.open(p, FROM_ARTICLE);
 
   return (
     <PublicPage>
@@ -136,7 +135,7 @@ function ArticleView({ article }: { article: Article }) {
           <h2 id="article-finds" className="text-[clamp(40px,5vw,72px)] leading-[.9] mt-3 mb-8">The finds</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {products.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} onOpen={open} onQuickView={setQuick} pending={outbound.state?.status === 'opening'} />
+              <ProductCard key={p.id} product={p} index={i} onQuickView={setQuick} />
             ))}
           </div>
         </section>
