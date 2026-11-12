@@ -29,7 +29,7 @@ try {
     console.log('Products already exist — skipping.');
   } else {
     for (const [i, s] of SAMPLES.entries()) {
-      await insertProduct(db, { imagePublicId: null, affiliateTag: null, subId: null, badge: null, featured: false, status: 'published', sortOrder: i, ...s });
+      await insertProduct(db, { imagePublicId: null, affiliateTag: null, subId: null, badge: null, pickNote: null, featured: false, status: 'published', sortOrder: i, ...s });
     }
     console.log(`Added ${SAMPLES.length} sample products.`);
   }

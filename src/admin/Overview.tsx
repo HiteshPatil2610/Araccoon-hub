@@ -36,6 +36,7 @@ export function Overview() {
   }, []);
 
   const broken = products?.filter(p => !p.linkHealthy && p.status !== 'archived') ?? [];
+  const gone = products?.filter(p => p.listing.status === 'gone' && p.status === 'published') ?? [];
   const drafts = products?.filter(p => p.status === 'draft').length ?? 0;
   const t = summary?.totals;
 
@@ -58,6 +59,16 @@ export function Overview() {
           <div>
             <p className="font-semibold">{broken.length} product link{broken.length > 1 ? 's' : ''} can't be opened</p>
             <p className="text-sm">These destinations aren't on an approved Amazon store, so visitors get "link not available". <Link className="underline font-bold" to="/admin/products?status=published&broken=1">Fix them</Link></p>
+          </div>
+        </div>
+      )}
+
+      {gone.length > 0 && (
+        <div role="alert" className="panel !bg-coral text-on-coral p-4 mt-6 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 shrink-0" aria-hidden="true" />
+          <div>
+            <p className="font-semibold">{gone.length} Amazon listing{gone.length > 1 ? 's look' : ' looks'} removed</p>
+            <p className="text-sm">Amazon answered "not found" for {gone.length > 1 ? 'these finds' : 'this find'} at the last check. Nothing was changed on your site. <Link className="underline font-bold" to="/admin/products?status=published&gone=1">Review {gone.length > 1 ? 'them' : 'it'}</Link></p>
           </div>
         </div>
       )}

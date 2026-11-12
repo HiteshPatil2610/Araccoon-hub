@@ -4,12 +4,26 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Changed (colour balance)
+
+- **Theme switch:** the new theme now bleeds out from the toggle like ink in water, replacing the expanding circle.
+- **Menu button:** on phones it stays in place and its two lines fold into a cross.
+- **Colour balance:** about 60% page colour, 30% its opposite and 10% crimson in both themes. In light mode the hero, picks and footer are now white; in dark mode product cards and the story section are white; the footer wordmark sits on a crimson band.
+
 ### Changed (licence)
 
 - **Code licence changed from MIT to PolyForm Noncommercial 1.0.0.** Commercial use now needs a licence from the author. Copies taken before this change (up to commit `75551df`) remain under MIT. Contributors grant the author the right to use their contributions commercially (see CONTRIBUTING.md).
 
 ### Added
 
+- **Surprise me:** a random find with the mascot, plus mascot art on the empty-search panel and the 404 page.
+- **Your stash:** visitors can save finds; the list is kept only in their browser.
+- **Journal RSS feed** at `/articles/feed.xml`.
+- **Listing check:** a daily (and on-demand) check that flags finds whose Amazon listing returns "not found" in the owner hub (migration 9).
+- **Collections:** owner-made themed lists of finds with their own pages (`/collections/<slug>`), managed in a new owner hub page, linked from the storefront and listed in the sitemap (migration 8).
+- **Shareable finds:** every find has its own link (`/find/<title>-<id>`) that opens its quick view, with its own title, description and preview image, a Share button, and an entry in the sitemap.
+- **Why we picked it:** an optional owner note (up to 280 characters) on each find, edited in the product editor and shown at the top of Quick View (migration 7, `products.pick_note`).
+- The home page preloads the hero mascot image and the two first-screen fonts.
 - Code of conduct, issue and pull request templates, CODEOWNERS, Dependabot config and this changelog.
 - [Public-repo checklist](docs/OPEN_SOURCE_CHECKLIST.md) with the maintainer's remaining manual steps.
 

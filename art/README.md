@@ -5,6 +5,7 @@ Everything in this folder is covered by [CC BY-NC 4.0](../LICENSE-ART.md) (artwo
 | Folder | What | Tools |
 | --- | --- | --- |
 | `posters/` | Poster compositions built from the source images in `posters/source/` | Python 3 with Pillow and NumPy; run `npm install` first so the bundled fonts exist |
+| `mascot/` | The mascot PNG originals and `make_web.py`, which builds the small WebP copies in `public/art/video-concept/` | Python 3 with Pillow |
 | `og/` | The link-preview share image (`public/og-image.jpg`) | Python 3 with Pillow |
 
 ## Posters

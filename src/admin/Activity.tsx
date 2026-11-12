@@ -7,7 +7,7 @@ import type { AuditEntry } from '../../shared/types';
 const LABELS: Record<string, string> = {
   'auth.login': 'Signed in', 'auth.setup': 'Owner setup', 'auth.recovery': 'Recovery code sign-in', 'auth.invite_accepted': 'Accepted invitation',
   'auth.dev_login': 'Development sign-in', 'product.create': 'Added a product', 'product.update': 'Edited a product', 'product.delete': 'Deleted a product',
-  'product.duplicate': 'Duplicated a product', 'analytics.export': 'Exported clicks', 'analytics.reset': 'Reset analytics',
+  'product.duplicate': 'Duplicated a product', 'product.links_checked': 'Checked Amazon listings', 'collection.create': 'Added a collection', 'collection.update': 'Edited a collection', 'collection.delete': 'Deleted a collection', 'analytics.export': 'Exported clicks', 'analytics.reset': 'Reset analytics',
   'conversion.manual': 'Recorded a sale', 'conversion.webhook': 'Sale received (webhook)', 'conversion.delete': 'Deleted a sale',
   'security.passkey_added': 'Added a passkey', 'security.passkey_removed': 'Removed a passkey', 'security.recovery_codes_regenerated': 'New recovery codes',
   'security.session_revoked': 'Signed out a device', 'security.sessions_revoked': 'Signed out other devices', 'security.owner_invited': 'Invited an owner',

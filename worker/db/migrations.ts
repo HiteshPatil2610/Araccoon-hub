@@ -193,6 +193,43 @@ ALTER TABLE product_content_sources ADD CONSTRAINT product_content_sources_provi
       ADD COLUMN password_hash text CHECK (password_hash IS NULL OR char_length(password_hash) <= 200),
       ADD COLUMN password_updated_at timestamptz;`,
   },
+  {
+    version: 7,
+    name: 'product_pick_note',
+    // The owner's own short reason for choosing a find; shown to visitors in the quick view.
+    sql: `ALTER TABLE products
+      ADD COLUMN pick_note text CHECK (pick_note IS NULL OR char_length(pick_note) BETWEEN 1 AND 280);`,
+  },
+  {
+    version: 8,
+    name: 'collections',
+    // Owner-made themed lists of finds. The slug is the public address and never changes after creation.
+    sql: `CREATE TABLE collections (
+      id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      slug        text NOT NULL UNIQUE CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' AND char_length(slug) <= 70),
+      title       text NOT NULL CHECK (char_length(title) BETWEEN 1 AND 80),
+      description text NOT NULL DEFAULT '' CHECK (char_length(description) <= 300),
+      status      text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+      sort_order  integer NOT NULL DEFAULT 0,
+      created_at  timestamptz NOT NULL DEFAULT now(),
+      updated_at  timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE TABLE collection_products (
+      collection_id uuid NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+      product_id    uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+      position      integer NOT NULL,
+      PRIMARY KEY (collection_id, product_id)
+    );
+    CREATE INDEX collection_products_product_idx ON collection_products (product_id);`,
+  },
+  {
+    version: 9,
+    name: 'product_listing_check',
+    // Result of the periodic "does the Amazon listing still exist" check; NULL means not checked since the link last changed.
+    sql: `ALTER TABLE products
+      ADD COLUMN link_status text CHECK (link_status IN ('ok', 'gone', 'unknown')),
+      ADD COLUMN link_checked_at timestamptz;`,
+  },
 ];
 
 const LOCK_KEY = 4_204_201_337;

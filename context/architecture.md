@@ -15,9 +15,10 @@ Updated 3 November 2026 (pages, site text and articles added; earlier sections f
 
 | Data | Source of truth | Notes |
 | --- | --- | --- |
-| Products, affiliate links | Postgres `products` | Edited in the owner hub; visitors get `toPublic` fields only |
+| Products, affiliate links | Postgres `products` | Edited in the owner hub; visitors get `toPublic` fields only (including the optional `pick_note`, migration 7) |
 | Clicks, conversions | Postgres `clicks`, `conversions` | Product snapshot kept; 90-day click retention (daily cron) |
 | Owners, passwords, passkeys, sessions, recovery codes, invites, audit log | Postgres | Passwords (migration 6), session and recovery secrets stored only as hashes |
+| Collections | Postgres `collections`, `collection_products` (migration 8) | Slug is set from the title at creation and never changes; finds are ordered by `position`; deleting a product removes it from its collections |
 | Short storefront copy | Postgres `site_text` (migration 5) | Key/value; a missing row means the default in `shared/siteText.ts` |
 | Articles | `content/articles/*.md` in git | Compiled to `shared/generated/articles.ts` (gitignored) by `scripts/articles.ts` |
 | Product images | Cloudinary | Signed direct uploads into one folder |
@@ -25,9 +26,27 @@ Updated 3 November 2026 (pages, site text and articles added; earlier sections f
 
 ## Public pages (Worker-rendered)
 
-`run_worker_first` in `wrangler.jsonc` sends `/`, `/articles`, `/articles/*`, `/robots.txt` and `/sitemap.xml` to the Worker (`worker/routes/pages.ts`). It reads the built `index.html` through the `ASSETS` binding and fills in the title, description, canonical URL, Open Graph/Twitter tags, JSON-LD, a `<noscript>` text version, and a `<script type="application/json" id="rh-initial">` payload (site text plus the products the page shows). The React app reads that payload (`src/lib/initialData.ts`), so the first render makes no API call; later in-app navigation uses the API. In production the rendered HTML is cached in `caches.default` for 60 seconds; a database error still renders the page with defaults, uncached. Outside production, pages are `noindex` and `robots.txt` disallows everything. The site origin is `PASSKEY_ORIGIN` in production and the request origin elsewhere.
+`run_worker_first` in `wrangler.jsonc` sends `/`, `/articles`, `/articles/*`, `/find/*`, `/collections/*`, `/robots.txt` and `/sitemap.xml` to the Worker (`worker/routes/pages.ts`). It reads the built `index.html` through the `ASSETS` binding and fills in the title, description, canonical URL, Open Graph/Twitter tags, JSON-LD, a `<noscript>` text version, and a `<script type="application/json" id="rh-initial">` payload (site text plus the products the page shows). The React app reads that payload (`src/lib/initialData.ts`), so the first render makes no API call; later in-app navigation uses the API. In production the rendered HTML is cached in `caches.default` for 60 seconds; a database error still renders the page with defaults, uncached. The home page also carries a `<link rel="preload">` for the hero mascot image (`PageMeta.preloadImage`), and `index.html` preloads the two first-screen fonts, so they start downloading before the scripts run. Outside production, pages are `noindex` and `robots.txt` disallows everything. The site origin is `PASSKEY_ORIGIN` in production and the request origin elsewhere.
 
 HTML responses get the page security headers from `worker/lib/pageHeaders.ts` (identical to `public/_headers`, enforced by a unit test); API responses keep the locked-down API CSP. Local development omits the page CSP because Vite's hot-reload preamble is an inline script.
+
+## Shareable finds
+
+Each published find has an address `/find/<title-slug>-<first 8 id characters>` (`shared/finds.ts`). Only the id part identifies it, so links survive title edits; the canonical link always names the current address. The Worker renders it as the storefront (same embedded catalog) with the find's title, description (the pick note, else its description), image as the share image, and a noscript block whose Amazon link is the tracked `/r/:id`. An unknown, draft or archived find returns 404 with `noindex` and the app shows the storefront with a message. In the app, `/find/:slug` is a child route of `/`, so the storefront stays mounted and the quick view is derived from the address: opening one pushes the address (scroll and filters kept), closing goes Back when it was opened in the app and replaces with `/` when the visitor arrived by link. Quick views on article pages stay local state but share the same link. The sitemap lists published finds when the database answers.
+
+## Listing check
+
+`worker/lib/linkCheck.ts` asks Amazon whether a find's listing still exists. It requests only the clean product page built from a validated marketplace and ASIN (never the tagged affiliate URL, so no click is attributed), follows at most two redirects and only to the same product, and records `ok` (page loads), `gone` (HTTP 404) or `unknown` (short links, bot checks, errors, timeouts, redirects elsewhere) in `products.link_status` / `link_checked_at` (migration 9). It runs after the daily maintenance for the 10 published finds checked longest ago, and on demand from `POST /api/admin/products/check-links` (owner, 6 runs an hour, audited). Changing a product's Amazon link clears the result. The result is owner-only (`Product.listing`), shown as a chip in Products and a banner on the Overview; nothing is unpublished automatically.
+
+## Visitor extras
+
+- **Surprise me** (`pickSurprise` in `src/lib/catalog.ts`): a random find from the filtered list (or the whole catalog when the filters match nothing), never the open one and none twice until all were shown; it opens the find's `/find/` address with `surprise` in the navigation state.
+- **Stash** (`src/lib/stash.ts`): saved find ids in `localStorage` (`araccoon_stash`, at most 100, validated on read), shared between components through `useSyncExternalStore` and between tabs through the `storage` event. Nothing is sent to the server.
+- **Journal feed**: `GET /articles/feed.xml` (RSS 2.0, published articles, summaries only), advertised with a `<link rel="alternate">` on journal pages (`PageMeta.feedUrl`).
+
+## Collections
+
+A collection is a titled, ordered list of products (`shared/collections.ts`, `worker/repo/collections.ts`, `worker/routes/collections.ts`). Visitors only ever see a collection that is published **and** has at least one published find; drafts, empty lists and unpublished finds inside a list are filtered in SQL, and responses use `toPublic` like the catalog. `GET /api/collections` lists summaries (title, count, first find's image); `GET /api/collections/:slug` returns one with its finds. Owner routes under `/api/admin/collections` (list, create, patch, delete) are validated with the shared schema, rate-limited and audited; a list naming an unknown product is refused and nothing is written. The Worker renders `/collections/<slug>` with the collection embedded (`InitialData.collection`), its description and first image for link previews, and 404 + `noindex` when it is not visible. The home and find pages embed the summaries (`InitialData.collections`); the storefront shows them as links above the catalog search and hides the block when there are none or they cannot be loaded. Owner hub page: `src/admin/Collections.tsx`.
 
 ## Content editing
 
