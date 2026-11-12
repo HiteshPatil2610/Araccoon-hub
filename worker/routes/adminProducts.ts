@@ -6,6 +6,7 @@ import { audit } from '../lib/audit';
 import { countImageRefs, getProduct, insertProduct, listProducts, toProduct, updateProduct } from '../repo/products';
 import { bulkActionSchema, productInputSchema, productPatchSchema, type ProductPatch } from '../../shared/schemas';
 import { prepareAffiliateLink } from '../lib/affiliateLinks';
+import { checkListings } from '../lib/linkCheck';
 
 export const adminProductRoutes = new Hono<AppEnv>();
 adminProductRoutes.use('*', requireOwner());
@@ -88,6 +89,14 @@ adminProductRoutes.patch('/:id', async (c) => {
   return c.json(toProduct(row!, c.get('deps').config.allowedHosts));
 });
 
+// Runs one batch of the listing check now (the daily job does the same); a few runs cover a small catalog.
+adminProductRoutes.post('/check-links', async (c) => {
+  await limit(c, 'link-check', ownerKey(c), 6, 3600);
+  const result = await checkListings(c.get('db'), c.get('deps').listingFetch ?? ((...args) => fetch(...args)));
+  await audit(c, 'product.links_checked', 'success');
+  return c.json(result);
+});
+
 adminProductRoutes.post('/:id/duplicate', async (c) => {
   await limit(c, 'owner-write', ownerKey(c), 60, 60);
   const src = await getProduct(c.get('db'), c.req.param('id'));
@@ -95,7 +104,7 @@ adminProductRoutes.post('/:id/duplicate', async (c) => {
   const row = await insertProduct(c.get('db'), {
     title: `${src.title.slice(0, 190)} (copy)`, description: src.description, category: src.category,
     rating: Number(src.rating), reviewCount: src.review_count, imageUrl: src.image_url, imagePublicId: src.image_public_id,
-    affiliateUrl: src.affiliate_url, affiliateTag: src.affiliate_tag, subId: src.sub_id, badge: src.badge,
+    affiliateUrl: src.affiliate_url, affiliateTag: src.affiliate_tag, subId: src.sub_id, badge: src.badge, pickNote: src.pick_note,
     featured: false, status: 'draft', sortOrder: src.sort_order,
   });
   await audit(c, 'product.duplicate', 'success', row.id);

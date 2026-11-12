@@ -90,17 +90,29 @@ export function Navbar() {
 
 const EASE = [0.83, 0, 0.17, 1] as const; // --ease-curtain
 
+// The menu disc's two lines (long over short) fold into a cross; they sit 5.6px apart (1.6px line + 4px gap).
+const LINE_TOP = { closed: { width: 20, y: 0, rotate: 0 }, open: { width: 20, y: 2.8, rotate: 45 } };
+const LINE_BOTTOM = { closed: { width: 13, y: 0, rotate: 0 }, open: { width: 20, y: -2.8, rotate: -45 } };
+
 /** Phone/tablet navigation: the design system's solid menu disc opens a full-screen black curtain that
-    grows out of the button as a circle; links rise in one after another. Desktop keeps the inline links. */
+    grows out of the button as a circle; links rise in one after another. Desktop keeps the inline links.
+    The curtain's close button is drawn in exactly the same place and colours as the menu disc, so the
+    disc appears to stay put while its two lines turn into a cross (and back on close). */
 function MenuButton({ current }: { current: string }) {
   const [open, setOpen] = useState(false);
   const btn = useRef<HTMLButtonElement>(null);
   const [origin, setOrigin] = useState('100% 0%');
+  const [from, setFrom] = useState({ bg: '#fff', fg: '#0A0A0A' });
   const panel = useDialog(open, () => setOpen(false));
 
   const show = () => {
-    const r = btn.current?.getBoundingClientRect();
-    if (r) setOrigin(`${r.left + r.width / 2}px ${r.top + r.height / 2}px`);
+    const el = btn.current;
+    if (el) {
+      const r = el.getBoundingClientRect();
+      setOrigin(`${r.left + r.width / 2}px ${r.top + r.height / 2}px`);
+      const style = getComputedStyle(el);
+      setFrom({ bg: style.backgroundColor, fg: style.color });
+    }
     setOpen(true);
   };
   const go = (id: string) => {
@@ -123,7 +135,12 @@ function MenuButton({ current }: { current: string }) {
             transition={{ duration: 0.7, ease: EASE }}>
             <div className="cd-menu__top">
               <span className="font-display text-[26px] sm:text-[32px] leading-none pt-1">Raccoon<span className="text-red"> Hub</span></span>
-              <button type="button" className="icon-btn !border-white/70" onClick={() => setOpen(false)} aria-label="Close menu" data-initial-focus><X className="w-5 h-5" /></button>
+              <motion.button type="button" className="cd-menu-btn cd-menu-btn--close" onClick={() => setOpen(false)} aria-label="Close menu" data-initial-focus
+                initial={{ backgroundColor: from.bg, color: from.fg }} animate={{ backgroundColor: '#FFFFFF', color: '#0A0A0A' }} exit={{ backgroundColor: from.bg, color: from.fg }}
+                transition={{ duration: 0.45, ease: EASE }}>
+                <motion.span initial={LINE_TOP.closed} animate={LINE_TOP.open} exit={LINE_TOP.closed} transition={{ duration: 0.45, ease: EASE }} />
+                <motion.span initial={LINE_BOTTOM.closed} animate={LINE_BOTTOM.open} exit={LINE_BOTTOM.closed} transition={{ duration: 0.45, ease: EASE }} />
+              </motion.button>
             </div>
             <nav aria-label="Site" className="cd-menu__links">
               {[...LINKS.map(l => ({ ...l, to: '' })), { id: 'articles', label: 'Journal', to: '/articles' }, { id: 'admin', label: 'Owner hub', to: '/admin' }].map((l, i) => (
@@ -149,16 +166,21 @@ function MenuButton({ current }: { current: string }) {
 export function Footer() {
   const text = useSiteText();
   return (
-    <footer className="mt-auto bg-ink text-white relative" data-morph-root>
+    <footer className="mt-auto bg-[var(--stage-bg)] text-[var(--stage-fg)] relative" data-morph-root>
       <div className="h-[3px]" style={{ background: 'var(--gradient-section-edge)' }} aria-hidden="true" />
-      <div className="max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)] pt-14">
-        <TrackingReveal from="0.3em" once className="overflow-hidden" morph="type">
-          <p className="font-display text-[clamp(64px,15vw,220px)] leading-[.8] whitespace-nowrap text-center">Raccoon<span className="text-red"> Hub</span></p>
-        </TrackingReveal>
-        <div className="cd-footer__details mt-12 border-t border-white/10">
+      {/* The crimson wordmark band carries most of the page's 10% accent. */}
+      <div className="cd-footer__brand">
+        <div className="max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)]">
+          <TrackingReveal from="0.3em" once className="overflow-hidden" morph="type">
+            <p className="font-display text-[clamp(64px,15vw,220px)] leading-[.8] whitespace-nowrap text-center">Raccoon<span className="cd-footer__hub"> Hub</span></p>
+          </TrackingReveal>
+        </div>
+      </div>
+      <div className="max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)]">
+        <div className="cd-footer__details">
           <div data-morph="move">
             <SectionLabel>The idea</SectionLabel>
-            <p className="mt-4 text-sm text-[var(--cd-gray-300)] max-w-xs">{text.footerIdea}</p>
+            <p className="mt-4 text-sm text-[var(--stage-muted)] max-w-xs">{text.footerIdea}</p>
           </div>
           <nav aria-label="Categories" data-morph="move">
             <SectionLabel>Browse</SectionLabel>
@@ -166,20 +188,20 @@ export function Footer() {
               {CATEGORIES.map(c => <li key={c}><Link to={`/?category=${encodeURIComponent(c)}`} className="inline-flex min-h-11 items-center font-display text-xl hover:text-red transition-colors">{c}</Link></li>)}
             </ul>
           </nav>
-          <div className="text-sm text-[var(--cd-gray-300)]" data-morph="move">
-            <SectionLabel className="text-white">Good to know</SectionLabel>
+          <div className="text-sm text-[var(--stage-muted)]" data-morph="move">
+            <SectionLabel className="text-[var(--stage-fg)]">Good to know</SectionLabel>
             <p className="mt-4">Prices and availability are shown on Amazon and may change.</p>
-            <Link to="/articles" className="inline-flex min-h-11 items-center mt-1 mr-4 eyebrow text-white/60 hover:text-white">Journal ↗</Link>
-            <Link to="/admin" className="inline-flex min-h-11 items-center mt-1 eyebrow text-white/60 hover:text-white">Owner sign-in ↗</Link>
+            <Link to="/articles" className="inline-flex min-h-11 items-center mt-1 mr-4 eyebrow text-[var(--stage-muted)] hover:text-[var(--stage-fg)]">Journal ↗</Link>
+            <Link to="/admin" className="inline-flex min-h-11 items-center mt-1 eyebrow text-[var(--stage-muted)] hover:text-[var(--stage-fg)]">Owner sign-in ↗</Link>
           </div>
           <Reveal effect="rise" distance={24} once className="cd-footer__mascot" morph="move">
-            <img src="/art/video-concept/raccoon-closing-heart.webp" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} />
+            <img src="/art/video-concept/raccoon-closing-heart.webp" srcSet="/art/video-concept/raccoon-closing-heart-720.webp 676w, /art/video-concept/raccoon-closing-heart.webp 1200w" sizes="(max-width: 639px) 270px, (max-width: 1023px) 340px, 31vw" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} />
           </Reveal>
         </div>
       </div>
-      <div className="border-t border-white/10">
-        <p className="max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)] py-5 text-xs text-[var(--cd-gray-300)]">
-          <strong className="text-white font-semibold">Disclosure:</strong> As an Amazon Associate I earn from qualifying purchases.
+      <div className="border-t border-[var(--stage-line)]">
+        <p className="max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)] py-5 text-xs text-[var(--stage-muted)]">
+          <strong className="text-[var(--stage-fg)] font-semibold">Disclosure:</strong> As an Amazon Associate I earn from qualifying purchases.
           {' '}· © {new Date().getFullYear()} Raccoon Hub
         </p>
       </div>

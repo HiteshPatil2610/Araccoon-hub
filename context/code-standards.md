@@ -29,7 +29,7 @@ Updated 3 November 2026. These describe how the existing code is written; follow
 
 ## Security invariants (do not weaken)
 
-Passkeys only (no passwords); HttpOnly SameSite=Strict session cookie with hashed tokens; exact `Origin` check on state-changing API calls; strict CSP with no inline scripts in production (`public/_headers` and `worker/lib/pageHeaders.ts` must match; a test checks this); trusted Amazon hosts for outbound links; rate limits that fail closed on sensitive routes; 100 KB request bodies; no secrets in the repo or in client code.
+Owner sign-in by passkey or email + password (hashed as described in `architecture.md`; never stored or logged in plain text); HttpOnly SameSite=Strict session cookie with hashed tokens; exact `Origin` check on state-changing API calls; strict CSP with no inline scripts in production (`public/_headers` and `worker/lib/pageHeaders.ts` must match; a test checks this); trusted Amazon hosts for outbound links; rate limits that fail closed on sensitive routes; 100 KB request bodies; no secrets in the repo or in client code.
 
 ## Frontend conventions
 

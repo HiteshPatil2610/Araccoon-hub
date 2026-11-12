@@ -16,21 +16,21 @@ const TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 type Form = {
   title: string; description: string; category: string; rating: string; reviewCount: string;
-  imageUrl: string; imagePublicId: string | null; affiliateUrl: string; badge: string; featured: boolean;
+  imageUrl: string; imagePublicId: string | null; affiliateUrl: string; badge: string; pickNote: string; featured: boolean;
   affiliateTag: string; subId: string;
   status: Product['status']; sortOrder: string;
 };
 
 const empty: Form = {
   title: '', description: '', category: CATEGORIES[0], rating: '0', reviewCount: '0', imageUrl: '', imagePublicId: null,
-  affiliateUrl: '', badge: '', featured: false, status: 'published', sortOrder: '0',
+  affiliateUrl: '', badge: '', pickNote: '', featured: false, status: 'published', sortOrder: '0',
   affiliateTag: '', subId: '',
 };
 
 function fromProduct(p: Product): Form {
   return {
     title: p.title, description: p.description, category: p.category, rating: String(p.rating), reviewCount: String(p.reviewCount),
-    imageUrl: p.imageUrl, imagePublicId: p.imagePublicId, affiliateUrl: p.affiliateUrl, badge: p.badge ?? '', featured: p.featured,
+    imageUrl: p.imageUrl, imagePublicId: p.imagePublicId, affiliateUrl: p.affiliateUrl, badge: p.badge ?? '', pickNote: p.pickNote ?? '', featured: p.featured,
     status: p.status, sortOrder: String(p.sortOrder),
     affiliateTag: p.affiliateTag ?? '', subId: p.subId ?? '',
   };
@@ -39,7 +39,7 @@ function fromProduct(p: Product): Form {
 function toInput(f: Form) {
   return {
     title: f.title, description: f.description, category: f.category, rating: Number(f.rating), reviewCount: Number(f.reviewCount),
-    imageUrl: f.imageUrl, imagePublicId: f.imagePublicId, affiliateUrl: f.affiliateUrl, badge: f.badge.trim() || null,
+    imageUrl: f.imageUrl, imagePublicId: f.imagePublicId, affiliateUrl: f.affiliateUrl, badge: f.badge.trim() || null, pickNote: f.pickNote.trim() || null,
     featured: f.featured, status: f.status, sortOrder: Number(f.sortOrder),
     affiliateTag: f.affiliateTag.trim() || null, subId: f.subId.trim() || null,
   };
@@ -249,6 +249,12 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
             <textarea {...fieldProps('description')} rows={3} className="field" maxLength={2000} value={form.description} onChange={e => set('description', e.target.value)} />
             <p className="mt-1 text-sm text-muted-fg">Use one spec per line, such as “Refresh rate: 200Hz”. Spec labels appear bold in Quick View.</p>
             {err('description')}
+          </div>
+          <div>
+            <label htmlFor="f-pickNote" className="field-label">Why you picked it (optional)</label>
+            <textarea {...fieldProps('pickNote')} rows={2} className="field" maxLength={280} placeholder="I keep one on my desk because…" value={form.pickNote} onChange={e => set('pickNote', e.target.value)} />
+            <p className="mt-1 text-sm text-muted-fg">A sentence or two in your own words. Shown to visitors at the top of Quick View. {form.pickNote.length}/280</p>
+            {err('pickNote')}
           </div>
             <div className="col-span-2">
               <label htmlFor="f-category" className="field-label">Category</label>

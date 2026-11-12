@@ -6,6 +6,7 @@ import { adminAnalyticsRoutes } from './routes/adminAnalytics';
 import { adminSecurityRoutes } from './routes/adminSecurity';
 import { webhookRoutes } from './routes/webhooks';
 import { adminSiteTextRoutes, publicSiteTextRoutes } from './routes/siteText';
+import { adminCollectionRoutes, publicCollectionRoutes } from './routes/collections';
 import { pageRoutes } from './routes/pages';
 import { adminProductImportRoutes } from './routes/adminProductImports';
 import { createSelectedProductImportProvider } from './lib/productImport/composition';
@@ -21,6 +22,8 @@ export function buildApp(deps: AppDeps) {
   app.route('/api/admin/analytics', adminAnalyticsRoutes);
   app.route('/api/admin/site-text', adminSiteTextRoutes);
   app.route('/api/site-text', publicSiteTextRoutes);
+  app.route('/api/admin/collections', adminCollectionRoutes);
+  app.route('/api/collections', publicCollectionRoutes);
   app.route('/api/admin', adminSecurityRoutes);
   app.route('/api/webhooks', webhookRoutes);
   return app;

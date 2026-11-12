@@ -5,6 +5,7 @@ import { memoryLimiter, upstashLimiter } from './lib/ratelimit';
 import { turnstileVerifier } from './lib/turnstile';
 import { cloudinaryStore } from './lib/cloudinary';
 import { runMaintenance } from './maintenance';
+import { checkListings } from './lib/linkCheck';
 
 // Config and the app are built once per isolate and reused across requests;
 // only the database connection is per request (Hyperdrive pools for us).
@@ -42,6 +43,12 @@ export default {
       try {
         const result = await runMaintenance(db, config.clickRetentionDays);
         console.info(`[maintenance] ${JSON.stringify(result)}`);
+        // Separate from the cleanup above so a slow or failing Amazon never stops it.
+        try {
+          console.info(`[listing-check] ${JSON.stringify(await checkListings(db, (...args) => fetch(...args)))}`);
+        } catch (err) {
+          console.error(`[listing-check] failed: ${err instanceof Error ? err.message : err}`);
+        }
       } finally {
         await db.close();
       }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
+import { INK_DURATION, inkMaskUrl } from './inkReveal';
 
 const KEY = 'araccoon_theme';
 
@@ -7,7 +8,7 @@ function storedDark(): boolean {
   return document.documentElement.classList.contains('dark');
 }
 
-/** Light/dark theme with the circular View Transition reveal from the click point. */
+/** Light/dark theme; the new theme bleeds out from the toggle like ink (View Transition + animated SVG mask). */
 export function useTheme() {
   const [dark, setDark] = useState(storedDark);
   const transitioning = useRef(false);
@@ -32,8 +33,9 @@ export function useTheme() {
     }
     const r = e.currentTarget.getBoundingClientRect();
     const root = document.documentElement;
-    root.style.setProperty('--x', `${r.left + r.width / 2}px`);
-    root.style.setProperty('--y', `${r.top + r.height / 2}px`);
+    const seed = Math.floor(Math.random() * 1000);
+    root.style.setProperty('--theme-ink', inkMaskUrl(r.left + r.width / 2, r.top + r.height / 2, window.innerWidth, window.innerHeight, seed));
+    root.style.setProperty('--theme-ink-duration', `${INK_DURATION}ms`);
     root.classList.add('theme-transitioning', next ? 'theme-going-dark' : 'theme-going-light');
     transitioning.current = true;
     const transition = doc.startViewTransition(() => flushSync(() => setDark(next)));
@@ -42,6 +44,7 @@ export function useTheme() {
     transition.finished.catch(() => {}).finally(() => {
       transitioning.current = false;
       root.classList.remove('theme-transitioning', 'theme-going-dark', 'theme-going-light');
+      root.style.removeProperty('--theme-ink');
     });
   }, []);
 

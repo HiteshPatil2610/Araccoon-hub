@@ -14,7 +14,7 @@ title: The 5 desk gadgets I actually use
 description: One or two sentences for search results and link previews (up to 200 characters).
 date: 2026-11-03
 updated: 2026-11-10          # optional
-image: /art/raccoon-hero.webp   # optional cover: a site path or https URL
+image: /art/video-concept/raccoon-story-card-presenter.webp   # optional cover: a site path or https URL
 imageAlt: The raccoon mascot at a desk   # required when image is set
 products:                     # optional: product ids, shown as cards under the article
   - 3f1c2a9e-1111-4b6a-9c3d-123456789abc
@@ -28,7 +28,7 @@ Your article in Markdown. Use `##` for section headings.
 
 - `title`, `description` and `date` are required.
 - Use `##` and below for headings; the title is the page's only `#` heading.
-- Images need alt text: `![what the picture shows](/art/raccoon-side.webp "optional caption")`.
+- Images need alt text: `![what the picture shows](/art/video-concept/raccoon-picks-box.webp "optional caption")`.
 - **No direct Amazon links.** Put product ids under `products:` instead, so every link
   goes through the tracked `/r/` redirect with the right Associates tag. Copy an id from
   the owner hub: Products → edit a product → "Copy id" near the bottom.

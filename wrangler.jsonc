@@ -11,8 +11,9 @@
     // React routes are served as static assets (free, never invoke the Worker)…
     "not_found_handling": "single-page-application",
     // …except the API, the short outbound redirect links, and the public pages the
-    // Worker renders with their data, titles and share tags (worker/routes/pages.ts).
-    "run_worker_first": ["/api/*", "/r/*", "/", "/articles", "/articles/*", "/robots.txt", "/sitemap.xml"]
+    // Worker renders with their data, titles and share tags (worker/routes/pages.ts),
+    // including each find's shareable /find/<slug> address and each collection page.
+    "run_worker_first": ["/api/*", "/r/*", "/", "/articles", "/articles/*", "/find/*", "/collections/*", "/robots.txt", "/sitemap.xml"]
   },
   "hyperdrive": [
     {

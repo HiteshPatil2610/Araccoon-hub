@@ -41,18 +41,82 @@ describe('store: products, outbound links, analytics, exports, conversions', { s
   };
 
   it('publishing and editing one field preserve omitted copy, ratings, tags and catalog settings', async () => {
-    const product = await create({description:'Material: Steel',rating:4.2,reviewCount:27,badge:'Useful',featured:true,status:'draft',sortOrder:42,affiliateTag:'custom-21',subId:'desk'});
+    const product = await create({description:'Material: Steel',rating:4.2,reviewCount:27,badge:'Useful',pickNote:'Sturdy.',featured:true,status:'draft',sortOrder:42,affiliateTag:'custom-21',subId:'desk'});
     const published = await owner.patch(`/api/admin/products/${product.id}`, {status:'published'});
     assert.equal(published.status, 200, published.text);
-    for (const key of ['description', 'rating', 'reviewCount', 'badge', 'featured', 'sortOrder', 'affiliateTag', 'subId', 'imageUrl', 'imagePublicId', 'affiliateUrl']) {
+    for (const key of ['description', 'rating', 'reviewCount', 'badge', 'pickNote', 'featured', 'sortOrder', 'affiliateTag', 'subId', 'imageUrl', 'imagePublicId', 'affiliateUrl']) {
       assert.equal(published.body[key], product[key], key);
     }
     const edited = await owner.patch(`/api/admin/products/${product.id}`, {description:'Material: Alloy steel'});
     assert.equal(edited.status, 200, edited.text);
     assert.equal(edited.body.description, 'Material: Alloy steel');
-    for (const key of ['status', 'rating', 'reviewCount', 'badge', 'featured', 'sortOrder', 'affiliateTag', 'subId', 'imageUrl', 'imagePublicId', 'affiliateUrl']) {
+    for (const key of ['status', 'rating', 'reviewCount', 'badge', 'pickNote', 'featured', 'sortOrder', 'affiliateTag', 'subId', 'imageUrl', 'imagePublicId', 'affiliateUrl']) {
       assert.equal(edited.body[key], published.body[key], key);
     }
+  });
+
+  it('keeps the pick note optional, bounded, clearable and copied on duplicate', async () => {
+    assert.equal((await create()).pickNote, null);
+    assert.equal((await create({ pickNote: '   ' })).pickNote, null);
+    const tooLong = await owner.post('/api/admin/products', { ...VALID_PRODUCT, pickNote: 'x'.repeat(281) });
+    assert.equal(tooLong.status, 400, tooLong.text);
+    assert.ok(tooLong.body.fields.pickNote);
+    const product = await create({ pickNote: 'x'.repeat(280) });
+    const copy = await owner.post(`/api/admin/products/${product.id}/duplicate`, {});
+    assert.equal(copy.body.pickNote, product.pickNote);
+    const retitled = await owner.patch(`/api/admin/products/${product.id}`, { title: 'Renamed' });
+    assert.equal(retitled.body.pickNote, product.pickNote);
+    const cleared = await owner.patch(`/api/admin/products/${product.id}`, { pickNote: '' });
+    assert.equal(cleared.status, 200, cleared.text);
+    assert.equal(cleared.body.pickNote, null);
+  });
+
+  it('checks listings: flags only a clear "not found", never requests the tagged link, and resets on a new link', async test => {
+    const live = await create({ title: 'Live', affiliateUrl: 'https://www.amazon.in/dp/B0LIVE0001' });
+    const gone = await create({ title: 'Gone', affiliateUrl: 'https://www.amazon.in/dp/B0GONE0001' });
+    const blocked = await create({ title: 'Blocked', affiliateUrl: 'https://www.amazon.in/dp/B0BLOCK001' });
+    const moved = await create({ title: 'Moved', affiliateUrl: 'https://www.amazon.in/dp/B0MOVED001' });
+    await create({ title: 'Draft', status: 'draft', affiliateUrl: 'https://www.amazon.in/dp/B0DRAFT001' });
+    assert.deepEqual(live.listing, { status: null, checkedAt: null });
+
+    const requested: string[] = [];
+    test.mock.method(globalThis, 'fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      requested.push(url);
+      assert.equal(init?.redirect, 'manual');
+      if (url.includes('B0GONE0001')) return new Response('not here', { status: 404 });
+      if (url.includes('B0BLOCK001')) return new Response('robot check', { status: 503 });
+      if (url.includes('B0MOVED001')) return new Response(null, { status: 302, headers: { location: 'https://www.amazon.in/s?k=something+else' } });
+      if (url === 'https://www.amazon.in/dp/B0LIVE0001') return new Response(null, { status: 301, headers: { location: '/Some-Name/dp/B0LIVE0001' } });
+      return new Response('<html>ok</html>', { status: 200 });
+    });
+
+    assert.equal((await t.browser().post('/api/admin/products/check-links')).status, 401);
+    const run = await owner.post('/api/admin/products/check-links');
+    assert.equal(run.status, 200, run.text);
+    assert.deepEqual(run.body, { checked: 4, ok: 1, gone: 1, unknown: 2 });
+    assert.ok(requested.every(u => /^https:\/\/www\.amazon\.in\//.test(u) && !u.includes('tag=')), `only clean Amazon product pages are requested: ${requested.join(' ')}`);
+    assert.ok(!requested.some(u => u.includes('B0DRAFT001')), 'drafts are not checked');
+    assert.ok(!requested.some(u => u.includes('/s?k=')), 'a redirect away from the product is not followed');
+
+    const byTitle = async () => Object.fromEntries((await owner.get('/api/admin/products')).body.map((p: any) => [p.title, p.listing]));
+    let listing = await byTitle();
+    assert.equal(listing.Live.status, 'ok');
+    assert.equal(listing.Gone.status, 'gone');
+    assert.equal(listing.Blocked.status, 'unknown');
+    assert.equal(listing.Moved.status, 'unknown');
+    assert.equal(listing.Draft.status, null);
+    assert.ok(listing.Gone.checkedAt);
+
+    // Nothing changes for visitors, and the owner-only result never reaches them.
+    const visitors = await t.browser().get('/api/products');
+    assert.equal(visitors.body.length, 4);
+    assert.ok(!('listing' in visitors.body[0]));
+
+    // A new destination starts unchecked; an unrelated edit keeps the result.
+    assert.equal((await owner.patch(`/api/admin/products/${gone.id}`, { title: 'Gone renamed' })).body.listing.status, 'gone');
+    assert.deepEqual((await owner.patch(`/api/admin/products/${gone.id}`, { affiliateUrl: 'https://www.amazon.in/dp/B0FIXED0001' })).body.listing, { status: null, checkedAt: null });
+    void blocked; void moved;
   });
 
   it('accepts .com and .in Amazon links (incl. short links) and normalizes to https', async test => {
@@ -80,12 +144,13 @@ describe('store: products, outbound links, analytics, exports, conversions', { s
   });
 
   it('serves only published products to visitors and never exposes affiliate URLs', async () => {
-    const pub = await create({ title: 'Visible' });
+    const pub = await create({ title: 'Visible', pickNote: '  I keep one on my desk.  ' });
     await create({ title: 'Hidden draft', status: 'draft' });
     const list = await t.browser().get('/api/products');
     assert.deepEqual(list.body.map((p: any) => p.title), ['Visible']);
     assert.ok(!('affiliateUrl' in list.body[0]));
     assert.equal(list.body[0].store, 'amazon.in');
+    assert.equal(list.body[0].pickNote, 'I keep one on my desk.');
     assert.equal((await t.browser().get(`/api/products/${pub.id}`)).status, 200);
     const search = await t.browser().get(`/api/products?search=${encodeURIComponent("%_' OR 1=1 --")}`);
     assert.equal(search.body.length, 0);

@@ -5,6 +5,7 @@ import { AuthProvider } from './auth';
 const TITLES: Record<string, string> = {
   '/admin': 'Overview',
   '/admin/products': 'Products',
+  '/admin/collections': 'Collections',
   '/admin/analytics': 'Analytics',
   '/admin/site-text': 'Site text',
   '/admin/activity': 'Activity',

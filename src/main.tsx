@@ -15,9 +15,11 @@ import { PageLoadError } from './pages/PageLoadError';
 const page = (load: () => Promise<{ Component: React.ComponentType }>) => ({ lazy: load });
 
 const router = createBrowserRouter([
-  { path: '/', element: <Storefront />, ErrorBoundary: PageLoadError },
+  // /find/<slug> is the storefront with one find's quick view open; as a child route it keeps the page mounted.
+  { path: '/', element: <Storefront />, ErrorBoundary: PageLoadError, children: [{ index: true, element: null }, { path: 'find/:slug', element: null }] },
   { path: '/articles', ErrorBoundary: PageLoadError, HydrateFallback: () => null, ...page(async () => ({ Component: (await import('./pages/Articles')).ArticleList })) },
   { path: '/articles/:slug', ErrorBoundary: PageLoadError, HydrateFallback: () => null, ...page(async () => ({ Component: (await import('./pages/Articles')).ArticlePage })) },
+  { path: '/collections/:slug', ErrorBoundary: PageLoadError, HydrateFallback: () => null, ...page(async () => ({ Component: (await import('./pages/Collection')).CollectionPage })) },
   {
     path: '/admin',
     ErrorBoundary: PageLoadError,
@@ -32,6 +34,7 @@ const router = createBrowserRouter([
           { index: true, ...page(async () => ({ Component: (await import('./admin/Overview')).Overview })) },
           { path: 'products', ...page(async () => ({ Component: (await import('./admin/Products')).Products })) },
           { path: 'analytics', ...page(async () => ({ Component: (await import('./admin/Analytics')).Analytics })) },
+          { path: 'collections', ...page(async () => ({ Component: (await import('./admin/Collections')).Collections })) },
           { path: 'site-text', ...page(async () => ({ Component: (await import('./admin/SiteText')).SiteTextEditor })) },
           { path: 'activity', ...page(async () => ({ Component: (await import('./admin/Activity')).ActivityLog })) },
           { path: 'settings', ...page(async () => ({ Component: (await import('./admin/Settings')).Settings })) },

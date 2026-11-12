@@ -19,6 +19,8 @@ export function Products() {
   const [params, setParams] = useSearchParams();
   const tab = (params.get('status') as 'all' | ProductStatus) ?? 'all';
   const onlyBroken = params.get('broken') === '1';
+  const onlyGone = params.get('gone') === '1';
+  const [checking, setChecking] = useState(false);
   const [search, setSearch] = useState('');
   const [products, setProducts] = useState<Product[] | null>(null);
   const [error, setError] = useState('');
@@ -44,7 +46,7 @@ export function Products() {
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     return (products ?? []).filter(p =>
-      (tab === 'all' || p.status === tab) && (!onlyBroken || !p.linkHealthy) &&
+      (tab === 'all' || p.status === tab) && (!onlyBroken || !p.linkHealthy) && (!onlyGone || p.listing.status === 'gone') &&
       (!q || `${p.title} ${p.category} ${p.description}`.toLowerCase().includes(q)));
   }, [products, tab, search, onlyBroken]);
 
@@ -91,6 +93,21 @@ export function Products() {
     toast('success', editing ? 'Product saved.' : 'Product added.');
   };
 
+  const checkLinks = async () => {
+    if (checking) return;
+    setChecking(true);
+    try {
+      const r = await api.checkProductLinks();
+      const parts = [`${r.ok} found`, r.gone ? `${r.gone} look removed` : '', r.unknown ? `${r.unknown} could not be told (Amazon blocked the check or it is a short link)` : ''].filter(Boolean);
+      toast(r.gone ? 'error' : 'success', r.checked ? `Checked ${r.checked} listing${r.checked === 1 ? '' : 's'}: ${parts.join(', ')}.` : 'No published products to check.');
+      await load();
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Could not check the listings.');
+    } finally {
+      setChecking(false);
+    }
+  };
+
   const duplicate = async (p: Product) => {
     if (duplicating.current.has(p.id)) return;
     duplicating.current.add(p.id);
@@ -108,6 +125,7 @@ export function Products() {
       <PageHeader title="Products" subtitle="Everything in the store. Drafts and archived items are hidden from visitors."
         actions={<>
           <button type="button" className="btn !px-3" onClick={load} aria-label="Reload"><RefreshCw className="w-4 h-4" /></button>
+          <button type="button" className="btn" disabled={checking} onClick={checkLinks} title="Asks Amazon whether up to 10 listings still exist, starting with those checked longest ago. This also runs once a day by itself.">{checking ? 'Checking…' : 'Check listings'}</button>
           <button type="button" className="btn btn-primary" onClick={() => { setEditing(null); setEditorOpen(true); }}><Plus className="w-4 h-4" /> Add product</button>
         </>} />
 
@@ -125,6 +143,12 @@ export function Products() {
           <input type="search" aria-label="Search products" className="field !pl-9" placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
       </div>
+
+      {onlyGone && (
+        <p className="panel-sm !bg-coral text-on-coral p-3 text-sm font-bold mb-4 flex items-center justify-between gap-3">
+          Showing products whose Amazon listing looks removed. <button type="button" className="underline" onClick={() => setTab(tab)}>Show all</button>
+        </p>
+      )}
 
       {onlyBroken && (
         <p className="panel-sm !bg-coral text-on-coral p-3 text-sm font-bold mb-4 flex items-center justify-between gap-3">
@@ -176,11 +200,12 @@ export function Products() {
                   <div className="flex xl:hidden gap-2 mt-1 flex-wrap">
                     <span className={`chip ${STATUS_CHIP[p.status]}`}>{p.status}</span>
                     {!p.linkHealthy && <span className="chip !bg-coral !text-on-coral">Link blocked</span>}
+                    {p.listing.status === 'gone' && <span className="chip !bg-coral !text-on-coral">Listing gone?</span>}
                   </div>
                 </div>
                 <span className={`hidden xl:inline-flex chip justify-self-start ${STATUS_CHIP[p.status]}`}>{p.status}</span>
                 <span className="hidden xl:inline-flex">
-                  {p.linkHealthy ? <span className="chip !bg-sky !text-on-sky !border-line">OK</span> : <span className="chip !bg-coral !text-on-coral" title="Not an approved Amazon host"><AlertTriangle className="w-3 h-3" /> Blocked</span>}
+                  {p.linkHealthy && p.listing.status === 'gone' ? <span className="chip !bg-coral !text-on-coral" title={`Amazon answered "not found" when checked${p.listing.checkedAt ? ` on ${new Date(p.listing.checkedAt).toLocaleDateString()}` : ''}. Open the test link to confirm.`}><AlertTriangle className="w-3 h-3" /> Gone?</span> : p.linkHealthy ? <span className="chip !bg-sky !text-on-sky !border-line" title={p.listing.status === 'ok' && p.listing.checkedAt ? `Listing found on ${new Date(p.listing.checkedAt).toLocaleDateString()}` : 'Approved Amazon link. Listing not confirmed yet.'}>OK</span> : <span className="chip !bg-coral !text-on-coral" title="Not an approved Amazon host"><AlertTriangle className="w-3 h-3" /> Blocked</span>}
                 </span>
                 <div className="col-span-3 xl:col-span-1 flex gap-1 justify-end">
                   <button type="button" className="btn btn-ghost !px-2" aria-label={`Edit ${p.title}`} onClick={() => { setEditing(p); setEditorOpen(true); }}><Pencil className="w-4 h-4" /></button>

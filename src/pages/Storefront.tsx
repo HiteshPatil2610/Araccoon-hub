@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link, useLocation, useMatch, useNavigate, useSearchParams } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowDown, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpDown, Bookmark, Dices, RefreshCw } from 'lucide-react';
 import { api } from '../lib/api';
-import { takeInitialProducts } from '../lib/initialData';
+import { initialData, takeInitialProducts } from '../lib/initialData';
 import { useSiteText } from '../lib/siteText';
 import { usePageMeta } from '../lib/pageMeta';
-import { featuredProducts } from '../lib/catalog';
+import { featuredProducts, pickSurprise } from '../lib/catalog';
 import { useOutbound } from '../lib/outbound';
 import { useLayoutMorph } from '../lib/useLayoutMorph';
 import { useHeroHandoff } from '../lib/useHeroHandoff';
@@ -17,6 +17,11 @@ import { Cutout, PicksSection, StorySection } from '../components/StorefrontSect
 import { CATEGORIES, type PublicProduct } from '../../shared/types';
 import { formatProductCopy } from '../../shared/productCopy';
 import { ProductOverlays } from '../components/ProductOverlays';
+import { useToast } from '../components/Toasts';
+import { useStash } from '../lib/stash';
+import { findBySlug, findPath } from '../../shared/finds';
+import { collectionPath, type CollectionSummary } from '../../shared/collections';
+import { ProductImage } from '../components/ProductImage';
 
 type Sort = 'curated' | 'popular' | 'recent' | 'title';
 
@@ -27,12 +32,43 @@ export function Storefront() {
   const category = params.get('category') ?? 'All';
   const [search, setSearch] = useState(params.get('q') ?? '');
   const [sort, setSort] = useState<Sort>('curated');
+  // The visitor's saved finds (this browser only). Ids of finds that are no longer published simply match nothing.
+  const stash = useStash();
+  const [stashOnly, setStashOnly] = useState(false);
   const text = useSiteText();
-  usePageMeta(text.seoTitle, text.seoDescription);
   // The Worker embeds the catalog in the page, so the first render needs no fetch.
   const [products, setProducts] = useState<PublicProduct[] | null>(() => withCopy(takeInitialProducts()));
   const [error, setError] = useState('');
-  const [quick, setQuick] = useState<PublicProduct | null>(null);
+  // Collections are an extra: if they cannot be loaded the catalog simply shows without them.
+  const [collections, setCollections] = useState<CollectionSummary[] | null>(() => initialData().collections ?? null);
+  useEffect(() => {
+    if (collections) return;
+    let live = true;
+    api.collections().then(list => { if (live) setCollections(list); }).catch(() => { if (live) setCollections([]); });
+    return () => { live = false; };
+  }, [collections]);
+  // Quick view lives in the address (/find/<slug>), so an open find can be shared, reloaded and closed with Back.
+  const findSlugParam = useMatch('/find/:slug')?.params.slug;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const quick = useMemo(() => (findSlugParam && products ? findBySlug(products, findSlugParam) : null), [findSlugParam, products]);
+  usePageMeta(quick ? `${quick.title} — Raccoon Hub` : text.seoTitle, quick ? quick.pickNote || text.seoDescription : text.seoDescription);
+  const setQuick = useCallback((p: PublicProduct) => {
+    navigate({ pathname: findPath(p), search: location.search }, { state: { inApp: true }, preventScrollReset: true });
+  }, [navigate, location.search]);
+  const closeQuick = useCallback(() => {
+    // Opened from this page: Back returns to where the visitor was. Arrived by link: the storefront replaces it.
+    if ((location.state as { inApp?: boolean } | null)?.inApp) navigate(-1);
+    else navigate({ pathname: '/', search: location.search }, { replace: true, preventScrollReset: true });
+  }, [navigate, location.state, location.search]);
+  const missingFind = useRef<string | null>(null); // say it once per address, even if the effect re-runs
+  useEffect(() => {
+    if (!findSlugParam || !products || quick) return;
+    if (missingFind.current !== findSlugParam) toast('error', 'That find is no longer available.');
+    missingFind.current = findSlugParam;
+    navigate({ pathname: '/', search: location.search }, { replace: true, preventScrollReset: true });
+  }, [findSlugParam, products, quick, toast, navigate, location.search]);
   const handoffRef = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
   useHeroHandoff(handoffRef, reducedMotion);
@@ -67,13 +103,27 @@ export function Storefront() {
     if (!products) return [];
     const q = search.trim().toLowerCase();
     const list = products.filter(p =>
+      (!stashOnly || stash.ids.includes(p.id)) &&
       (category === 'All' || p.category.toLowerCase() === category.toLowerCase()) &&
       (!q || `${p.title} ${p.description} ${p.category}`.toLowerCase().includes(q)));
     if (sort === 'popular') return [...list].sort((a, b) => b.reviewCount - a.reviewCount);
     if (sort === 'recent') return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     if (sort === 'title') return [...list].sort((a, b) => a.title.localeCompare(b.title));
     return list; // curated order from the owner (featured, sort order, newest)
-  }, [products, category, search, sort]);
+  }, [products, category, search, sort, stashOnly, stash.ids]);
+  const stashCount = useMemo(() => (products ?? []).filter(p => stash.ids.includes(p.id)).length, [products, stash.ids]);
+  useEffect(() => { if (stashOnly && products && stashCount === 0) setStashOnly(false); }, [stashOnly, products, stashCount]); // emptied: back to the full catalog
+
+  // "Surprise me": a random find from what the filters show (or the whole catalog when they show nothing).
+  const surprised = useRef(new Set<string>());
+  const inSurprise = Boolean((location.state as { surprise?: boolean } | null)?.surprise);
+  const surprise = useCallback(() => {
+    const pick = pickSurprise(visible.length ? visible : products ?? [], surprised.current, quick?.id ?? null);
+    if (!pick) return;
+    // "Another one" swaps the open find in place, so Back still returns to the catalog in one step.
+    navigate({ pathname: findPath(pick), search: location.search }, { state: { inApp: true, surprise: true }, replace: quick !== null, preventScrollReset: true });
+  }, [visible, products, quick, navigate, location.search]);
+  const canSurprise = (products?.length ?? 0) > (quick ? 1 : 0);
 
   // Picks and Story share one carousel: the owner's featured finds, else the first few in curated order.
   const picks = useMemo(() => {
@@ -154,6 +204,26 @@ export function Storefront() {
             </span>
           </div>
 
+          {collections && collections.length > 0 && (
+            <nav aria-labelledby="collections-heading" className="mt-8" data-morph="move">
+              <h3 id="collections-heading" className="eyebrow text-muted-fg">Collections</h3>
+              <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {collections.map(col => (
+                  <li key={col.id}>
+                    <Link to={collectionPath(col.slug)} className="collection-card panel paper">
+                      {col.coverImageUrl && <ProductImage src={col.coverImageUrl} title={col.title} compact className="w-16 h-16 shrink-0 rounded-[var(--radius-m)] bg-white object-contain p-1" />}
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-display text-2xl leading-none break-words">{col.title}</span>
+                        <span className="block text-sm text-muted-fg mt-1">{col.productCount} {col.productCount === 1 ? 'find' : 'finds'}</span>
+                      </span>
+                      <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
+
           <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
             <div className="min-w-0 max-w-2xl" data-morph="move">
               <label htmlFor="catalog-search" className="field-label">Search products</label>
@@ -173,6 +243,12 @@ export function Storefront() {
                   <option value="title">Title A–Z</option>
                 </select>
               </label>
+              <button type="button" className="btn" disabled={!products?.length} onClick={surprise}><Dices className="w-4 h-4" aria-hidden="true" /> Surprise me</button>
+              {(stashCount > 0 || stashOnly) && (
+                <button type="button" className={`btn ${stashOnly ? 'btn-mint' : ''}`} aria-pressed={stashOnly} title="Finds you saved, kept in this browser only" onClick={() => setStashOnly(v => !v)}>
+                  <Bookmark className="w-4 h-4" aria-hidden="true" fill={stashOnly ? 'currentColor' : 'none'} /> Your stash <span className="opacity-70">{stashCount}</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -184,10 +260,10 @@ export function Storefront() {
               </button>
             ))}
           </div>
-          {(search || category !== 'All') && (
+          {(search || category !== 'All' || stashOnly) && (
             <div className="flex flex-wrap items-center gap-3 pb-5 text-sm">
-              <p className="text-muted-fg">Filters: {category}{search && ` · “${search}”`}</p>
-              <button type="button" className="btn btn-ghost !text-lg !px-2" onClick={() => { setSearch(''); setCategory('All'); }}>Clear filters</button>
+              <p className="text-muted-fg">Filters: {stashOnly && 'Your stash · '}{category}{search && ` · “${search}”`}</p>
+              <button type="button" className="btn btn-ghost !text-lg !px-2" onClick={() => { setSearch(''); setCategory('All'); setStashOnly(false); }}>Clear filters</button>
             </div>
           )}
 
@@ -204,9 +280,13 @@ export function Storefront() {
           ) : visible.length === 0 ? (
             <div className="relative overflow-hidden panel p-12 max-w-xl mx-auto text-center my-8">
               <Viewfinder size={360} light />
+              {products.length > 0 && <img src="/art/video-concept/raccoon-picks-box-720.webp" alt="" width={604} height={720} loading="lazy" decoding="async" draggable={false} className="relative mx-auto h-36 w-auto mb-4 select-none" />}
               <p className="relative eyebrow text-muted-fg">{products.length ? 'No matches .' : 'Coming soon .'}</p>
-              <h3 className="relative text-5xl mt-3">{products.length ? 'No finds match these filters.' : text.emptyCatalog}</h3>
-              {products.length > 0 && <p className="relative text-sm text-muted-fg mt-4">Try a different search or clear the filters above.</p>}
+              <h3 className="relative text-5xl mt-3">{products.length ? 'The raccoon came back with an empty box.' : text.emptyCatalog}</h3>
+              {products.length > 0 && <>
+                <p className="relative text-sm text-muted-fg mt-4">No finds match these filters. Try a different search, clear the filters above, or let the raccoon choose.</p>
+                <button type="button" className="relative btn btn-primary mt-6" onClick={surprise}><Dices className="w-4 h-4" aria-hidden="true" /> Surprise me</button>
+              </>}
             </div>
           ) : (
             <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-6 gap-5">
@@ -224,7 +304,7 @@ export function Storefront() {
       <Footer />
       <Announcement />
 
-      <ProductOverlays quick={quick} onCloseQuick={() => setQuick(null)} outbound={outbound} />
+      <ProductOverlays quick={quick} onCloseQuick={closeQuick} outbound={outbound} surprise={inSurprise} onSurprise={canSurprise ? surprise : undefined} />
     </div>
     </HeroEntrance>
   );
