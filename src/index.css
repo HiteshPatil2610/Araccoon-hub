@@ -246,11 +246,17 @@ canvas[aria-hidden="true"] { opacity: .4; }
   display: flex; align-items: center; justify-content: center; overflow: hidden;
   background: var(--cd-red-500); clip-path: inset(0 100% 0 0);
 }
-.theme-curtain__mark {
+.theme-curtain__mark, .stash-ribbon__mark {
   font-family: var(--font-display); font-weight: 400; text-transform: uppercase; letter-spacing: var(--ls-display);
   font-size: clamp(64px, 15vw, 220px); line-height: .8; padding-top: .08em; white-space: nowrap; color: #fff;
 }
-.theme-curtain__hub { color: var(--cd-black); }
+.theme-curtain__hub, .stash-ribbon__dark { color: var(--cd-black); }
+/* Ribbon into and out of Your lists (src/lib/stashRibbon.ts): starts hidden; the animations set its shape. */
+.stash-ribbon {
+  position: fixed; inset: 0; z-index: 2147483000; pointer-events: none;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  background: var(--cd-red-500); clip-path: inset(0 0 100% 0);
+}
 html.theme-transitioning *,
 html.theme-transitioning .cd-nav::before { transition: none !important; }
 

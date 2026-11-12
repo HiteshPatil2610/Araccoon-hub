@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useMatch, useNavigate, useSearchParams } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowDown, ArrowRight, ArrowUpDown, Bookmark, Dices, RefreshCw } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpDown, Dices, RefreshCw } from 'lucide-react';
 import { api } from '../lib/api';
 import { initialData, takeInitialProducts } from '../lib/initialData';
 import { useSiteText } from '../lib/siteText';
@@ -18,7 +18,6 @@ import { CATEGORIES, type PublicProduct } from '../../shared/types';
 import { formatProductCopy } from '../../shared/productCopy';
 import { ProductOverlays } from '../components/ProductOverlays';
 import { useToast } from '../components/Toasts';
-import { useStashLists } from '../lib/stash';
 import { DailyFind } from '../components/DailyFind';
 import { findBySlug, findPath } from '../../shared/finds';
 import { collectionPath, type CollectionSummary } from '../../shared/collections';
@@ -34,7 +33,6 @@ export function Storefront() {
   const [search, setSearch] = useState(params.get('q') ?? '');
   const [sort, setSort] = useState<Sort>('curated');
   // The visitor's saved lists (this browser only). Ids of finds that are no longer published simply match nothing.
-  const stash = useStashLists();
   const text = useSiteText();
   // The Worker embeds the catalog in the page, so the first render needs no fetch.
   const [products, setProducts] = useState<PublicProduct[] | null>(() => withCopy(takeInitialProducts()));
@@ -112,7 +110,6 @@ export function Storefront() {
     if (sort === 'title') return [...list].sort((a, b) => a.title.localeCompare(b.title));
     return list; // curated order from the owner (featured, sort order, newest)
   }, [products, category, search, sort]);
-  const stashCount = useMemo(() => (products ?? []).filter(p => stash.saved.has(p.id)).length, [products, stash.saved]);
 
   // "Surprise me": a random find from what the filters show (or the whole catalog when they show nothing).
   const surprised = useRef(new Set<string>());
@@ -257,11 +254,6 @@ export function Storefront() {
                 </select>
               </label>
               <button type="button" className="btn" disabled={!products?.length} onClick={surprise}><Dices className="w-4 h-4" aria-hidden="true" /> Surprise me</button>
-              {stashCount > 0 && (
-                <Link to="/stash" className="btn" title="Your saved lists, kept in this browser only">
-                  <Bookmark className="w-4 h-4" aria-hidden="true" fill="currentColor" /> Your stash <span className="opacity-70">{stashCount}</span>
-                </Link>
-              )}
             </div>
           </div>
 
