@@ -38,15 +38,31 @@ export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise 
     <>
       <Dialog open={quick !== null} onClose={onCloseQuick} title={quick?.title ?? ''} wide animated>
         {quick && (
-          <div className="grid sm:grid-cols-2 gap-6 min-w-0">
-            <div className="cd-still aspect-square"><ProductImage src={quick.imageUrl} title={quick.title} className="w-full h-full object-contain p-[8%]" /></div>
-            <div className="flex flex-col min-w-0">
-              {surprise && (
-                <p className="surprise-note" role="status">
-                  <img src="/art/video-concept/raccoon-picks-box-720.webp" alt="" width={604} height={720} decoding="async" draggable={false} />
-                  <span className="eyebrow text-red">The raccoon dug this one out for you</span>
-                </p>
-              )}
+          <div className="quick-view">
+            {surprise && (
+              <p className="surprise-note quick-view__surprise" role="status">
+                <img src="/art/video-concept/raccoon-picks-box-720.webp" alt="" width={604} height={720} decoding="async" draggable={false} />
+                <span className="eyebrow text-red">The raccoon dug this one out for you</span>
+              </p>
+            )}
+            {/* Image and actions stay in view while long descriptions scroll beside them. */}
+            <div className="quick-view__aside">
+              <div className="cd-still aspect-square"><ProductImage src={quick.imageUrl} title={quick.title} className="w-full h-full object-contain p-[8%]" /></div>
+              <div>
+                <button type="button" disabled={outbound.state?.status === 'opening'} className="btn btn-primary btn-bar" onClick={() => { void outbound.open(quick, from); onCloseQuick(); }}>
+                  View on {storeLabel(quick.store)} <ArrowUpRight className="w-4 h-4" />
+                </button>
+                <p className="mt-2 text-xs text-muted-fg">Opens Amazon in a new tab. Prices are set by Amazon.</p>
+              </div>
+              <div className="quick-view__actions">
+                <button type="button" className={`btn ${stash.ids.includes(quick.id) ? 'btn-mint' : ''}`} aria-pressed={stash.ids.includes(quick.id)} title="Kept in this browser only" onClick={() => stash.toggle(quick.id)}>
+                  <Bookmark className="w-4 h-4" aria-hidden="true" fill={stash.ids.includes(quick.id) ? 'currentColor' : 'none'} /> {stash.ids.includes(quick.id) ? 'In your stash' : 'Save to stash'}
+                </button>
+                <button type="button" className="btn" onClick={() => void share(quick)}><Share2 className="w-4 h-4" aria-hidden="true" /> Share this find</button>
+                {surprise && onSurprise && <button type="button" className="btn" onClick={onSurprise}><Dices className="w-4 h-4" aria-hidden="true" /> Another one</button>}
+              </div>
+            </div>
+            <div className="quick-view__body">
               <SectionLabel className="text-muted-fg">{quick.category}</SectionLabel>
               {quick.pickNote && (
                 <figure className="pick-note">
@@ -54,18 +70,7 @@ export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise 
                   <blockquote className="mt-2">{quick.pickNote}</blockquote>
                 </figure>
               )}
-              <ProductDescription text={quick.description} className="mt-4 mb-6" />
-              <button type="button" disabled={outbound.state?.status === 'opening'} className="btn btn-primary btn-bar mt-auto" onClick={() => { void outbound.open(quick, from); onCloseQuick(); }}>
-                View on {storeLabel(quick.store)} <ArrowUpRight className="w-4 h-4" />
-              </button>
-              <p className="mt-2 text-xs text-muted-fg">Opens Amazon in a new tab. Prices are set by Amazon.</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button type="button" className={`btn ${stash.ids.includes(quick.id) ? 'btn-mint' : ''}`} aria-pressed={stash.ids.includes(quick.id)} title="Kept in this browser only" onClick={() => stash.toggle(quick.id)}>
-                  <Bookmark className="w-4 h-4" aria-hidden="true" fill={stash.ids.includes(quick.id) ? 'currentColor' : 'none'} /> {stash.ids.includes(quick.id) ? 'In your stash' : 'Save to stash'}
-                </button>
-                <button type="button" className="btn" onClick={() => void share(quick)}><Share2 className="w-4 h-4" aria-hidden="true" /> Share this find</button>
-                {surprise && onSurprise && <button type="button" className="btn" onClick={onSurprise}><Dices className="w-4 h-4" aria-hidden="true" /> Another one</button>}
-              </div>
+              <ProductDescription text={quick.description} className="mt-4" />
             </div>
           </div>
         )}

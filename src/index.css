@@ -696,6 +696,23 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 .stash-btn:hover { border-color: var(--cd-red-500); color: var(--cd-red-500); }
 .stash-btn--on, .stash-btn--on:hover { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; }
 /* Quick View opened by "Surprise me": the box mascot beside a one-line caption. */
+/* Quick view: image + actions on the left (sticky inside the dialog's scroll area), details on the right.
+   On phones it stacks image, actions, details so the Amazon button is reached before long spec lists. */
+.quick-view { display: grid; gap: 20px; min-width: 0; }
+.quick-view__aside { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.quick-view__body { min-width: 0; }
+.quick-view__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Labels stay on one line; a button that does not fit moves to its own full-width row. */
+.quick-view__actions > .btn { flex: 1 1 auto; white-space: nowrap; padding-inline: 1rem; }
+.quick-view__surprise { margin: 0; }
+@media (min-width: 640px) {
+  .quick-view { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: 28px; align-items: start; }
+  .quick-view__surprise { grid-column: 1 / -1; }
+  .quick-view__aside { position: sticky; top: 0; }
+  /* Short windows: the white frame gets shorter (photo stays contained) so the actions still fit beside the scrolling details. */
+  .quick-view__aside .cd-still { max-height: 44vh; max-height: 44dvh; }
+  .quick-view__body { align-self: stretch; padding-left: 28px; border-left: 1px solid var(--line); margin-left: -1px; }
+}
 .surprise-note { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
 .surprise-note img { height: 56px; width: auto; flex: none; user-select: none; }
 /* The owner's own note in Quick View: a quiet pull quote with the one crimson accent. */
