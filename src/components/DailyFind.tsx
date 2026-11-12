@@ -29,24 +29,3 @@ export function DailyFind({ find, day, onOpen }: { find: PublicProduct; day: str
   );
 }
 
-/** Finds this browser opened on earlier visits, newest first. Kept only in this browser; Clear forgets them. */
-export function RecentStrip({ finds, onOpen, onClear }: { finds: readonly PublicProduct[]; onOpen: (p: PublicProduct) => void; onClear: () => void }) {
-  return (
-    <section className="recent-finds" aria-labelledby="recent-finds-heading">
-      <div className="flex items-center justify-between gap-3">
-        <h3 id="recent-finds-heading" className="eyebrow text-muted-fg">Pick up where you left off</h3>
-        <button type="button" className="btn btn-ghost !text-lg !px-2 !min-h-9" onClick={onClear} title="Forget these (kept in this browser only)">Clear</button>
-      </div>
-      <ul className="recent-finds__list">
-        {finds.map(p => (
-          <li key={p.id} className="min-w-0">
-            <button type="button" className="recent-finds__tile" onClick={() => onOpen(p)}>
-              <span className="cd-still recent-finds__image"><ProductImage src={p.imageUrl} title={p.title} compact className="w-full h-full object-contain p-[8%]" /></span>
-              <span className="recent-finds__title">{p.title}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}

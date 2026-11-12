@@ -697,6 +697,35 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 .stash-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: #fff; color: var(--cd-ink-900, #0a0a0a); border: 1px solid rgb(0 0 0 / .18); transition: background-color var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
 .stash-btn:hover { border-color: var(--cd-red-500); color: var(--cd-red-500); }
 .stash-btn--on, .stash-btn--on:hover { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; }
+/* "Save to a list": a small panel (not a dialog) under the save button, on a card or in Quick View. */
+.list-picker { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--card); color: var(--foreground); box-shadow: 0 18px 40px rgb(0 0 0 / .22); text-align: left; }
+.list-picker__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.list-picker__close { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; margin: -6px -6px -6px 0; border: 0; border-radius: 999px; background: transparent; color: inherit; cursor: pointer; }
+.list-picker__close:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+.list-picker__status { margin: 0; font-size: .8125rem; font-weight: 600; color: var(--cd-red-500); }
+.list-picker__lists { display: flex; flex-direction: column; gap: 2px; max-height: 220px; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.list-picker__row { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 8px; border-radius: var(--radius-s); cursor: pointer; }
+.list-picker__row:hover { background: color-mix(in srgb, currentColor 6%, transparent); }
+.list-picker__row input { flex: none; width: 18px; height: 18px; accent-color: var(--cd-red-500); }
+:root.dark .list-picker.paper { color-scheme: light; } /* white panel on a card: light checkboxes and fields */
+.list-picker__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.list-picker__count { font-family: var(--font-display); font-size: 16px; line-height: 1; color: var(--muted-text); }
+.list-picker__new { display: flex; gap: 8px; }
+.list-picker__new .field { flex: 1; min-width: 0; min-height: 40px; }
+.list-picker__new .btn, .list-picker__done { min-height: 40px; padding-inline: .9rem; font-size: 1.05rem; }
+.list-picker__foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
+.list-picker__link { display: inline-flex; align-items: center; min-height: 40px; font-size: .875rem; font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+.list-picker__done { background: var(--foreground); border-color: var(--foreground); color: var(--background); }
+.list-picker__done:hover:not(:disabled) { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; }
+/* On a card the picker floats over the photo; the card is lifted so the next row of cards cannot cover it. */
+.product-card--picking { z-index: 5; }
+.product-card__picker { position: absolute; top: 64px; left: 10px; right: 10px; z-index: 3; }
+.quick-view__picker { flex-basis: 100%; min-width: 0; }
+/* /stash: the row of lists, and the selected list's title with its actions. */
+.stash-lists { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 24px; }
+.stash-lists__new { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.stash-lists__new .field { width: min(320px, 100%); }
+.stash-list__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
 /* Product card: a click anywhere opens Quick View. The real control is the "Quick view" button; its ::after
    covers the card, so there is one focusable control (plus Save, layered above it). */
 .product-card { transition: border-color var(--dur-fast) var(--ease-cine); }
@@ -711,11 +740,8 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
   .product-card__open:focus-visible { outline: none; }
   .product-card:has(.product-card__open:focus-visible) { outline: 2px solid var(--primary); outline-offset: 3px; }
 }
-/* "New since last visit" tag on a product card: the inverted chip, so it never reads as the owner's crimson badge. */
-.chip-new { background: var(--foreground); border-color: var(--foreground); color: var(--background); }
-/* Return-visit row at the top of the catalog: find of the day and, beside it from 1024px, finds opened on earlier visits. */
+/* The raccoon's find of the day, at the top of the catalog. */
 .catalog-extras { display: grid; gap: 16px; margin-top: 32px; }
-@media (min-width: 1024px) { .catalog-extras--two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; } }
 .daily-find { position: relative; display: flex; align-items: center; gap: 16px; padding: 12px; min-width: 0; overflow: hidden; transition: border-color var(--dur-fast) var(--ease-cine); }
 .daily-find:hover { border-color: var(--cd-red-500); }
 .daily-find__image { flex: none; width: 120px; aspect-ratio: 1; }
@@ -734,12 +760,6 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 .daily-find__mascot { display: none; flex: none; height: 112px; width: auto; align-self: flex-end; margin-bottom: -12px; user-select: none; }
 @media (min-width: 640px) { .daily-find__mascot { display: block; } .daily-find__image { width: 136px; } }
 @media (max-width: 379px) { .daily-find { align-items: flex-start; } .daily-find__image { width: 88px; } }
-.recent-finds { min-width: 0; }
-.recent-finds__list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0 0; padding: 0; list-style: none; }
-.recent-finds__tile { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; min-height: 64px; padding: 6px 10px 6px 6px; border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--card); color: inherit; text-align: left; cursor: pointer; transition: border-color var(--dur-fast) var(--ease-cine); }
-.recent-finds__tile:hover { border-color: var(--cd-red-500); }
-.recent-finds__image { flex: none; width: 52px; height: 52px; border-radius: calc(var(--radius-m) - 4px); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .06); }
-.recent-finds__title { min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--font-display); font-size: 18px; line-height: 1; text-transform: uppercase; letter-spacing: var(--ls-display); overflow-wrap: anywhere; }
 /* Quick View opened by "Surprise me": the box mascot beside a one-line caption. */
 /* Quick view: image + actions on the left (sticky inside the dialog's scroll area), details on the right.
    On phones it stacks image, actions, details so the Amazon button is reached before long spec lists. */
