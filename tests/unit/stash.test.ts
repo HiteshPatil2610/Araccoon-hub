@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DEFAULT_LIST_NAME, LIST_ITEMS_MAX, LIST_MAX, NAME_MAX, cleanName, createList, deleteList, parseLists, renameList, savedIds, toggleInList, uniqueName,
+  DEFAULT_LIST_NAME, LIST_ITEMS_MAX, addedFind, LIST_MAX, NAME_MAX, cleanName, createList, deleteList, parseLists, renameList, savedIds, toggleInList, uniqueName,
 } from '../../src/lib/stash';
 import { matchShared, parseSharedList, sharedListPath } from '../../src/lib/stashShare';
 
@@ -55,6 +55,18 @@ test('a find can be in several lists, toggles per list, and the last list used i
   full = toggleInList(full, 'f1', id(999));
   assert.equal(full.lists[1]!.ids.length, LIST_ITEMS_MAX);
   assert.equal(full.lists[1]!.ids[0], id(999));
+});
+
+test('only adding a find to a list counts as a save', () => {
+  const start = parseLists(null);
+  const one = toggleInList(start, 'stash', id(1));
+  assert.equal(addedFind(start, one), true);
+  assert.equal(addedFind(one, toggleInList(one, 'stash', id(1))), false, 'removing');
+  assert.equal(addedFind(one, renameList(one, 'stash', 'Desk')), false, 'renaming');
+  assert.equal(addedFind(one, createList(one, 'Empty', 'e1')!), false, 'an empty new list');
+  assert.equal(addedFind(one, createList(one, 'Gifts', 'g1', [id(1)])!), true, 'a saved find going into a second list');
+  assert.equal(addedFind(one, deleteList(one, 'stash')), false, 'deleting');
+  assert.equal(addedFind(one, one), false);
 });
 
 test('list names are plain, short and unique; renaming and deleting', () => {

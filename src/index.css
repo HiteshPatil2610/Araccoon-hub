@@ -246,11 +246,20 @@ canvas[aria-hidden="true"] { opacity: .4; }
   display: flex; align-items: center; justify-content: center; overflow: hidden;
   background: var(--cd-red-500); clip-path: inset(0 100% 0 0);
 }
-.theme-curtain__mark {
+.theme-curtain__mark, .stash-flaps__mark {
   font-family: var(--font-display); font-weight: 400; text-transform: uppercase; letter-spacing: var(--ls-display);
   font-size: clamp(64px, 15vw, 220px); line-height: .8; padding-top: .08em; white-space: nowrap; color: #fff;
 }
-.theme-curtain__hub { color: var(--cd-black); }
+.theme-curtain__hub, .stash-flaps__dark { color: var(--cd-black); }
+/* Box flaps into and out of Your lists (src/lib/stashFlaps.ts): two crimson halves that start off screen
+   and meet in the middle; each holds the whole wordmark centred on the screen and shows only its half. */
+.stash-flaps { position: fixed; inset: 0; z-index: 2147483000; pointer-events: none; }
+.stash-flaps__flap { position: absolute; left: 0; right: 0; overflow: hidden; background: var(--cd-red-500); }
+.stash-flaps__flap--top { top: 0; bottom: calc(50% - 1px); transform: translateY(-101%); }
+.stash-flaps__flap--bottom { top: 50%; bottom: 0; transform: translateY(101%); }
+.stash-flaps__inner { position: absolute; left: 0; right: 0; display: flex; align-items: center; justify-content: center; }
+.stash-flaps__flap--top .stash-flaps__inner { top: 0; height: calc(200% - 2px); } /* the top flap is 1px taller, to overlap */
+.stash-flaps__flap--bottom .stash-flaps__inner { bottom: 0; height: 200%; }
 html.theme-transitioning *,
 html.theme-transitioning .cd-nav::before { transition: none !important; }
 
@@ -315,13 +324,13 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 .cd-nav--over-dark { --nav-bg: var(--stage-nav); --nav-line: transparent; color: var(--stage-fg); }
 /* Animate the controls, not their parent: the fixed mobile menu retains its viewport anchor. */
 .cd-nav--intro:not(.cd-nav--intro-shown)::before,
-.cd-nav--intro:not(.cd-nav--intro-shown) :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > button),
+.cd-nav--intro:not(.cd-nav--intro-shown) :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > :is(a, button)),
 .cd-hero__meta--intro:not(.cd-hero__meta--shown) {
   opacity: 0; transform: translateY(calc(-1 * var(--nav-height)));
 }
 @media (prefers-reduced-motion: no-preference) {
   .cd-nav--intro-shown::before,
-  .cd-nav--intro-shown :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > button),
+  .cd-nav--intro-shown :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > :is(a, button)),
   .cd-hero__meta--shown {
     animation: hero-nav-arrive 1400ms var(--ease-hero, var(--ease-cine)) var(--nav-entry-delay) backwards;
   }
@@ -332,8 +341,8 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 }
 .cd-nav--intro:focus-within::before,
 .cd-nav--intro:not(.cd-nav--over-dark)::before,
-.cd-nav--intro:focus-within :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > button),
-.cd-nav--intro:not(.cd-nav--over-dark) :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > button),
+.cd-nav--intro:focus-within :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > :is(a, button)),
+.cd-nav--intro:not(.cd-nav--over-dark) :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > :is(a, button)),
 .cd-hero__meta--intro:focus-within {
   opacity: 1 !important; transform: none !important; transition: none;
 }
@@ -693,6 +702,55 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 .collection-card { display: flex; align-items: center; gap: 14px; min-height: 88px; padding: 12px 16px 12px 12px; transition: border-color var(--dur-fast, 150ms) var(--ease-cine), transform var(--dur-fast, 150ms) var(--ease-cine); }
 .collection-card:hover { border-color: var(--cd-red-500); transform: translateY(-2px); }
 @media (prefers-reduced-motion: reduce) { .collection-card:hover { transform: none; } }
+/* Nav stash button (StashNavButton): the theme toggle's outline circle with a crimson count badge. On a save it
+   fills crimson while the bookmark turns over and lands filled, two rings ripple out and the count rolls up
+   (1100ms, picked by the owner on 12 November 2026). Reduced motion: no animation, the count just changes. */
+.stash-nav { position: relative; }
+.stash-nav__fx, .stash-nav__fx > span { position: absolute; inset: -1.3px; border-radius: 50%; pointer-events: none; }
+.stash-nav__fx > span { opacity: 0; }
+.stash-nav__fx > span:first-child { background: var(--cd-red-500); }
+.stash-nav__fx > span:not(:first-child) { border: 2px solid var(--cd-red-500); }
+.stash-nav__icon { position: relative; display: grid; }
+.stash-nav__icon > svg { grid-area: 1 / 1; width: 18px; height: 18px; }
+.stash-nav__filled { opacity: 0; }
+.stash-nav__count {
+  position: absolute; top: -5px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; overflow: hidden;
+  border-radius: 999px; background: var(--cd-red-500); color: var(--on-primary);
+  font: 700 11px/20px var(--font-sans); letter-spacing: 0; text-align: center; font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 2px var(--background);
+}
+.cd-nav--over-dark .stash-nav__count { box-shadow: 0 0 0 2px var(--stage-bg); }
+.stash-nav__count > span { display: block; }
+@media (prefers-reduced-motion: no-preference) {
+  .stash-nav__fx > span:first-child { animation: stash-nav-fill 1100ms var(--ease-out) both; }
+  .stash-nav__fx > span:nth-child(2) { animation: stash-nav-ring 720ms var(--ease-out) 140ms both; }
+  .stash-nav__fx > span:nth-child(3) { animation: stash-nav-ring 720ms var(--ease-out) 320ms both; }
+  .stash-nav__icon--saved { animation: stash-nav-flip 1100ms both; }
+  .stash-nav__icon--saved .stash-nav__outline { animation: stash-nav-outline 1100ms both; }
+  .stash-nav__icon--saved .stash-nav__filled { animation: stash-nav-filled 1100ms both; }
+  .stash-nav__roll { animation: stash-nav-roll 420ms var(--ease-pop) 150ms both; }
+}
+@keyframes stash-nav-fill {
+  0% { opacity: 0; transform: scale(.6); }
+  18% { opacity: 1; transform: scale(1); }
+  65% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+@keyframes stash-nav-ring { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(2.2); } }
+/* Edge-on at 90deg, so the jump to -90deg (where the filled icon takes over) is invisible. */
+@keyframes stash-nav-flip {
+  0% { transform: perspective(120px) rotateY(0); animation-timing-function: ease-in; }
+  13.6% { transform: perspective(120px) rotateY(90deg); }
+  13.7% { transform: perspective(120px) rotateY(-90deg); color: var(--on-primary); animation-timing-function: var(--ease-pop); }
+  35% { transform: perspective(120px) rotateY(0) scale(1.2); }
+  48% { transform: perspective(120px) rotateY(0) scale(1); }
+  65% { color: var(--on-primary); }
+  100% { transform: none; }
+}
+@keyframes stash-nav-outline { 0%, 13.6% { opacity: 1; } 13.7%, 68% { opacity: 0; } 82%, 100% { opacity: 1; } }
+@keyframes stash-nav-filled { 0%, 13.6% { opacity: 0; } 13.7%, 68% { opacity: 1; } 82%, 100% { opacity: 0; } }
+@keyframes stash-nav-roll { from { transform: translateY(110%); } to { transform: none; } }
+
 /* Save-to-stash toggle on a product card: a 44px disc that fills crimson when saved. */
 .stash-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: #fff; color: var(--cd-ink-900, #0a0a0a); border: 1px solid rgb(0 0 0 / .18); transition: background-color var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
 .stash-btn:hover { border-color: var(--cd-red-500); color: var(--cd-red-500); }
@@ -703,6 +761,7 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 .list-picker__close { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; margin: -6px -6px -6px 0; border: 0; border-radius: 999px; background: transparent; color: inherit; cursor: pointer; }
 .list-picker__close:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
 .list-picker__status { margin: 0; font-size: .8125rem; font-weight: 600; color: var(--cd-red-500); }
+.list-picker__status:empty { margin-top: -10px; } /* kept in the page while empty, so screen readers hear it fill */
 .list-picker__lists { display: flex; flex-direction: column; gap: 2px; max-height: 220px; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
 .list-picker__row { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 8px; border-radius: var(--radius-s); cursor: pointer; }
 .list-picker__row:hover { background: color-mix(in srgb, currentColor 6%, transparent); }
@@ -815,7 +874,7 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
   .cd-story { --story-entry: 1 !important; }
   .cd-unfold__letter, .cd-unfold__glyph, .cd-story__by, .cd-story__index { opacity: 1; transform: none; translate: none; }
   .cd-nav--intro::before,
-  .cd-nav--intro :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > button) { opacity: 1; transform: none; }
+  .cd-nav--intro :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > :is(a, button)) { opacity: 1; transform: none; }
 }
 
 /* Ambient storefront light: gradients stay behind content in isolated sections.

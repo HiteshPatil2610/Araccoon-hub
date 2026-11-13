@@ -7,6 +7,8 @@ import { useDialog } from '../lib/useDialog';
 import { HERO_CUES, Reveal, SectionLabel, TrackingReveal, useHeroEntrance, usePrefersReducedMotion } from './cine';
 import { CATEGORIES } from '../../shared/types';
 import { useSiteText } from '../lib/siteText';
+import { StashNavButton } from './StashNavButton';
+import { useStashFlaps } from '../lib/useStashFlaps';
 
 const LINKS = [
   { id: 'top', label: 'Featured' },
@@ -25,6 +27,7 @@ export function Navbar() {
   const [introDone, setIntroDone] = useState(false);
   const introEnabled = introReady !== null && !introDone;
   const { dark, toggle } = useTheme();
+  useStashFlaps();
   const [overDark, setOverDark] = useState(true);
   const [current, setCurrent] = useState<string>('top');
 
@@ -80,6 +83,7 @@ export function Navbar() {
           </ul>
         </nav>
         <div className="flex gap-1.5 justify-self-end items-center" data-morph="move">
+          <StashNavButton />
           <button type="button" onClick={toggle} className="icon-btn" aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
             {dark ? <Sun className="w-[18px] h-[18px]" strokeWidth={1.5} /> : <Moon className="w-[18px] h-[18px]" strokeWidth={1.5} />}
           </button>
