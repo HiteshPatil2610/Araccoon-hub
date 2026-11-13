@@ -58,7 +58,7 @@ export function ListPicker({ product, onClose, trigger, status, className = '' }
 }) {
   const stash = useStashLists();
   const [name, setName] = useState('');
-  const [note, setNote] = useState(status ?? '');
+  const [note, setNote] = useState('');
   const panel = useRef<HTMLDivElement>(null);
   const headingId = useId();
   const inputId = useId();
@@ -68,6 +68,8 @@ export function ListPicker({ product, onClose, trigger, status, className = '' }
   useEffect(() => {
     panel.current?.querySelector<HTMLElement>('input[type="checkbox"]')?.focus({ preventScroll: true });
     panel.current?.scrollIntoView({ block: 'nearest' });
+    // Filled after the (empty) live region is in the page: text present at mount is often not announced.
+    if (status) setNote(status);
   }, []);
   useEffect(() => {
     const onDown = (e: PointerEvent) => {
@@ -98,7 +100,7 @@ export function ListPicker({ product, onClose, trigger, status, className = '' }
         <p id={headingId} className="eyebrow">Save to a list</p>
         <button type="button" className="list-picker__close" onClick={done} aria-label="Close"><X className="w-4 h-4" aria-hidden="true" /></button>
       </div>
-      {note && <p className="list-picker__status" role="status">{note}</p>}
+      <p className="list-picker__status" role="status">{note}</p>
       <ul className="list-picker__lists">
         {stash.lists.map(l => (
           <li key={l.id}>

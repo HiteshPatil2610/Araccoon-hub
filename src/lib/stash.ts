@@ -122,6 +122,12 @@ export function restoreList(state: StashState, list: StashList, index: number, w
   return { lists: [...lists.slice(0, at), back, ...lists.slice(at)], last: placeholder ? list.id : state.last };
 }
 
+/** True when `next` has a find in a list that did not hold it in `prev` (a save, not a removal or rename). */
+export function addedFind(prev: StashState, next: StashState): boolean {
+  const before = new Map(prev.lists.map(l => [l.id, new Set(l.ids)]));
+  return next.lists.some(l => l.ids.some(id => !before.get(l.id)?.has(id)));
+}
+
 export const newListId = () => (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(16).slice(2)).replace(/-/g, '').slice(0, 10);
 
 // ---- Shared, in-memory copy kept in step with localStorage and other tabs ----------------------
@@ -131,6 +137,7 @@ const RETIRED_KEYS = ['araccoon_last_visit', 'araccoon_recent'];
 
 let current: StashState | null = null;
 const listeners = new Set<() => void>();
+const saveListeners = new Set<() => void>();
 
 function read(): StashState {
   if (current) return current;
@@ -144,6 +151,7 @@ function read(): StashState {
 }
 
 function write(next: StashState) {
+  const saved = addedFind(read(), next);
   current = next;
   try {
     localStorage.setItem(LISTS_KEY, JSON.stringify(next));
@@ -152,6 +160,16 @@ function write(next: StashState) {
     /* storage unavailable (private mode): keep it in memory for this visit */
   }
   listeners.forEach(notify => notify());
+  if (saved) saveListeners.forEach(notify => notify());
+}
+
+/**
+ * Called whenever this tab adds a find to any list (not for removals, renames or changes made in
+ * another tab), so the nav's stash button can show where the find went.
+ */
+export function onFindSaved(notify: () => void) {
+  saveListeners.add(notify);
+  return () => { saveListeners.delete(notify); };
 }
 
 function subscribe(notify: () => void) {

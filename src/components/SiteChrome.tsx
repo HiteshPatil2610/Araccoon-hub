@@ -7,6 +7,9 @@ import { useDialog } from '../lib/useDialog';
 import { HERO_CUES, Reveal, SectionLabel, TrackingReveal, useHeroEntrance, usePrefersReducedMotion } from './cine';
 import { CATEGORIES } from '../../shared/types';
 import { useSiteText } from '../lib/siteText';
+import { StashNavButton } from './StashNavButton';
+import { playStashFlaps, useStashFlaps } from '../lib/useStashFlaps';
+import { stashDirection } from '../lib/stashFlaps';
 
 const LINKS = [
   { id: 'top', label: 'Featured' },
@@ -28,7 +31,6 @@ export function useSectionLink() {
   const onStorefront = pathname === '/' || pathname.startsWith('/find/');
   const go = useCallback((id: string) => {
     if (onStorefront) { document.getElementById(id)?.scrollIntoView({ behavior: smooth() }); return; }
-    navigate(`/#${id}`);
     let tries = 0;
     let moved = false;
     const stop = () => { moved = true; };
@@ -41,7 +43,10 @@ export function useSectionLink() {
       else if (++tries < 120) requestAnimationFrame(seek);
       else done();
     };
-    requestAnimationFrame(seek);
+    const move = () => { navigate(`/#${id}`); requestAnimationFrame(seek); };
+    // Leaving Your lists plays the box flaps, as every other way out of it does; the jump happens behind them.
+    const direction = stashDirection(window.location.pathname, '/');
+    if (direction) playStashFlaps(direction, '/', move); else move();
   }, [onStorefront, navigate]);
   return { onStorefront, go };
 }
@@ -62,6 +67,7 @@ export function Navbar() {
   const [introDone, setIntroDone] = useState(false);
   const introEnabled = introReady !== null && !introDone;
   const { dark, toggle } = useTheme();
+  useStashFlaps();
   const [overDark, setOverDark] = useState(true);
   const [current, setCurrent] = useState<string>('top');
   const section = useSectionLink();
@@ -119,6 +125,7 @@ export function Navbar() {
           </ul>
         </nav>
         <div className="flex gap-1.5 justify-self-end items-center" data-morph="move">
+          <StashNavButton />
           <button type="button" onClick={toggle} className="icon-btn" aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}>
             {dark ? <Sun className="w-[18px] h-[18px]" strokeWidth={1.5} /> : <Moon className="w-[18px] h-[18px]" strokeWidth={1.5} />}
           </button>
