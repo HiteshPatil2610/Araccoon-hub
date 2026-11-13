@@ -8,7 +8,7 @@ import { HERO_CUES, Reveal, SectionLabel, TrackingReveal, useHeroEntrance, usePr
 import { CATEGORIES } from '../../shared/types';
 import { useSiteText } from '../lib/siteText';
 import { StashNavButton } from './StashNavButton';
-import { useStashRibbon } from '../lib/useStashRibbon';
+import { useStashFlaps } from '../lib/useStashFlaps';
 
 const LINKS = [
   { id: 'top', label: 'Featured' },
@@ -27,7 +27,7 @@ export function Navbar() {
   const [introDone, setIntroDone] = useState(false);
   const introEnabled = introReady !== null && !introDone;
   const { dark, toggle } = useTheme();
-  useStashRibbon();
+  useStashFlaps();
   const [overDark, setOverDark] = useState(true);
   const [current, setCurrent] = useState<string>('top');
 

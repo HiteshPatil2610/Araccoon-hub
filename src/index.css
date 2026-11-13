@@ -246,17 +246,20 @@ canvas[aria-hidden="true"] { opacity: .4; }
   display: flex; align-items: center; justify-content: center; overflow: hidden;
   background: var(--cd-red-500); clip-path: inset(0 100% 0 0);
 }
-.theme-curtain__mark, .stash-ribbon__mark {
+.theme-curtain__mark, .stash-flaps__mark {
   font-family: var(--font-display); font-weight: 400; text-transform: uppercase; letter-spacing: var(--ls-display);
   font-size: clamp(64px, 15vw, 220px); line-height: .8; padding-top: .08em; white-space: nowrap; color: #fff;
 }
-.theme-curtain__hub, .stash-ribbon__dark { color: var(--cd-black); }
-/* Ribbon into and out of Your lists (src/lib/stashRibbon.ts): starts hidden; the animations set its shape. */
-.stash-ribbon {
-  position: fixed; inset: 0; z-index: 2147483000; pointer-events: none;
-  display: flex; align-items: center; justify-content: center; overflow: hidden;
-  background: var(--cd-red-500); clip-path: inset(0 0 100% 0);
-}
+.theme-curtain__hub, .stash-flaps__dark { color: var(--cd-black); }
+/* Box flaps into and out of Your lists (src/lib/stashFlaps.ts): two crimson halves that start off screen
+   and meet in the middle; each holds the whole wordmark centred on the screen and shows only its half. */
+.stash-flaps { position: fixed; inset: 0; z-index: 2147483000; pointer-events: none; }
+.stash-flaps__flap { position: absolute; left: 0; right: 0; overflow: hidden; background: var(--cd-red-500); }
+.stash-flaps__flap--top { top: 0; bottom: calc(50% - 1px); transform: translateY(-101%); }
+.stash-flaps__flap--bottom { top: 50%; bottom: 0; transform: translateY(101%); }
+.stash-flaps__inner { position: absolute; left: 0; right: 0; display: flex; align-items: center; justify-content: center; }
+.stash-flaps__flap--top .stash-flaps__inner { top: 0; height: calc(200% - 2px); } /* the top flap is 1px taller, to overlap */
+.stash-flaps__flap--bottom .stash-flaps__inner { bottom: 0; height: 200%; }
 html.theme-transitioning *,
 html.theme-transitioning .cd-nav::before { transition: none !important; }
 
