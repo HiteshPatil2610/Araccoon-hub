@@ -62,13 +62,13 @@ export function ProductCard({ product, index, onQuickView }: {
       )}
       <div className="flex items-center gap-2 mb-2 flex-wrap px-1">
         <span className="eyebrow text-muted-fg">{product.category} .</span>
-        {product.badge && <span className="chip !bg-red !border-red !text-white">{product.badge}</span>}
+        {product.badge && <span className="chip product-card__badge !bg-red !border-red !text-white">{product.badge}</span>}
       </div>
-      <h3 id={`p-${product.id}`} className="px-1 line-clamp-2 text-[28px]">
+      <h3 id={`p-${product.id}`} className="product-card__title px-1 line-clamp-2 text-[28px]">
         {product.title}
       </h3>
-      <p className="px-1 text-sm mt-2 leading-relaxed text-muted-fg line-clamp-2">{descriptionSummary(product.description)}</p>
-      <div className="mt-auto pt-4">
+      <p className="product-card__spec px-1 text-sm mt-2 leading-relaxed text-muted-fg line-clamp-2">{descriptionSummary(product.description)}</p>
+      <div className="product-card__foot mt-auto pt-4">
         <button type="button" onClick={() => onQuickView(product)} className="btn btn-bar product-card__open" aria-label={`Quick view: ${product.title}`}>
           <span className="inline-flex items-center gap-2"><Eye className="w-4 h-4" aria-hidden="true" /> Quick view</span>
           <ArrowRight className="w-4 h-4" aria-hidden="true" />

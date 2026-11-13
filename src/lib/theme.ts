@@ -15,6 +15,8 @@ export function useTheme() {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
+    // The phone browser bar follows the page colour.
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0A0A0A' : '#FFFFFF');
     try {
       localStorage.setItem(KEY, dark ? 'dark' : 'light');
     } catch {

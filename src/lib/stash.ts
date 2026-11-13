@@ -107,6 +107,21 @@ export function deleteList(state: StashState, id: string): StashState {
   return { lists, last: lists.some(l => l.id === state.last) ? state.last : lists[0]!.id };
 }
 
+/**
+ * Undo for deleteList: puts the list back where it was. When it was the only list, the empty "Your stash" that
+ * replaced it gives way again (unless something was saved there since). Null when it cannot come back
+ * (already there, or 20 lists by now); the name is made unique if another list took it meanwhile.
+ */
+export function restoreList(state: StashState, list: StashList, index: number, wasOnlyList: boolean): StashState | null {
+  const only = state.lists[0];
+  const placeholder = wasOnlyList && state.lists.length === 1 && only!.id === 'stash' && only!.ids.length === 0 && only!.name === DEFAULT_LIST_NAME;
+  const lists = placeholder ? [] : state.lists;
+  if (lists.some(l => l.id === list.id) || lists.length >= LIST_MAX) return null;
+  const back = { ...list, name: uniqueName({ lists, last: '' }, list.name) };
+  const at = Math.min(Math.max(index, 0), lists.length);
+  return { lists: [...lists.slice(0, at), back, ...lists.slice(at)], last: placeholder ? list.id : state.last };
+}
+
 /** True when `next` has a find in a list that did not hold it in `prev` (a save, not a removal or rename). */
 export function addedFind(prev: StashState, next: StashState): boolean {
   const before = new Map(prev.lists.map(l => [l.id, new Set(l.ids)]));
@@ -192,5 +207,11 @@ export function useStashLists() {
   }, []);
   const rename = useCallback((id: string, name: string) => write(renameList(read(), id, name)), []);
   const remove = useCallback((id: string) => write(deleteList(read(), id)), []);
-  return { lists: state.lists, last: state.last, saved, toggle, quickSave, create, rename, remove };
+  /** Undoes remove(); false when the list could not come back. */
+  const restore = useCallback((list: StashList, index: number, wasOnlyList: boolean) => {
+    const next = restoreList(read(), list, index, wasOnlyList);
+    if (next) write(next);
+    return next !== null;
+  }, []);
+  return { lists: state.lists, last: state.last, saved, toggle, quickSave, create, rename, remove, restore };
 }

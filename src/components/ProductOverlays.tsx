@@ -111,7 +111,10 @@ export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise 
                 </div>
               </div>
               <div className="quick-view__body">
-                <SectionLabel className="text-muted-fg">{quick.category}</SectionLabel>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <SectionLabel className="text-muted-fg">{quick.category}</SectionLabel>
+                  {quick.badge && <span className="chip !bg-red !border-red !text-white">{quick.badge}</span>}
+                </div>
                 {quick.pickNote && (
                   <figure className="pick-note">
                     <figcaption className="eyebrow text-red">Why we picked it</figcaption>

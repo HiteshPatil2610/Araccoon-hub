@@ -22,6 +22,7 @@ import { DailyFind } from '../components/DailyFind';
 import { findBySlug, findPath } from '../../shared/finds';
 import { collectionPath, type CollectionSummary } from '../../shared/collections';
 import { ProductImage } from '../components/ProductImage';
+import { useSettled } from '../lib/useSettled';
 
 type Sort = 'curated' | 'popular' | 'recent' | 'title';
 
@@ -67,6 +68,15 @@ export function Storefront() {
     missingFind.current = findSlugParam;
     navigate({ pathname: '/', search: location.search }, { replace: true, preventScrollReset: true });
   }, [findSlugParam, products, quick, toast, navigate, location.search]);
+  // The search is kept in the address (?q=) once typing pauses, so reloading, sharing or coming back keeps it.
+  // Not while Quick View is open: its address carries navigation state that replacing the search would drop.
+  const settledSearch = useSettled(search.trim(), 500);
+  useEffect(() => {
+    if (findSlugParam || (params.get('q') ?? '') === settledSearch) return;
+    const next = new URLSearchParams(params);
+    if (settledSearch) next.set('q', settledSearch); else next.delete('q');
+    setParams(next, { replace: true, preventScrollReset: true });
+  }, [settledSearch, findSlugParam, params, setParams]);
   const handoffRef = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
   useHeroHandoff(handoffRef, reducedMotion);
@@ -91,6 +101,16 @@ export function Storefront() {
     setParams(next, { replace: true });
   };
 
+  // On phones the category pills are one sideways-scrolling row: keep the chosen one in view (e.g. picked in the hero or footer).
+  const categoryRow = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = categoryRow.current;
+    const pill = row?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!row || !pill || row.scrollWidth <= row.clientWidth) return;
+    const left = pill.getBoundingClientRect().left - row.getBoundingClientRect().left + row.scrollLeft, right = left + pill.offsetWidth;
+    if (left < row.scrollLeft || right > row.scrollLeft + row.clientWidth - 40) row.scrollTo({ left: Math.max(0, left - 16), behavior: 'instant' });
+  }, [category]);
+
   const toCatalog = () => {
     const h = document.getElementById('catalog-heading');
     h?.focus({ preventScroll: true });
@@ -110,6 +130,8 @@ export function Storefront() {
     if (sort === 'title') return [...list].sort((a, b) => a.title.localeCompare(b.title));
     return list; // curated order from the owner (featured, sort order, newest)
   }, [products, category, search, sort]);
+  // Screen readers hear the result count once typing pauses, not after every key.
+  const announcedCount = useSettled(error ? 'Catalog unavailable' : products ? `${visible.length} ${visible.length === 1 ? 'find' : 'finds'}` : '', 600);
 
   // "Surprise me": a random find from what the filters show (or the whole catalog when they show nothing).
   const surprised = useRef(new Set<string>());
@@ -201,9 +223,10 @@ export function Storefront() {
           <Reveal effect="rise" distance={24} once morph="move"><SectionLabel>The current stash</SectionLabel></Reveal>
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-line pb-6 mt-5">
             <TrackingReveal from="0.3em" once morph="type">
-              <h2 id="catalog-heading" tabIndex={-1} className="text-[clamp(48px,7vw,104px)] leading-[.86] scroll-mt-28 max-w-[14ch]">Find something for your everyday!</h2>
+              <h2 id="catalog-heading" tabIndex={-1} className="text-[clamp(48px,7vw,104px)] leading-[.86] scroll-mt-4 max-w-[14ch]">Find something for your everyday!</h2>
             </TrackingReveal>
-            <span className="font-display text-2xl sm:text-3xl leading-none shrink-0" aria-live="polite" data-morph="move">
+            <span className="sr-only" aria-live="polite">{announcedCount}</span>
+            <span className="font-display text-2xl sm:text-3xl leading-none shrink-0" aria-hidden="true" data-morph="move">
               [{error ? 'Catalog unavailable' : products ? `${String(visible.length).padStart(2, '0')} finds` : 'Loading…'}]
             </span>
           </div>
@@ -238,15 +261,18 @@ export function Storefront() {
             <div className="min-w-0 max-w-2xl" data-morph="move">
               <label htmlFor="catalog-search" className="field-label">Search products</label>
               <div className="flex flex-wrap gap-2">
-                <input id="catalog-search" type="search" className="field min-w-0 flex-1 basis-48 !rounded-full !px-5" value={search} maxLength={100} placeholder="Search title, description, or category…" onChange={e => setSearch(e.target.value)} />
+                <input id="catalog-search" type="search" className="field field-search min-w-0 flex-1 basis-48 !rounded-full !px-5" value={search} maxLength={100} placeholder="Search title, description, or category…"
+                  enterKeyHint="search" onChange={e => setSearch(e.target.value)}
+                  // On touch screens Enter closes the keyboard so the results show; keyboard users keep their place.
+                  onKeyDown={e => { if (e.key === 'Enter' && matchMedia('(pointer: coarse)').matches) e.currentTarget.blur(); }} />
                 {search && <button type="button" className="btn" onClick={() => setSearch('')}>Clear search</button>}
               </div>
             </div>
             <div className="min-w-0 flex flex-wrap items-center gap-2" data-morph="move">
-              <label className="flex max-w-full items-center gap-2 pl-4 pr-3 min-h-11 rounded-full border border-[var(--field-border)]">
+              <label className="sort-pill flex flex-1 basis-40 sm:flex-none sm:basis-auto max-w-full items-center gap-2 pl-4 pr-3 min-h-11 rounded-full border border-[var(--field-border)]">
                 <ArrowUpDown className="w-4 h-4" aria-hidden="true" />
                 <span className="sr-only">Sort</span>
-                <select value={sort} onChange={e => setSort(e.target.value as Sort)} className="min-w-0 max-w-full bg-transparent eyebrow !tracking-[.16em] focus:outline-none min-h-11">
+                <select value={sort} onChange={e => setSort(e.target.value as Sort)} className="min-w-0 w-full sm:w-auto max-w-full bg-transparent eyebrow !tracking-[.16em] focus:outline-none min-h-11">
                   <option value="curated">Curated</option>
                   <option value="popular">Most reviewed (owner supplied)</option>
                   <option value="recent">Recently added</option>
@@ -257,7 +283,7 @@ export function Storefront() {
             </div>
           </div>
 
-          <div className="py-5 flex flex-wrap items-center gap-2" role="group" aria-label="Filter by category">
+          <div ref={categoryRow} className="category-row py-5 flex flex-wrap items-center gap-2" role="group" aria-label="Filter by category">
             {['All', ...CATEGORIES].map(c => (
               <button key={c} type="button" aria-pressed={category === c} onClick={() => setCategory(c)} data-morph="move"
                 className={`btn !text-lg ${category === c ? 'btn-mint' : ''}`}>
@@ -279,8 +305,8 @@ export function Storefront() {
               <button type="button" className="btn btn-primary" onClick={load}><RefreshCw className="w-4 h-4" /> Try again</button>
             </div>
           ) : !products ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-6 gap-5" aria-busy="true" aria-label="Loading products">
-              {Array.from({ length: 8 }, (_, i) => <div key={i} className="panel h-96 !bg-muted" />)}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-6 gap-3 sm:gap-5" aria-busy="true" aria-label="Loading products">
+              {Array.from({ length: 8 }, (_, i) => <div key={i} className="panel h-64 sm:h-96 !bg-muted" />)}
             </div>
           ) : visible.length === 0 ? (
             <div className="relative overflow-hidden panel p-12 max-w-xl mx-auto text-center my-8">
@@ -294,7 +320,7 @@ export function Storefront() {
               </>}
             </div>
           ) : (
-            <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-6 gap-5">
+            <motion.div layout className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 3xl:grid-cols-5 4xl:grid-cols-6 gap-3 sm:gap-5">
               <AnimatePresence mode="popLayout">
                 {visible.map((p, i) => (
                   <ProductCard key={p.id} product={p} index={i} onQuickView={setQuick} />

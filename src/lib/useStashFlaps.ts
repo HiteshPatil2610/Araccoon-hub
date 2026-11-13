@@ -51,8 +51,8 @@ export function playStashFlaps(direction: StashDirection, to: string, go: () => 
 /**
  * Plays the box flaps for in-app links into and out of Your lists, whatever renders them (nav button,
  * Stash link, phone menu, "See your lists", logo, footer…), by catching the click before React Router
- * does. Back/Forward only get the opening: the page has already changed by then. Links with a #section
- * reload the page and are left alone; reduced motion and hidden tabs change at once.
+ * does. Back/Forward only get the opening: the page has already changed by then. Links with a #section are
+ * left to `useSectionLink` in SiteChrome.tsx, which plays the flaps itself; reduced motion and hidden tabs change at once.
  */
 export function useStashFlaps() {
   const navigate = useNavigate();
