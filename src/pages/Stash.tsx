@@ -16,6 +16,7 @@ import { ConfirmDialog } from '../components/Dialog';
 import { SectionLabel } from '../components/cine';
 import { useToast } from '../components/Toasts';
 import { PublicPage } from './Articles';
+import { SectionLink } from '../components/SiteChrome';
 
 const FROM_STASH: OutboundSource = { source: 'stash', medium: 'stash_card' };
 const FROM_SHARED: OutboundSource = { source: 'shared_list', medium: 'shared_list_card' };
@@ -139,11 +140,11 @@ export function StashPage() {
         </div>
 
         {failed ? <CatalogFailed retry={retry} /> : !products ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-8" aria-busy="true" aria-label="Loading finds">
-            {Array.from({ length: Math.min(4, Math.max(1, selected.ids.length)) }, (_, i) => <div key={i} className="panel h-96 !bg-muted" />)}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 mt-8" aria-busy="true" aria-label="Loading finds">
+            {Array.from({ length: Math.min(4, Math.max(1, selected.ids.length)) }, (_, i) => <div key={i} className="panel h-64 sm:h-96 !bg-muted" />)}
           </div>
         ) : shown.finds.length ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 mt-8">
             {shown.finds.map((p, i) => <ProductCard key={p.id} product={p} index={i} onQuickView={setQuick} />)}
           </div>
         ) : (
@@ -152,7 +153,7 @@ export function StashPage() {
             <p className="eyebrow text-muted-fg">Empty list .</p>
             <h3 className="text-4xl mt-3">Nothing saved here yet.</h3>
             <p className="text-sm text-muted-fg mt-3">Tap the bookmark on any find and tick “{selected.name}”.</p>
-            <Link to="/#finds" className="btn btn-primary mt-6">Browse the finds</Link>
+            <SectionLink section="finds" className="btn btn-primary mt-6">Browse the finds</SectionLink>
           </div>
         )}
         {shown.missing > 0 && <p className="mt-6 text-sm text-muted-fg">{count(shown.missing)} in this list {shown.missing === 1 ? 'is' : 'are'} no longer available and {shown.missing === 1 ? 'is' : 'are'} not shown.</p>}
@@ -163,7 +164,14 @@ export function StashPage() {
       <ConfirmDialog open={deleting} title={`Delete “${selected.name}”?`} confirmLabel="Delete list" danger
         message={<>The list and its name are removed from this browser. Its finds stay in any other list you saved them to.</>}
         onClose={() => setDeleting(false)}
-        onConfirm={() => { const name = selected.name; stash.remove(selected.id); setDeleting(false); setParams({}, { replace: true }); toast('success', `Deleted “${name}”.`); }} />
+        onConfirm={() => {
+          const list = selected, at = stash.lists.findIndex(l => l.id === list.id), only = stash.lists.length === 1;
+          stash.remove(list.id); setDeleting(false); setParams({}, { replace: true });
+          toast('success', `Deleted “${list.name}”.`, { label: 'Undo', run: () => {
+            if (!stash.restore(list, at, only)) { toast('error', 'That list could not be brought back.'); return; }
+            if (window.location.pathname === '/stash') setParams(at === 0 ? {} : { list: list.id }, { replace: true });
+          } });
+        }} />
     </PublicPage>
   );
 }
@@ -204,11 +212,11 @@ export function SharedListPage() {
       </header>
 
       {failed ? <CatalogFailed retry={retry} /> : !products ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-10" aria-busy="true" aria-label="Loading finds">
-          {Array.from({ length: Math.min(4, Math.max(1, shared.keys.length)) }, (_, i) => <div key={i} className="panel h-96 !bg-muted" />)}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 mt-10" aria-busy="true" aria-label="Loading finds">
+          {Array.from({ length: Math.min(4, Math.max(1, shared.keys.length)) }, (_, i) => <div key={i} className="panel h-64 sm:h-96 !bg-muted" />)}
         </div>
       ) : shown.finds.length ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-10">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 mt-10">
           {shown.finds.map((p, i) => <ProductCard key={p.id} product={p} index={i} onQuickView={setQuick} />)}
         </div>
       ) : (
@@ -216,7 +224,7 @@ export function SharedListPage() {
           <img src="/art/video-concept/raccoon-picks-box-720.webp" alt="" width={604} height={720} loading="lazy" decoding="async" draggable={false} className="mx-auto h-32 w-auto mb-4 select-none" />
           <h2 className="text-4xl">Nothing to show here.</h2>
           <p className="text-sm text-muted-fg mt-3">This list is empty, or its finds are no longer available.</p>
-          <Link to="/#finds" className="btn btn-primary mt-6">Browse the finds</Link>
+          <SectionLink section="finds" className="btn btn-primary mt-6">Browse the finds</SectionLink>
         </div>
       )}
       {shown.missing > 0 && shown.finds.length > 0 && <p className="mt-6 text-sm text-muted-fg">{count(shown.missing)} from this list {shown.missing === 1 ? 'is' : 'are'} no longer available.</p>}

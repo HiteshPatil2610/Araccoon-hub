@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Link } from 'react-router';
+import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
 import { Moon, Sun, X } from 'lucide-react';
 import { useTheme } from '../lib/theme';
@@ -15,6 +15,43 @@ const LINKS = [
   { id: 'finds', label: 'Browse' },
 ] as const;
 
+const smooth = () => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth');
+
+/**
+ * Scrolls to a storefront section. From another page it moves to the storefront inside the app (no full reload,
+ * so the hero intro does not replay) and jumps once the section exists; a second jump corrects for content that
+ * loaded above it, unless the visitor has started scrolling.
+ */
+export function useSectionLink() {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const onStorefront = pathname === '/' || pathname.startsWith('/find/');
+  const go = useCallback((id: string) => {
+    if (onStorefront) { document.getElementById(id)?.scrollIntoView({ behavior: smooth() }); return; }
+    navigate(`/#${id}`);
+    let tries = 0;
+    let moved = false;
+    const stop = () => { moved = true; };
+    const guards = ['wheel', 'touchstart', 'keydown'] as const;
+    for (const type of guards) window.addEventListener(type, stop, { passive: true });
+    const done = () => { for (const type of guards) window.removeEventListener(type, stop); };
+    const jump = () => document.getElementById(id)?.scrollIntoView({ behavior: 'instant' });
+    const seek = () => {
+      if (document.getElementById(id)) { jump(); setTimeout(() => { if (!moved) jump(); done(); }, 700); }
+      else if (++tries < 120) requestAnimationFrame(seek);
+      else done();
+    };
+    requestAnimationFrame(seek);
+  }, [onStorefront, navigate]);
+  return { onStorefront, go };
+}
+
+/** A link to a storefront section (`/#finds`) that lands on it from any page. */
+export function SectionLink({ section: id, className, children }: { section: string; className?: string; children: ReactNode }) {
+  const section = useSectionLink();
+  return <a href={`/#${id}`} className={className} onClick={e => { if (!section.onStorefront) { e.preventDefault(); section.go(id); } }}>{children}</a>;
+}
+
 /**
  * Fixed nav. Sections marked data-nav-tone="dark" (the black hero and picks curtain) get a dark
  * nav with white type; everything else follows the page theme. The link for the section under the nav is current.
@@ -27,6 +64,7 @@ export function Navbar() {
   const { dark, toggle } = useTheme();
   const [overDark, setOverDark] = useState(true);
   const [current, setCurrent] = useState<string>('top');
+  const section = useSectionLink();
 
   useEffect(() => { if (reducedMotion) setIntroDone(true); }, [reducedMotion]);
 
@@ -68,13 +106,14 @@ export function Navbar() {
             {LINKS.map((l, i) => (
               <Fragment key={l.id}>
                 {i > 0 && <li aria-hidden="true" className="cd-nav__dot" />}
-                <li><a href={`/#${l.id}`} aria-current={current === l.id ? 'location' : undefined}>{l.label}</a></li>
+                <li><a href={`/#${l.id}`} aria-current={current === l.id ? 'location' : undefined}
+                  onClick={(e: MouseEvent) => { if (!section.onStorefront) { e.preventDefault(); section.go(l.id); } }}>{l.label}</a></li>
               </Fragment>
             ))}
             <li aria-hidden="true" className="cd-nav__dot" />
-            <li><Link to="/articles">Journal</Link></li>
+            <li><NavLink to="/articles">Journal</NavLink></li>
             <li aria-hidden="true" className="cd-nav__dot" />
-            <li><Link to="/stash">Stash</Link></li>
+            <li><NavLink to="/stash">Stash</NavLink></li>
             <li aria-hidden="true" className="cd-nav__dot" />
             <li><Link to="/admin">Owner hub</Link></li>
           </ul>
@@ -106,6 +145,7 @@ function MenuButton({ current }: { current: string }) {
   const [origin, setOrigin] = useState('100% 0%');
   const [from, setFrom] = useState({ bg: '#fff', fg: '#0A0A0A' });
   const panel = useDialog(open, () => setOpen(false));
+  const section = useSectionLink();
 
   const show = () => {
     const el = btn.current;
@@ -120,7 +160,7 @@ function MenuButton({ current }: { current: string }) {
   const go = (id: string) => {
     setOpen(false);
     // let the curtain start closing, then glide to the section
-    requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }));
+    requestAnimationFrame(() => section.go(id));
   };
 
   return (
@@ -149,7 +189,7 @@ function MenuButton({ current }: { current: string }) {
                 <motion.div key={l.id} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20, transition: { duration: 0.2 } }}
                   transition={{ duration: 0.7, delay: 0.18 + i * 0.07, ease: [0.7, 0, 0.2, 1] }}>
                   {l.to
-                    ? <Link to={l.to} className="cd-menu__link" onClick={() => setOpen(false)}><span className="cd-menu__n">{String(i + 1).padStart(2, '0')}</span>{l.label}</Link>
+                    ? <NavLink to={l.to} className="cd-menu__link" onClick={() => setOpen(false)}><span className="cd-menu__n">{String(i + 1).padStart(2, '0')}</span>{l.label}</NavLink>
                     : <a href={`/#${l.id}`} className="cd-menu__link" aria-current={current === l.id ? 'location' : undefined}
                         onClick={e => { e.preventDefault(); go(l.id); }}><span className="cd-menu__n">{String(i + 1).padStart(2, '0')}</span>{l.label}</a>}
                 </motion.div>

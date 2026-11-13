@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DEFAULT_LIST_NAME, LIST_ITEMS_MAX, LIST_MAX, NAME_MAX, cleanName, createList, deleteList, parseLists, renameList, savedIds, toggleInList, uniqueName,
+  DEFAULT_LIST_NAME, LIST_ITEMS_MAX, LIST_MAX, NAME_MAX, cleanName, createList, deleteList, parseLists, renameList, restoreList, savedIds, toggleInList, uniqueName,
 } from '../../src/lib/stash';
 import { matchShared, parseSharedList, sharedListPath } from '../../src/lib/stashShare';
 
@@ -78,6 +78,30 @@ test('list names are plain, short and unique; renaming and deleting', () => {
   for (let i = 1; i < LIST_MAX; i++) capped = createList(capped, `L${i}`, `l${i}`)!;
   assert.equal(capped.lists.length, LIST_MAX);
   assert.equal(createList(capped, 'One more', 'extra'), null);
+});
+
+test('undo puts a deleted list back where it was', () => {
+  let state = createList(createList(parseLists(null), 'Desk', 'd1', [id(1)])!, 'Gifts', 'g1')!;
+  const desk = state.lists[1]!;
+  const after = deleteList(state, 'd1');
+  const back = restoreList(after, desk, 1, false)!;
+  assert.deepEqual(back.lists.map(l => l.id), ['stash', 'd1', 'g1']);
+  assert.deepEqual(back.lists[1]!.ids, [id(1)]);
+  assert.equal(restoreList(back, desk, 1, false), null, 'not twice');
+  const renamed = restoreList(createList(after, 'Desk', 'd9')!, desk, 1, false)!;
+  assert.equal(renamed.lists[1]!.name, 'Desk 2', 'a name taken meanwhile is made unique');
+  // The only list: the empty default that replaced it gives way, unless something was saved there since.
+  const lone = { id: 'solo', name: 'Solo', ids: [id(2)] };
+  const only = { lists: [lone], last: 'solo' };
+  const emptied = deleteList(only, 'solo');
+  assert.deepEqual(restoreList(emptied, lone, 0, true), only);
+  const used = toggleInList(emptied, 'stash', id(3));
+  assert.deepEqual(restoreList(used, lone, 0, true)!.lists.map(l => l.id), ['solo', 'stash']);
+  // An empty default list that was already there before is kept.
+  assert.deepEqual(restoreList(deleteList(state, 'g1'), state.lists[2]!, 2, false)!.lists.length, 3);
+  state = parseLists(null);
+  for (let i = 1; i < LIST_MAX; i++) state = createList(state, `L${i}`, `l${i}`)!;
+  assert.equal(restoreList(state, desk, 0, false), null, 'no room at 20 lists');
 });
 
 test('a shared link carries the name and short find ids, and reads back safely', () => {

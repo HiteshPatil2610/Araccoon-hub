@@ -4,6 +4,15 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Changed (UI/UX polish, 13 November 2026)
+
+- **Phones:** finds show two to a row in compact cards, and the category filters are one row you can swipe sideways, so the first finds appear much sooner.
+- **Easier to find your way:** the nav marks the Journal and Stash pages you are on; section links and "Browse the finds" from other pages go straight to that part of the storefront without reloading; the 404 page and the end of an article offer next steps.
+- **Search:** your search stays in the address (reload or share it), the phone keyboard closes on Enter, and there is one clear button instead of two.
+- **Feedback:** messages slide in gently and stay while you point at or focus them, and deleting a stash list can be undone.
+- **Accessibility and finish:** a visible focus ring on the sort control, keyboard focus kept clear of the fixed nav, a quieter result count for screen readers, no stuck hover colours after a tap, a phone browser bar that matches the theme, evenly wrapped headings, and the owner's badge in Quick View.
+- Added a project skill, `.claude/skills/ui-ux-polish`, with the checklist used for this pass.
+
 ### Changed (colour balance)
 
 - **Theme switch:** the new theme now bleeds out from the toggle like ink in water, replacing the expanding circle.

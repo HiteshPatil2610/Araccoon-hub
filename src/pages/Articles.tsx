@@ -9,7 +9,7 @@ import { api } from '../lib/api';
 import { takeInitialProducts } from '../lib/initialData';
 import { useOutbound, type OutboundSource } from '../lib/outbound';
 import { usePageMeta } from '../lib/pageMeta';
-import { Navbar, Footer, Announcement } from '../components/SiteChrome';
+import { Navbar, Footer, Announcement, SectionLink } from '../components/SiteChrome';
 import { ProductCard } from '../components/ProductCard';
 import { ProductOverlays } from '../components/ProductOverlays';
 import { SectionLabel, Viewfinder } from '../components/cine';
@@ -133,7 +133,7 @@ function ArticleView({ article }: { article: Article }) {
         <section aria-labelledby="article-finds" className="mt-16 border-t border-line pt-10">
           <SectionLabel>In this article</SectionLabel>
           <h2 id="article-finds" className="text-[clamp(40px,5vw,72px)] leading-[.9] mt-3 mb-8">The finds</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
             {products.map((p, i) => (
               <ProductCard key={p.id} product={p} index={i} onQuickView={setQuick} />
             ))}
@@ -141,7 +141,12 @@ function ArticleView({ article }: { article: Article }) {
         </section>
       )}
 
-      <p className="mt-16 text-xs text-muted-fg max-w-[72ch] mx-auto">As an Amazon Associate, Raccoon Hub earns from qualifying purchases.</p>
+      {/* A next step once the reader reaches the end, instead of a dead end above the footer. */}
+      <nav aria-label="After this article" className="mt-16 max-w-[72ch] mx-auto flex flex-wrap gap-3 border-t border-line pt-8">
+        <Link to="/articles" className="btn"><ArrowLeft className="w-4 h-4" aria-hidden="true" /> Back to the journal</Link>
+        <SectionLink section="finds" className="btn btn-primary">Browse the finds <ArrowRight className="w-4 h-4" aria-hidden="true" /></SectionLink>
+      </nav>
+      <p className="mt-10 text-xs text-muted-fg max-w-[72ch] mx-auto">As an Amazon Associate, Raccoon Hub earns from qualifying purchases.</p>
       <ProductOverlays quick={quick} onCloseQuick={() => setQuick(null)} outbound={outbound} from={FROM_ARTICLE} browse={products} onShow={setQuick} />
     </PublicPage>
   );
