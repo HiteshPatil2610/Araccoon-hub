@@ -26,21 +26,25 @@ The project is public and source-available: code under PolyForm Noncommercial 1.
 
 | Area | Features |
 | --- | --- |
-| Storefront (`/`) | Hero, featured picks carousel, story section, catalog with search, category filter and sort, quick view with the owner's optional "Why we picked it" note, outbound notice |
+| Storefront (`/`) | Hero, featured picks carousel, story section, catalog with search, category filter, tier filter (Budget / Value for money / Premium, the owner's judgement) and sort, quick view with the owner's optional "Why we picked it" note, outbound notice |
 | Journal (`/articles`, `/articles/<slug>`) | Markdown articles with cover image, reading time, and cards for listed products |
 | Outbound links | `/r/:id` redirect and `/api/track` beacon; Associates tag rules; trusted Amazon hosts only |
-| Owner hub (`/admin`) | Email + password or passkey sign-in, recovery codes, invites; Products (create, import from an Amazon link, edit, bulk, duplicate, images); Collections (create, order finds, publish); listing check (daily and on demand: flags finds whose Amazon listing returns "not found"); Site text; Analytics, CSV export, conversions; Activity log; Account and sessions |
+| Owner hub (`/admin`) | Email + password or passkey sign-in, recovery codes, invites; Products (create, import from an Amazon link, edit, bulk, duplicate, images, and optional brand, product type, tier and comparable specs); Collections (create, order finds, publish); listing check (daily and on demand: flags finds whose Amazon listing returns "not found"); Site text; Analytics, CSV export, conversions; Activity log; Account and sessions |
 | Discovery extras | "Surprise me" random find with the mascot; the raccoon's find of the day; "Your stash": named lists of saved finds, a find in several lists, each list shareable as a link (browser only, `/stash`, `/stash/shared`); journal RSS feed (`/articles/feed.xml`) |
-| Collections (`/collections/<slug>`) | Owner-made themed lists of finds, each with its own page, linked from the storefront above the catalog and listed in the sitemap |
+| Collections (`/collections/<slug>`) | Owner-made themed lists of finds, each with its own page, linked from the storefront above the catalog and listed in the sitemap. A collection is also the group visitors compare within: its page has a Compare section (pick two to four finds, see brand, tier and specs side by side) when at least two of its finds have specs |
 | Shareable finds (`/find/<slug>`) | A link per find that opens its quick view on the storefront; Share button (device share sheet or copy link); Worker-rendered title, description and the find's image for link previews; listed in the sitemap |
 | Search and sharing | Worker-rendered titles, descriptions, canonical links, Open Graph/Twitter tags, JSON-LD, `robots.txt`, `sitemap.xml`, share image |
 
 ## Out of scope (deliberately)
 
 - Cart, checkout, payments, prices, discounts, stock, visitor accounts, server-side wishlists or lists that sync between devices, newsletters, testimonials. (Since 10 November 2026 visitors can save finds to a "stash" kept only in their own browser: no account, nothing stored or reported on the server. Since 12 November 2026 the stash holds named lists that can be shared as links; the link itself carries the list, so a list lives on one device.)
-- Live Amazon ratings or prices (ratings and review counts are owner-supplied and not shown publicly).
+- Live Amazon ratings or prices (ratings and review counts are owner-supplied and not shown publicly). The tier on a find (since 14 November 2026) is the owner's own judgement of where it sits, not a price or a price band.
 - A CMS such as WordPress (evaluated and declined in November 2026: the owner hub plus Markdown articles cover the need).
 - Separate product detail pages. Products open in a quick view; since 10 November 2026 each find also has a shareable address (`/find/<title>-<id>`) that opens the storefront with that quick view, with its own title, description and preview image for link sharing.
+
+## Planned next (agreed with the owner, 14 November 2026)
+
+Built on the product facts (brand, product type, tier, specs) added on 14 November 2026. Done the same day: comparing finds side by side, inside a collection (the owner's decision: a collection such as "Mice" is the group to compare, not the product type). Still to do, in this order: links to stores other than Amazon (one find, several store links), and "alternatives" (a cheaper, branded or step-up find) with a visitor request box. Open decisions: whether to show price bands (exact Amazon prices are not allowed without Amazon's API), and how to earn from other stores (an affiliate network, or plain links). Update this file when each one is built.
 
 ## Hosting and services
 

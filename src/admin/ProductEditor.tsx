@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Check, Copy, ImagePlus, Link2, RefreshCw } from 'lucide-react';
+import { Check, Copy, ImagePlus, Link2, Plus, RefreshCw, X } from 'lucide-react';
 import { Dialog, ConfirmDialog } from '../components/Dialog';
 import { ProductImage } from '../components/ProductImage';
 import { api, HttpError } from '../lib/api';
@@ -8,7 +8,8 @@ import { normalizeAffiliateUrl, parseHostList } from '../../shared/urlPolicy';
 import { CATEGORIES, type Product } from '../../shared/types';
 import { ProductImportPanel, emptyImportDraft } from './ProductImportPanel';
 import { applyImportFields, type OwnerContentSource } from '../../shared/productImport';
-import { descriptionSummary } from '../../shared/productCopy';
+import { descriptionSummary, type ProductSpec } from '../../shared/productCopy';
+import { MAX_SPECS, SPEC_NAME_MAX, SPEC_TEMPLATES, SPEC_VALUE_MAX, TIERS, TIER_LABELS, mergeSpecs, specTemplate, type Tier } from '../../shared/productFacts';
 
 const HOSTS = parseHostList(undefined); // UI hint only; the server enforces its configured list
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -18,6 +19,7 @@ type Form = {
   title: string; description: string; category: string; rating: string; reviewCount: string;
   imageUrl: string; imagePublicId: string | null; affiliateUrl: string; badge: string; pickNote: string; featured: boolean;
   affiliateTag: string; subId: string;
+  brand: string; productType: string; tier: Tier | ''; specs: ProductSpec[];
   status: Product['status']; sortOrder: string;
 };
 
@@ -25,6 +27,7 @@ const empty: Form = {
   title: '', description: '', category: CATEGORIES[0], rating: '0', reviewCount: '0', imageUrl: '', imagePublicId: null,
   affiliateUrl: '', badge: '', pickNote: '', featured: false, status: 'published', sortOrder: '0',
   affiliateTag: '', subId: '',
+  brand: '', productType: '', tier: '', specs: [],
 };
 
 function fromProduct(p: Product): Form {
@@ -33,6 +36,7 @@ function fromProduct(p: Product): Form {
     imageUrl: p.imageUrl, imagePublicId: p.imagePublicId, affiliateUrl: p.affiliateUrl, badge: p.badge ?? '', pickNote: p.pickNote ?? '', featured: p.featured,
     status: p.status, sortOrder: String(p.sortOrder),
     affiliateTag: p.affiliateTag ?? '', subId: p.subId ?? '',
+    brand: p.brand ?? '', productType: p.productType ?? '', tier: p.tier ?? '', specs: p.specs.map(s => ({ ...s })),
   };
 }
 
@@ -42,6 +46,9 @@ function toInput(f: Form) {
     imageUrl: f.imageUrl, imagePublicId: f.imagePublicId, affiliateUrl: f.affiliateUrl, badge: f.badge.trim() || null, pickNote: f.pickNote.trim() || null,
     featured: f.featured, status: f.status, sortOrder: Number(f.sortOrder),
     affiliateTag: f.affiliateTag.trim() || null, subId: f.subId.trim() || null,
+    brand: f.brand.trim() || null, productType: f.productType.trim() || null, tier: f.tier || null,
+    // A row left without a value (e.g. an unused template row) is simply not saved.
+    specs: f.specs.map(s => ({ name: s.name.trim(), value: s.value.trim() })).filter(s => s.value),
   };
 }
 
@@ -93,6 +100,8 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
   const [importDraft, setImportDraft] = useState(emptyImportDraft);
   const [assistance, setAssistance] = useState<Omit<OwnerContentSource, 'contentAuthorized'> | null>(null);
   const [contentAuthorized, setContentAuthorized] = useState(false);
+  // Specification rows from the last fetched Amazon page, offered as spec rows (never added unasked).
+  const [fetchedSpecs, setFetchedSpecs] = useState<ProductSpec[]>([]);
   const dirty = Object.values(importDraft).some(Boolean) || assistance !== null || JSON.stringify(form) !== JSON.stringify(product ? fromProduct(product) : empty);
   const requestClose = () => { if (savingRef.current || uploadRef.current) return; if (dirty) setDiscard(true); else onClose(); };
   const showErrors = (next: Record<string, string>) => {
@@ -114,6 +123,7 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
       setImportDraft(emptyImportDraft);
       setAssistance(null);
       setContentAuthorized(false);
+      setFetchedSpecs([]);
     }
   }, [open, product]);
 
@@ -121,6 +131,11 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
     if (k === 'title' || k === 'description' || k === 'affiliateUrl') setContentAuthorized(false);
     setForm(f => ({ ...f, [k]: v }));
   };
+  const setSpec = (i: number, part: Partial<ProductSpec>) => setForm(f => ({ ...f, specs: f.specs.map((s, j) => (j === i ? { ...s, ...part } : s)) }));
+  const addSpecs = (rows: readonly ProductSpec[]) => setForm(f => ({ ...f, specs: mergeSpecs(f.specs, rows) }));
+  const usualRows = specTemplate(form.productType).map(name => ({ name, value: '' }));
+  const missingUsual = mergeSpecs(form.specs, usualRows).length - form.specs.length;
+  const missingFetched = mergeSpecs(form.specs, fetchedSpecs).length - form.specs.length;
   const linkOk = form.affiliateUrl ? normalizeAffiliateUrl(form.affiliateUrl, HOSTS) !== null : null;
 
   const pickFile = async (file: File | undefined) => {
@@ -177,7 +192,12 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
         ? await api.createAssistedDraft(input, { ...assistance, contentAuthorized: true }) : await api.createProduct(input));
       onClose();
     } catch (err) {
-      if (err instanceof HttpError) showErrors({ ...err.fields, _: Object.keys(err.fields).length ? '' : err.message });
+      if (err instanceof HttpError) {
+        // The server keys an error inside a spec row by its path ("specs.0.value"); the form shows it under the field.
+        const fields: Record<string, string> = {};
+        for (const [key, message] of Object.entries(err.fields)) fields[key.split('.')[0]!] ??= message;
+        showErrors({ ...fields, _: Object.keys(fields).length ? '' : err.message });
+      }
       else setErrors({ _: 'Could not save. Your changes are still here — try again.' });
     } finally {
       setSaving(false);
@@ -232,7 +252,9 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
         <div className="space-y-4 min-w-0">
           {open && !product && <ProductImportPanel current={form} disabled={saving || (upload !== null && upload.pct >= 0)} draft={importDraft} setDraft={setImportDraft}
             onApply={(preview, selected) => {
-              setForm(f => applyImportFields(f, preview, selected));
+              // The brand is a plain fact: fill it when the owner has not typed one.
+              setForm(f => ({ ...applyImportFields(f, preview, selected), brand: f.brand || (preview.details?.brand ?? '').trim().slice(0, 60) }));
+              setFetchedSpecs(preview.details?.specifications ?? []);
               setAssistance({ provider: preview.provider === 'amazon-page' ? 'amazon-page' : 'owner-content', sourceUrl: preview.sourceUrl });
               setContentAuthorized(false);
               setErrors({});
@@ -263,6 +285,51 @@ export function ProductEditor({ product, open, onClose, onSaved }: {
               </select>
               {err('category')}
             </div>
+          <h3 className="text-lg font-bold border-t border-line pt-4">Compare details</h3>
+          <p className="text-sm text-muted-fg">Optional. These let visitors filter finds by tier and will line finds of the same type up side by side. The tier is your own judgement, not a price.</p>
+          <div className="grid sm:grid-cols-3 gap-3">
+            <div>
+              <label htmlFor="f-brand" className="field-label">Brand</label>
+              <input {...fieldProps('brand')} className="field" maxLength={60} placeholder="Logitech" value={form.brand} onChange={e => set('brand', e.target.value)} />
+              {err('brand')}
+            </div>
+            <div>
+              <label htmlFor="f-productType" className="field-label">Product type</label>
+              <input {...fieldProps('productType')} className="field" maxLength={40} list="product-types" placeholder="Mouse" value={form.productType} onChange={e => set('productType', e.target.value)} />
+              <datalist id="product-types">{Object.keys(SPEC_TEMPLATES).map(t => <option key={t} value={t} />)}</datalist>
+              {err('productType')}
+            </div>
+            <div>
+              <label htmlFor="f-tier" className="field-label">Tier</label>
+              <select {...fieldProps('tier')} className="field" value={form.tier} onChange={e => set('tier', e.target.value as Form['tier'])}>
+                <option value="">Not set</option>
+                {TIERS.map(t => <option key={t} value={t}>{TIER_LABELS[t]}</option>)}
+              </select>
+              {err('tier')}
+            </div>
+          </div>
+          <fieldset className="min-w-0" aria-describedby={errors.specs ? 'e-specs' : 'specs-hint'}>
+            <legend className="field-label">Specs to compare</legend>
+            <p id="specs-hint" className="text-sm text-muted-fg">One fact per row, with the same names across finds of one type (for example “Weight” and “99 g”). Rows without a value are not saved.</p>
+            {form.specs.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {form.specs.map((s, i) => (
+                  <li key={i} className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)_auto] gap-2">
+                    <input className="field" aria-label={`Spec ${i + 1} name`} maxLength={SPEC_NAME_MAX} placeholder="Name" value={s.name} aria-invalid={errors.specs ? true : undefined} onChange={e => setSpec(i, { name: e.target.value })} />
+                    <input className="field" aria-label={`Spec ${i + 1} value`} maxLength={SPEC_VALUE_MAX} placeholder="Value" value={s.value} onChange={e => setSpec(i, { value: e.target.value })} />
+                    <button type="button" className="btn !px-3" aria-label={`Remove spec ${i + 1}${s.name ? `: ${s.name}` : ''}`} onClick={() => setForm(f => ({ ...f, specs: f.specs.filter((_, j) => j !== i) }))}><X className="w-4 h-4" aria-hidden="true" /></button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex flex-wrap gap-2 mt-3">
+              <button type="button" className="btn !min-h-9 !text-sm" disabled={form.specs.length >= MAX_SPECS} onClick={() => setForm(f => ({ ...f, specs: [...f.specs, { name: '', value: '' }] }))}><Plus className="w-4 h-4" aria-hidden="true" /> Add a row</button>
+              {missingUsual > 0 && <button type="button" className="btn !min-h-9 !text-sm" onClick={() => addSpecs(usualRows)}>Add the usual rows for {form.productType.trim()}</button>}
+              {missingFetched > 0 && <button type="button" className="btn !min-h-9 !text-sm" onClick={() => addSpecs(fetchedSpecs)}>Add {missingFetched} fetched {missingFetched === 1 ? 'spec' : 'specs'}</button>}
+            </div>
+            <p className="text-sm text-muted-fg mt-2">{form.specs.length} of {MAX_SPECS} rows</p>
+            {err('specs')}
+          </fieldset>
           <h3 className="text-lg font-bold border-t border-line pt-4">Amazon destination</h3>
           <div>
             <label htmlFor="f-affiliateUrl" className="field-label">Amazon link</label>
