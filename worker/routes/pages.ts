@@ -324,6 +324,7 @@ pageRoutes.get('/robots.txt', (c) => {
     'Disallow: /admin',
     'Disallow: /api/',
     'Disallow: /r/',
+    'Disallow: /stash', // visitors' own lists and shared-list links: personal, not pages to index
     '',
     `Sitemap: ${siteOrigin(c)}/sitemap.xml`,
     '',

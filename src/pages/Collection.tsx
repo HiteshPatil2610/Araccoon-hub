@@ -48,7 +48,6 @@ function CollectionView({ slug }: { slug: string }) {
   const products = useMemo(() => (loaded?.products ?? []).map(p => ({ ...p, ...formatProductCopy(p.title, p.description) })), [loaded]);
   const outbound = useOutbound();
   const [quick, setQuick] = useState<PublicProduct | null>(null);
-  const open = (p: PublicProduct) => outbound.open(p, FROM_COLLECTION);
 
   if (collection === 'missing') return <NotFound />;
   return (
@@ -61,8 +60,8 @@ function CollectionView({ slug }: { slug: string }) {
           <button type="button" className="btn btn-primary" onClick={retry}>Try again</button>
         </div>
       ) : !loaded ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-10" aria-busy="true" aria-label="Loading collection">
-          {Array.from({ length: 4 }, (_, i) => <div key={i} className="panel h-96 !bg-muted" />)}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 mt-10" aria-busy="true" aria-label="Loading collection">
+          {Array.from({ length: 4 }, (_, i) => <div key={i} className="panel h-64 sm:h-96 !bg-muted" />)}
         </div>
       ) : (
         <>
@@ -72,15 +71,15 @@ function CollectionView({ slug }: { slug: string }) {
             {loaded.description && <p className="mt-4 text-lg text-muted-fg max-w-[60ch]">{loaded.description}</p>}
             <p className="mt-4 font-display text-2xl leading-none">[{String(products.length).padStart(2, '0')} {products.length === 1 ? 'find' : 'finds'}]</p>
           </header>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 mt-10">
             {products.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} onOpen={open} onQuickView={setQuick} pending={outbound.state?.status === 'opening'} />
+              <ProductCard key={p.id} product={p} index={i} onQuickView={setQuick} />
             ))}
           </div>
           <p className="mt-16 text-xs text-muted-fg">As an Amazon Associate, Raccoon Hub earns from qualifying purchases.</p>
         </>
       )}
-      <ProductOverlays quick={quick} onCloseQuick={() => setQuick(null)} outbound={outbound} from={FROM_COLLECTION} />
+      <ProductOverlays quick={quick} onCloseQuick={() => setQuick(null)} outbound={outbound} from={FROM_COLLECTION} browse={products} onShow={setQuick} />
     </PublicPage>
   );
 }

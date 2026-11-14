@@ -140,7 +140,8 @@
 }
 
 @layer base {
-  html { color-scheme: light; font-synthesis: none; }
+  /* Anchor jumps and keyboard focus stop below the fixed nav (WCAG 2.4.11). */
+  html { color-scheme: light; font-synthesis: none; scroll-padding-top: var(--nav-height); }
   html.dark { color-scheme: dark; }
   body {
     margin: 0;
@@ -153,6 +154,9 @@
   /* Display type is always Bebas, all caps, tight. Bebas ships one weight; synthesis is off so bold utilities can't smear it. */
   h1, h2, h3, .font-display { font-family: var(--font-display); font-weight: 400; text-transform: uppercase; letter-spacing: var(--ls-display); line-height: .92; }
   h1, h2, h3, p { overflow-wrap: anywhere; }
+  /* Even heading lines (no lone last word); clamped card titles keep normal wrapping so balancing cannot hide more of them. */
+  h1, h2, h3:not([class*="line-clamp"]) { text-wrap: balance; }
+  p { text-wrap: pretty; }
   :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 6px; }
   input, textarea, select { font-size: 1rem; }
   ::selection { background: var(--cd-red-500); color: #fff; }
@@ -173,19 +177,19 @@
     cursor: pointer;
   }
   .btn svg { flex-shrink: 0; margin-top: -.2rem; }
-  .btn:hover:not(:disabled) { background: var(--foreground); color: var(--background); }
+  @media (hover: hover) { .btn:hover:not(:disabled) { background: var(--foreground); color: var(--background); } }
   .btn:active:not(:disabled) { transform: scale(.97); }
   .btn:disabled { opacity: .4; cursor: not-allowed; }
   .btn-primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
-  .btn-primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); color: var(--on-primary); }
+  @media (hover: hover) { .btn-primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); color: var(--on-primary); } }
   .btn-primary:active:not(:disabled) { background: var(--primary-press); border-color: var(--primary-press); }
   .btn-sun, .btn-mint { background: var(--secondary); border-color: var(--secondary); color: var(--on-secondary); }
   .btn-ink { background: var(--cd-black); border-color: var(--cd-black); color: #fff; }
-  .btn-ink:hover:not(:disabled) { background: var(--cd-ink-700); border-color: var(--cd-ink-700); color: #fff; }
+  @media (hover: hover) { .btn-ink:hover:not(:disabled) { background: var(--cd-ink-700); border-color: var(--cd-ink-700); color: #fff; } }
   .btn-danger { background: var(--danger-action); border-color: var(--danger-action); color: #fff; }
-  .btn-danger:hover:not(:disabled) { background: var(--cd-red-600); border-color: var(--cd-red-600); color: #fff; }
+  @media (hover: hover) { .btn-danger:hover:not(:disabled) { background: var(--cd-red-600); border-color: var(--cd-red-600); color: #fff; } }
   .btn-ghost { border-color: transparent; }
-  .btn-ghost:hover:not(:disabled) { background: transparent; color: var(--foreground); text-decoration: underline; text-underline-offset: 4px; }
+  @media (hover: hover) { .btn-ghost:hover:not(:disabled) { background: transparent; color: var(--foreground); text-decoration: underline; text-underline-offset: 4px; } }
   /* "Bar" CTA from BookingCard: full-width red bar, sans label, arrow pushed right. */
   .btn-bar {
     width: 100%; justify-content: space-between; border-radius: var(--radius-s); padding: 0 1rem;
@@ -198,7 +202,7 @@
     border-radius: 50%; border: 1.3px solid currentColor; color: inherit; background: transparent; cursor: pointer;
     transition: background-color var(--dur-base), color var(--dur-base), border-color var(--dur-base), transform var(--dur-fast);
   }
-  .icon-btn:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+  @media (hover: hover) { .icon-btn:hover { background: color-mix(in srgb, currentColor 12%, transparent); } }
   .icon-btn:active { transform: scale(.94); }
 
   .field-label { display: block; font-size: .75rem; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; margin-bottom: .45rem; }
@@ -246,11 +250,20 @@ canvas[aria-hidden="true"] { opacity: .4; }
   display: flex; align-items: center; justify-content: center; overflow: hidden;
   background: var(--cd-red-500); clip-path: inset(0 100% 0 0);
 }
-.theme-curtain__mark {
+.theme-curtain__mark, .stash-flaps__mark {
   font-family: var(--font-display); font-weight: 400; text-transform: uppercase; letter-spacing: var(--ls-display);
   font-size: clamp(64px, 15vw, 220px); line-height: .8; padding-top: .08em; white-space: nowrap; color: #fff;
 }
-.theme-curtain__hub { color: var(--cd-black); }
+.theme-curtain__hub, .stash-flaps__dark { color: var(--cd-black); }
+/* Box flaps into and out of Your lists (src/lib/stashFlaps.ts): two crimson halves that start off screen
+   and meet in the middle; each holds the whole wordmark centred on the screen and shows only its half. */
+.stash-flaps { position: fixed; inset: 0; z-index: 2147483000; pointer-events: none; }
+.stash-flaps__flap { position: absolute; left: 0; right: 0; overflow: hidden; background: var(--cd-red-500); }
+.stash-flaps__flap--top { top: 0; bottom: calc(50% - 1px); transform: translateY(-101%); }
+.stash-flaps__flap--bottom { top: 50%; bottom: 0; transform: translateY(101%); }
+.stash-flaps__inner { position: absolute; left: 0; right: 0; display: flex; align-items: center; justify-content: center; }
+.stash-flaps__flap--top .stash-flaps__inner { top: 0; height: calc(200% - 2px); } /* the top flap is 1px taller, to overlap */
+.stash-flaps__flap--bottom .stash-flaps__inner { bottom: 0; height: 200%; }
 html.theme-transitioning *,
 html.theme-transitioning .cd-nav::before { transition: none !important; }
 
@@ -315,13 +328,13 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 .cd-nav--over-dark { --nav-bg: var(--stage-nav); --nav-line: transparent; color: var(--stage-fg); }
 /* Animate the controls, not their parent: the fixed mobile menu retains its viewport anchor. */
 .cd-nav--intro:not(.cd-nav--intro-shown)::before,
-.cd-nav--intro:not(.cd-nav--intro-shown) :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > button),
+.cd-nav--intro:not(.cd-nav--intro-shown) :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > :is(a, button)),
 .cd-hero__meta--intro:not(.cd-hero__meta--shown) {
   opacity: 0; transform: translateY(calc(-1 * var(--nav-height)));
 }
 @media (prefers-reduced-motion: no-preference) {
   .cd-nav--intro-shown::before,
-  .cd-nav--intro-shown :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > button),
+  .cd-nav--intro-shown :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > :is(a, button)),
   .cd-hero__meta--shown {
     animation: hero-nav-arrive 1000ms var(--ease-hero, var(--ease-cine)) var(--nav-entry-delay) backwards;
   }
@@ -332,8 +345,8 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 }
 .cd-nav--intro:focus-within::before,
 .cd-nav--intro:not(.cd-nav--over-dark)::before,
-.cd-nav--intro:focus-within :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > button),
-.cd-nav--intro:not(.cd-nav--over-dark) :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > button),
+.cd-nav--intro:focus-within :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > :is(a, button)),
+.cd-nav--intro:not(.cd-nav--over-dark) :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > :is(a, button)),
 .cd-hero__meta--intro:focus-within {
   opacity: 1 !important; transform: none !important; transition: none;
 }
@@ -348,7 +361,7 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 /* Menu disc (IconButton "menu"): long line over short, right-aligned. Shown where the inline links don't fit. */
 .cd-menu-btn { display: none; width: 48px; height: 48px; flex: none; margin-left: 6px; border-radius: 50%; border: 0; cursor: pointer; flex-direction: column; align-items: flex-end; justify-content: center; gap: 4px; padding: 0 14px; background: var(--foreground); color: var(--background); transition: transform var(--dur-fast) var(--ease-pop), background-color var(--dur-base), color var(--dur-base); }
 .cd-nav--over-dark .cd-menu-btn { background: var(--stage-fg); color: var(--stage-bg); }
-.cd-menu-btn:hover { transform: scale(1.06); }
+@media (hover: hover) { .cd-menu-btn:hover { transform: scale(1.06); } }
 .cd-menu-btn span { display: block; height: 1.6px; border-radius: 2px; background: currentColor; }
 .cd-menu-btn span:first-child { width: 20px; } .cd-menu-btn span:last-child { width: 13px; }
 @media (max-width: 1023px) { .cd-menu-btn { display: inline-flex; } }
@@ -487,7 +500,7 @@ html.hero-opening body { animation: hero-opening-hold 4s step-end; }
 .cd-hero__foot > :last-child { gap: clamp(16px, 1.8vw, 36px); }
 .cd-hero__foot > * { pointer-events: auto; }
 .cd-hero__foot .btn { color: var(--stage-fg); border-color: var(--stage-edge); }
-.cd-hero__foot .btn:hover:not(:disabled) { background: var(--stage-fg); color: var(--stage-bg); }
+@media (hover: hover) { .cd-hero__foot .btn:hover:not(:disabled) { background: var(--stage-fg); color: var(--stage-bg); } }
 .cd-hero__action:focus-within { opacity: 1 !important; transform: none !important; transition: none !important; }
 /* Let the poster composition grow with wide displays instead of staying in a 1440px column. */
 @media (min-width: 1441px) {
@@ -516,7 +529,7 @@ html.hero-opening body { animation: hero-opening-hold 4s step-end; }
 }
 
 /* Picks: the "production" curtain — stat discs, pull-quote carousel, second cut-out, big prev/next discs. */
-.cd-picks { position: relative; isolation: isolate; min-height: 0; padding: 64px var(--page-gutter) 0; scroll-margin-top: var(--nav-height); }
+.cd-picks { position: relative; isolation: isolate; min-height: 0; padding: 64px var(--page-gutter) 0; }
 .cd-picks__grid { position: relative; z-index: 3; max-width: var(--page-max); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 24px; align-items: start; }
 .cd-picks__grid > * { min-width: 0; }
 .cd-picks__left { display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
@@ -545,7 +558,7 @@ html.hero-opening body { animation: hero-opening-hold 4s step-end; }
 .cd-picks__art img { max-width: 100%; object-fit: contain; }
 .cd-picks__nav { position: relative; grid-row: 1; z-index: 5; width: 64px; height: 64px; border-radius: 50%; border: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform var(--dur-fast) var(--ease-pop), background-color var(--dur-fast); }
 .cd-picks__nav:focus-visible { outline: 2px solid var(--stage-fg); outline-offset: 5px; }
-.cd-picks__nav:hover { transform: scale(1.06); }
+@media (hover: hover) { .cd-picks__nav:hover { transform: scale(1.06); } }
 .cd-picks__nav:active { transform: scale(.95); }
 .cd-picks__nav--prev { grid-column: 1; justify-self: start; background: var(--cd-red-500); color: #fff; }
 .cd-picks__nav--next { grid-column: 3; justify-self: end; background: var(--stage-fg); color: var(--stage-bg); }
@@ -571,7 +584,7 @@ html.hero-opening body { animation: hero-opening-hold 4s step-end; }
 }
 
 /* Story: the light "Directed by" section — tracking headline, index row, headline carousel, find card, chamfered stills. */
-.cd-story { --story-entry: 0; position: relative; overflow: hidden; isolation: isolate; margin-top: -48px; padding: clamp(112px, 9vw, 144px) var(--page-gutter) 32px; background: var(--background); color: var(--foreground); scroll-margin-top: calc(var(--nav-height) - 48px); }
+.cd-story { --story-entry: 0; position: relative; overflow: hidden; isolation: isolate; margin-top: -48px; padding: clamp(112px, 9vw, 144px) var(--page-gutter) 32px; background: var(--background); color: var(--foreground); scroll-margin-top: -48px; }
 .cd-story .viewfinder { --vf-line: var(--line); }
 .cd-story__directed { position: relative; z-index: 1; max-width: var(--page-max); margin: 0 auto; }
 .cd-story__directed h2 { margin: 0; display: grid; grid-template-columns: max-content auto max-content; align-items: start; gap: 0 clamp(12px, 1.25vw, 18px); font-size: clamp(56px, 11.8vw, 224px); }
@@ -592,13 +605,13 @@ html.hero-opening body { animation: hero-opening-hold 4s step-end; }
 .cd-arrows button:first-child { color: var(--cd-red-500); justify-content: flex-end; padding-left: 26px; }
 .cd-arrows button:last-child { justify-content: flex-start; padding-right: 26px; }
 .cd-arrows svg { width: 100%; height: 12px; transition: transform var(--dur-base) var(--ease-cine); }
-.cd-arrows button:first-child:hover svg { transform: translateX(6px); }
-.cd-arrows button:last-child:hover svg { transform: translateX(-6px); }
+@media (hover: hover) { .cd-arrows button:first-child:hover svg { transform: translateX(6px); } }
+@media (hover: hover) { .cd-arrows button:last-child:hover svg { transform: translateX(-6px); } }
 .cd-story__aside { position: relative; z-index: 1; max-width: var(--page-max); margin: -40px auto 0; display: flex; justify-content: space-between; align-items: center; min-height: 84px; }
 .cd-avatars { display: flex; }
 .cd-avatars button { width: 44px; height: 44px; margin-left: -6px; border-radius: 50%; border: 2px solid var(--background); background: #fff; overflow: hidden; padding: 0; cursor: pointer; transition: transform var(--dur-fast); position: relative; }
 .cd-avatars button:first-child { margin-left: 0; }
-.cd-avatars button:hover { transform: translateY(-3px); }
+@media (hover: hover) { .cd-avatars button:hover { transform: translateY(-3px); } }
 .cd-avatars button[aria-current="true"] { outline: 2px solid var(--cd-red-500); outline-offset: 1px; z-index: 1; }
 .cd-avatars img, .cd-avatars [role=img] { width: 100%; height: 100%; object-fit: contain; padding: 3px; font-size: 0; }
 .cd-story__grid { position: relative; z-index: 1; max-width: var(--page-max); margin: 32px auto 0; display: grid; grid-template-columns: minmax(0,1fr) 300px minmax(0,1fr); gap: 40px; align-items: start; }
@@ -608,7 +621,7 @@ html.hero-opening body { animation: hero-opening-hold 4s step-end; }
 .cd-story__col .blurb { max-width: 300px; }
 .cd-stills { position: relative; height: 220px; width: 240px; margin-top: 18px; }
 .cd-still-frame { position: absolute; background: #fff; overflow: hidden; clip-path: polygon(26px 0, 100% 0, 100% calc(100% - 26px), calc(100% - 26px) 100%, 0 100%, 0 26px); border: 0; padding: 0; cursor: pointer; transition: transform var(--dur-slow) var(--ease-cine); }
-.cd-still-frame:hover { transform: translateY(-6px); }
+@media (hover: hover) { .cd-still-frame:hover { transform: translateY(-6px); } }
 .cd-still-frame img, .cd-still-frame [role=img] { width: 100%; height: 100%; object-fit: contain; padding: 12%; font-size: 11px; color: var(--cd-ink-500); }
 .cd-still-frame--a { left: 40px; top: 0; width: 120px; height: 150px; box-shadow: inset 0 0 0 1px var(--line); }
 .cd-still-frame--b { left: 0; top: 118px; width: 118px; height: 96px; background: var(--cd-red-500); }
@@ -706,8 +719,8 @@ html.hero-opening body { animation: hero-opening-hold 4s step-end; }
   .cd-story__grid { gap: 28px; }
 }
 
-/* Keep the Story-to-Browse handoff compact; anchor clearance belongs to scroll-margin. */
-.cd-catalog { padding-top: clamp(32px, 4svh, 56px); scroll-margin-top: var(--nav-height); }
+/* Keep the Story-to-Browse handoff compact; the fixed nav's clearance comes from scroll-padding on html. */
+.cd-catalog { padding-top: clamp(32px, 4svh, 56px); scroll-margin-top: 0; }
 
 /* Footer wordmark on a crimson band: page-colour "Raccoon", opposite-colour "Hub" (both meet 3:1 for large text on #C8202F). */
 .cd-footer__brand { background: var(--cd-red-500); color: var(--stage-fg); padding: clamp(28px, 4vw, 56px) 0 clamp(20px, 3vw, 44px); }
@@ -734,12 +747,128 @@ html.hero-opening body { animation: hero-opening-hold 4s step-end; }
 /* Product tile image: always on white so Amazon packshots read cleanly in both themes */
 /* A collection link on the storefront: thumbnail, name and count in one tappable row. */
 .collection-card { display: flex; align-items: center; gap: 14px; min-height: 88px; padding: 12px 16px 12px 12px; transition: border-color var(--dur-fast, 150ms) var(--ease-cine), transform var(--dur-fast, 150ms) var(--ease-cine); }
-.collection-card:hover { border-color: var(--cd-red-500); transform: translateY(-2px); }
+@media (hover: hover) { .collection-card:hover { border-color: var(--cd-red-500); transform: translateY(-2px); } }
 @media (prefers-reduced-motion: reduce) { .collection-card:hover { transform: none; } }
+/* Nav stash button (StashNavButton): the theme toggle's outline circle with a crimson count badge. On a save it
+   fills crimson while the bookmark turns over and lands filled, two rings ripple out and the count rolls up
+   (1100ms, picked by the owner on 12 November 2026). Reduced motion: no animation, the count just changes. */
+.stash-nav { position: relative; }
+.stash-nav__fx, .stash-nav__fx > span { position: absolute; inset: -1.3px; border-radius: 50%; pointer-events: none; }
+.stash-nav__fx > span { opacity: 0; }
+.stash-nav__fx > span:first-child { background: var(--cd-red-500); }
+.stash-nav__fx > span:not(:first-child) { border: 2px solid var(--cd-red-500); }
+.stash-nav__icon { position: relative; display: grid; }
+.stash-nav__icon > svg { grid-area: 1 / 1; width: 18px; height: 18px; }
+.stash-nav__filled { opacity: 0; }
+.stash-nav__count {
+  position: absolute; top: -5px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; overflow: hidden;
+  border-radius: 999px; background: var(--cd-red-500); color: var(--on-primary);
+  font: 700 11px/20px var(--font-sans); letter-spacing: 0; text-align: center; font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 2px var(--background);
+}
+.cd-nav--over-dark .stash-nav__count { box-shadow: 0 0 0 2px var(--stage-bg); }
+.stash-nav__count > span { display: block; }
+@media (prefers-reduced-motion: no-preference) {
+  .stash-nav__fx > span:first-child { animation: stash-nav-fill 1100ms var(--ease-out) both; }
+  .stash-nav__fx > span:nth-child(2) { animation: stash-nav-ring 720ms var(--ease-out) 140ms both; }
+  .stash-nav__fx > span:nth-child(3) { animation: stash-nav-ring 720ms var(--ease-out) 320ms both; }
+  .stash-nav__icon--saved { animation: stash-nav-flip 1100ms both; }
+  .stash-nav__icon--saved .stash-nav__outline { animation: stash-nav-outline 1100ms both; }
+  .stash-nav__icon--saved .stash-nav__filled { animation: stash-nav-filled 1100ms both; }
+  .stash-nav__roll { animation: stash-nav-roll 420ms var(--ease-pop) 150ms both; }
+}
+@keyframes stash-nav-fill {
+  0% { opacity: 0; transform: scale(.6); }
+  18% { opacity: 1; transform: scale(1); }
+  65% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+@keyframes stash-nav-ring { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(2.2); } }
+/* Edge-on at 90deg, so the jump to -90deg (where the filled icon takes over) is invisible. */
+@keyframes stash-nav-flip {
+  0% { transform: perspective(120px) rotateY(0); animation-timing-function: ease-in; }
+  13.6% { transform: perspective(120px) rotateY(90deg); }
+  13.7% { transform: perspective(120px) rotateY(-90deg); color: var(--on-primary); animation-timing-function: var(--ease-pop); }
+  35% { transform: perspective(120px) rotateY(0) scale(1.2); }
+  48% { transform: perspective(120px) rotateY(0) scale(1); }
+  65% { color: var(--on-primary); }
+  100% { transform: none; }
+}
+@keyframes stash-nav-outline { 0%, 13.6% { opacity: 1; } 13.7%, 68% { opacity: 0; } 82%, 100% { opacity: 1; } }
+@keyframes stash-nav-filled { 0%, 13.6% { opacity: 0; } 13.7%, 68% { opacity: 1; } 82%, 100% { opacity: 0; } }
+@keyframes stash-nav-roll { from { transform: translateY(110%); } to { transform: none; } }
+
 /* Save-to-stash toggle on a product card: a 44px disc that fills crimson when saved. */
 .stash-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: #fff; color: var(--cd-ink-900, #0a0a0a); border: 1px solid rgb(0 0 0 / .18); transition: background-color var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
-.stash-btn:hover { border-color: var(--cd-red-500); color: var(--cd-red-500); }
+@media (hover: hover) { .stash-btn:hover { border-color: var(--cd-red-500); color: var(--cd-red-500); } }
 .stash-btn--on, .stash-btn--on:hover { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; }
+/* "Save to a list": a small panel (not a dialog) under the save button, on a card or in Quick View. */
+.list-picker { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--card); color: var(--foreground); box-shadow: 0 18px 40px rgb(0 0 0 / .22); text-align: left; }
+.list-picker__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.list-picker__close { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; margin: -6px -6px -6px 0; border: 0; border-radius: 999px; background: transparent; color: inherit; cursor: pointer; }
+@media (hover: hover) { .list-picker__close:hover { background: color-mix(in srgb, currentColor 10%, transparent); } }
+.list-picker__status { margin: 0; font-size: .8125rem; font-weight: 600; color: var(--cd-red-500); }
+.list-picker__status:empty { margin-top: -10px; } /* kept in the page while empty, so screen readers hear it fill */
+.list-picker__lists { display: flex; flex-direction: column; gap: 2px; max-height: 220px; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.list-picker__row { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 8px; border-radius: var(--radius-s); cursor: pointer; }
+@media (hover: hover) { .list-picker__row:hover { background: color-mix(in srgb, currentColor 6%, transparent); } }
+.list-picker__row input { flex: none; width: 18px; height: 18px; accent-color: var(--cd-red-500); }
+:root.dark .list-picker.paper { color-scheme: light; } /* white panel on a card: light checkboxes and fields */
+.list-picker__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.list-picker__count { font-family: var(--font-display); font-size: 16px; line-height: 1; color: var(--muted-text); }
+.list-picker__new { display: flex; gap: 8px; }
+.list-picker__new .field { flex: 1; min-width: 0; min-height: 40px; }
+.list-picker__new .btn, .list-picker__done { min-height: 40px; padding-inline: .9rem; font-size: 1.05rem; }
+.list-picker__foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
+.list-picker__link { display: inline-flex; align-items: center; min-height: 40px; font-size: .875rem; font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+.list-picker__done { background: var(--foreground); border-color: var(--foreground); color: var(--background); }
+@media (hover: hover) { .list-picker__done:hover:not(:disabled) { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; } }
+/* On a card the picker floats over the photo; the card is lifted so the next row of cards cannot cover it. */
+.product-card--picking { z-index: 5; }
+.product-card__picker { position: absolute; top: 64px; left: 10px; right: 10px; z-index: 3; }
+.quick-view__picker { flex-basis: 100%; min-width: 0; }
+/* /stash: the row of lists, and the selected list's title with its actions. */
+.stash-lists { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 24px; }
+.stash-lists__new { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.stash-lists__new .field { width: min(320px, 100%); }
+.stash-list__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+/* Product card: a click anywhere opens Quick View. The real control is the "Quick view" button; its ::after
+   covers the card, so there is one focusable control (plus Save, layered above it). */
+.product-card { transition: border-color var(--dur-fast) var(--ease-cine); }
+@media (hover: hover) { .product-card:hover { border-color: var(--cd-red-500); } }
+.product-card__save { z-index: 2; }
+.product-card__open { background: var(--foreground); border-color: var(--foreground); color: var(--background); }
+.product-card__open::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: var(--radius-l); }
+/* Hover only where a pointer can hover: on touch screens a tap would leave the bar crimson after Quick View closes. */
+@media (hover: hover) { .product-card:hover .product-card__open, .product-card__open:hover:not(:disabled) { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; } }
+.product-card__open:focus-visible { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; }
+/* A transform would make the button the ::after's containing block mid-press, shrinking the hit area so the click is lost. */
+.product-card__open:active:not(:disabled) { transform: none; }
+@supports selector(:has(*)) {
+  .product-card__open:focus-visible { outline: none; }
+  .product-card:has(.product-card__open:focus-visible) { outline: 2px solid var(--primary); outline-offset: 3px; }
+}
+/* The raccoon's find of the day, at the top of the catalog. */
+.catalog-extras { display: grid; gap: 16px; margin-top: 32px; }
+.daily-find { position: relative; display: flex; align-items: center; gap: 16px; padding: 12px; min-width: 0; overflow: hidden; transition: border-color var(--dur-fast) var(--ease-cine); }
+.daily-find:hover { border-color: var(--cd-red-500); }
+.daily-find__image { flex: none; width: 120px; aspect-ratio: 1; }
+.daily-find__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.daily-find__title { font-size: clamp(26px, 3vw, 34px); line-height: .95; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.daily-find__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 4px; }
+/* One button for the whole panel: its ::after covers it, like the product card. */
+.daily-find__open { background: var(--foreground); border-color: var(--foreground); color: var(--background); min-height: 40px; font-size: 1.1rem; }
+.daily-find__open::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: var(--radius-l); }
+@media (hover: hover) { .daily-find:hover .daily-find__open, .daily-find__open:hover:not(:disabled) { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; } }
+.daily-find__open:focus-visible { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; }
+.daily-find__open:active:not(:disabled) { transform: none; }
+@supports selector(:has(*)) {
+  .daily-find__open:focus-visible { outline: none; }
+  .daily-find:has(.daily-find__open:focus-visible) { outline: 2px solid var(--primary); outline-offset: 3px; }
+}
+.daily-find__mascot { display: none; flex: none; height: 112px; width: auto; align-self: flex-end; margin-bottom: -12px; user-select: none; }
+@media (min-width: 640px) { .daily-find__mascot { display: block; } .daily-find__image { width: 136px; } }
+@media (max-width: 379px) { .daily-find { align-items: flex-start; } .daily-find__image { width: 88px; } }
 /* Quick View opened by "Surprise me": the box mascot beside a one-line caption. */
 /* Quick view: image + actions on the left (sticky inside the dialog's scroll area), details on the right.
    On phones it stacks image, actions, details so the Amazon button is reached before long spec lists. */
@@ -758,6 +887,26 @@ html.hero-opening body { animation: hero-opening-hold 4s step-end; }
   .quick-view__aside .cd-still { max-height: 44vh; max-height: 44dvh; }
   .quick-view__body { align-self: stretch; padding-left: 28px; border-left: 1px solid var(--line); margin-left: -1px; }
 }
+/* Stepping through finds in Quick View: white discs on the photo's edges, a count at its foot. Swipes stay horizontal-only here. */
+.quick-view__frame--steps { touch-action: pan-y; }
+.quick-view__frame img { animation: quick-view-in var(--dur-base, 240ms) var(--ease-cine) both; }
+@keyframes quick-view-in { from { opacity: 0; } }
+.quick-view__step { position: absolute; top: 50%; translate: 0 -50%; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 999px; background: #fff; color: var(--cd-black); border: 1px solid rgb(0 0 0 / .18); cursor: pointer; transition: background-color var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
+.quick-view__step--prev { left: 10px; }
+.quick-view__step--next { right: 10px; }
+@media (hover: hover) { .quick-view__step:hover { background: var(--cd-red-500); border-color: var(--cd-red-500); color: #fff; } }
+.quick-view__count { position: absolute; bottom: 10px; left: 50%; translate: -50% 0; padding: 4px 10px 2px; border-radius: 999px; background: rgb(10 10 10 / .78); color: #fff; font-family: var(--font-display); font-size: 15px; line-height: 1.1; letter-spacing: .04em; pointer-events: none; }
+/* "More like this": a row of small tiles under the details; each one opens that find in place. */
+.quick-view__more { min-width: 0; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+.quick-view__more-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 12px 0 0; padding: 0; list-style: none; }
+.quick-view__tile { display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0; padding: 6px 6px 10px; border: 1px solid var(--line); border-radius: var(--radius-m); background: transparent; color: inherit; text-align: left; cursor: pointer; transition: border-color var(--dur-fast) var(--ease-cine); }
+@media (hover: hover) { .quick-view__tile:hover { border-color: var(--cd-red-500); } }
+@media (hover: hover) { .quick-view__tile:hover img { transform: scale(1.04); } }
+.quick-view__tile-image { display: block; aspect-ratio: 1; border-radius: calc(var(--radius-m) - 4px); box-shadow: inset 0 0 0 1px rgb(0 0 0 / .06); }
+.quick-view__tile-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; padding: 0 4px; font-family: var(--font-display); font-size: 18px; line-height: 1; text-transform: uppercase; letter-spacing: var(--ls-display); overflow-wrap: anywhere; }
+@media (min-width: 640px) {
+  .quick-view__more-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 .surprise-note { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
 .surprise-note img { height: 56px; width: auto; flex: none; user-select: none; }
 /* The owner's own note in Quick View: a quiet pull quote with the one crimson accent. */
@@ -765,7 +914,7 @@ html.hero-opening body { animation: hero-opening-hold 4s step-end; }
 .pick-note blockquote { margin: 0; font-size: 1.0625rem; line-height: 1.45; font-weight: 500; overflow-wrap: anywhere; }
 .cd-still { position: relative; overflow: hidden; border-radius: var(--radius-m); background: #fff; }
 .cd-still img { transition: transform var(--dur-slow) var(--ease-cine); }
-.group:hover .cd-still img { transform: scale(1.04); }
+@media (hover: hover) { .group:hover .cd-still img { transform: scale(1.04); } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; transition-delay: 0ms !important; scroll-behavior: auto !important; }
@@ -778,7 +927,7 @@ html.hero-opening body { animation: hero-opening-hold 4s step-end; }
   .cd-story { --story-entry: 1 !important; }
   .cd-unfold__letter, .cd-unfold__glyph, .cd-story__by, .cd-story__index { opacity: 1; transform: none; translate: none; }
   .cd-nav--intro::before,
-  .cd-nav--intro :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > button) { opacity: 1; transform: none; }
+  .cd-nav--intro :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > :is(a, button)) { opacity: 1; transform: none; }
 }
 
 /* Ambient storefront light: gradients stay behind content in isolated sections.
@@ -872,6 +1021,33 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .skip-link { position: fixed; top: 8px; left: 8px; transform: translateY(-200%); z-index: 100; background: var(--card); color: var(--foreground); padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-pill); }
 .skip-link:focus { transform: none; }
 [role=dialog] { overscroll-behavior: contain; }
+/* Phones: two compact cards per row and one scrolling row of category pills (both picked by the owner from previews, 13 November 2026).
+   The spec line moves out (Quick View has it), the owner badge sits on the photo so titles line up, and the save disc keeps a 44px tap area. */
+@media (max-width: 639px) {
+  .product-card { padding: 8px; border-radius: var(--radius-m); }
+  .product-card .cd-still { margin-bottom: 8px; border-radius: 12px; }
+  .product-card .eyebrow { font-size: 9px; letter-spacing: .24em; }
+  .product-card__save { top: 6px; right: 6px; width: 36px; height: 36px; }
+  .product-card__save::before { content: ''; position: absolute; inset: -4px; }
+  .product-card__badge { position: absolute; top: 14px; left: 14px; z-index: 2; max-width: calc(100% - 64px); overflow: hidden; text-overflow: ellipsis; font-size: 12px; padding: .25rem .5rem .1rem; }
+  .product-card__title { font-size: 20px; }
+  .product-card__spec { display: none; }
+  .product-card__foot { padding-top: 10px; }
+  .product-card__open { min-height: 38px; padding: 0 10px; font-size: .75rem; }
+  .product-card__open::after { border-radius: var(--radius-m); }
+  /* The list picker is wider than one card: it spans both columns, opening towards the other card. */
+  .product-card__picker { top: 48px; left: 6px; right: auto; width: 200%; }
+  .product-card:nth-child(even) .product-card__picker { left: auto; right: 6px; }
+  .category-row { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: none;
+    margin-inline: calc(-1 * var(--page-gutter)); padding-inline: var(--page-gutter) 40px; scroll-padding-inline: var(--page-gutter);
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); }
+  .category-row::-webkit-scrollbar { display: none; }
+  .category-row > .btn { flex: none; white-space: nowrap; scroll-snap-align: start; }
+}
+/* The sort pill wraps a native select whose own outline is off: ring the pill on keyboard focus. */
+.sort-pill:has(select:focus-visible) { outline: 2px solid var(--primary); outline-offset: 3px; }
+/* The catalog search has its own Clear button, so hide the browser's built-in one. */
+.field-search::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
 @layer utilities { .text-xs { font-size: .875rem; line-height: 1.45; } }
 
 /* Articles (content/articles/*.md): readable long-form text in the site's type. */

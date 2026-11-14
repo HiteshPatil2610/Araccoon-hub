@@ -20,6 +20,9 @@ const router = createBrowserRouter([
   { path: '/articles', ErrorBoundary: PageLoadError, HydrateFallback: () => null, ...page(async () => ({ Component: (await import('./pages/Articles')).ArticleList })) },
   { path: '/articles/:slug', ErrorBoundary: PageLoadError, HydrateFallback: () => null, ...page(async () => ({ Component: (await import('./pages/Articles')).ArticlePage })) },
   { path: '/collections/:slug', ErrorBoundary: PageLoadError, HydrateFallback: () => null, ...page(async () => ({ Component: (await import('./pages/Collection')).CollectionPage })) },
+  // The visitor's lists and shared-list links: browser-only data, so the static app shell serves them.
+  { path: '/stash', ErrorBoundary: PageLoadError, HydrateFallback: () => null, ...page(async () => ({ Component: (await import('./pages/Stash')).StashPage })) },
+  { path: '/stash/shared', ErrorBoundary: PageLoadError, HydrateFallback: () => null, ...page(async () => ({ Component: (await import('./pages/Stash')).SharedListPage })) },
   {
     path: '/admin',
     ErrorBoundary: PageLoadError,
