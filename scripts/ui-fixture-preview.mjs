@@ -3,10 +3,12 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+// Node strips the types, so the fixtures use the real default copy.
+import { DEFAULT_SITE_TEXT } from '../shared/siteText.ts';
 const root = path.resolve('dist/client');
 const port = Number(process.env.PORT || 5174);
 const names = ['Fixture desk object', 'Fixture keyboard accessory', 'Fixture home object with a deliberately long title for responsive checks', 'Fixture missing photo'];
-const products = names.map((title,i) => ({ id:`00000000-0000-4000-8000-00000000000${i}`, title, description:'Browser QA fixture only. This is not a real product listing or a business metric.', category: i%2 ? 'Tech & Gadgets':'Desk & Office', rating:0, reviewCount:0, imageUrl:i===3?'/missing-fixture.png':'/favicon.svg', badge:null, pickNote:i===0?'QA fixture note: shown only to check the layout of the owner note.':null, featured:i<3, store:'amazon.in', createdAt:'2026-10-03T00:00:00Z', updatedAt:'2026-10-03T00:00:00Z', imagePublicId:null, affiliateUrl:'https://www.amazon.in/dp/B000000000', affiliateTag:null, subId:null, status:'published', sortOrder:i, linkHealthy:true }));
+const products = names.map((title,i) => ({ id:`0000000${i}-0000-4000-8000-000000000000`, title, description:'Browser QA fixture only. This is not a real product listing or a business metric.', category: i%2 ? 'Tech & Gadgets':'Desk & Office', rating:0, reviewCount:0, imageUrl:i===3?'/missing-fixture.png':'/favicon.svg', badge:null, pickNote:i===0?'QA fixture note: shown only to check the layout of the owner note.':null, brand:i<2?'Fixture brand':null, productType:i<2?'Keyboard':null, tier:['premium','budget','value',null][i], specs:i<2?[{name:'Layout',value:'75%'},{name:'Connection',value:'USB-C'}]:[], featured:i<3, store:'amazon.in', createdAt:'2026-10-03T00:00:00Z', updatedAt:'2026-10-03T00:00:00Z', imagePublicId:null, affiliateUrl:'https://www.amazon.in/dp/B000000000', affiliateTag:null, subId:null, status:'published', sortOrder:i, linkHealthy:true }));
 let mode='normal'; let saves=0;
 products[2].description = [
  'Compatibility: QA fixture for a long specification value that wraps over multiple lines on a phone without escaping its container.',
@@ -39,6 +41,8 @@ http.createServer(async(req,res)=>{
   if(u.pathname==='/api/collections') return json(mode==='empty'?[]:collections.filter(c=>c.status==='published').map(summary));
   if(u.pathname.startsWith('/api/collections/')){ const c=collections.find(c=>c.status==='published'&&`/api/collections/${c.slug}`===u.pathname); return c?json({...summary(c),products:c.productIds.map(id=>products.find(p=>p.id===id))}):json({error:'Collection not found.'},404); }
   if(u.pathname==='/api/admin/product-imports/preview') return json(importPreview);
+  if(u.pathname==='/api/site-text' && req.method==='GET') return json(DEFAULT_SITE_TEXT);
+  if(u.pathname==='/api/admin/site-text' && req.method==='GET') return json({values:DEFAULT_SITE_TEXT,customized:[],updatedAt:null});
   // No write from this QA server is ever persisted or forwarded.
   if(req.method!=='GET') { saves++; return json({error:'QA fixture write failed; values should remain.'},503); }
   if(u.pathname==='/api/admin/analytics/conversions') return mode==='conversion-failed'?json({error:'QA conversion request failure.'},503):json([]);

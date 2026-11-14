@@ -53,7 +53,7 @@ Requires Node 24+ and, for the local database and tests, PostgreSQL binaries on 
 npm install
 npm run db:local                      # start a local Postgres in .localdb/ (skip if DATABASE_URL_DEV is set)
 npm run db:migrate -- --target=dev
-npm run db:seed                       # sample products (dev databases only)
+npm run db:seed                       # sample products and collections to try the tier filter and Compare (dev databases only)
 npm run dev                           # http://localhost:5173
 ```
 

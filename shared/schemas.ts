@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_SPECS, SPEC_NAME_MAX, SPEC_VALUE_MAX, TIERS, specKey } from './productFacts';
 
 // Request schemas shared by the admin form and the API. The API is
 // authoritative; the form uses the same rules for instant feedback.
@@ -24,6 +25,16 @@ export const productInputSchema = z.strictObject({
   badge: text(40).nullable().default(null),
   // The owner's own words on why this find made the cut; empty means none.
   pickNote: text(280).transform(v => v || null).nullable().default(null),
+  // Structured facts for filtering and comparing finds; all optional (see productFacts.ts).
+  brand: text(60).transform(v => v || null).nullable().default(null),
+  productType: text(40).transform(v => v || null).nullable().default(null),
+  tier: z.enum(TIERS).nullable().default(null),
+  specs: z.array(z.strictObject({
+    name: text(SPEC_NAME_MAX).min(1, 'Every spec needs a name.'),
+    value: text(SPEC_VALUE_MAX).min(1, 'Every spec needs a value.'),
+  })).max(MAX_SPECS, `At most ${MAX_SPECS} specs.`)
+    .refine(list => new Set(list.map(s => specKey(s.name))).size === list.length, 'Each spec name can be used once.')
+    .default([]),
   featured: z.boolean().default(false),
   status: z.enum(['draft', 'published', 'archived']).default('published'),
   sortOrder: z.number().int().min(-1_000_000).max(1_000_000).default(0),

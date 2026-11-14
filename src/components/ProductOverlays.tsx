@@ -9,6 +9,7 @@ import { SectionLabel } from './cine';
 import type { OutboundSource, useOutbound } from '../lib/outbound';
 import type { PublicProduct } from '../../shared/types';
 import { findPath } from '../../shared/finds';
+import { TIER_LABELS } from '../../shared/productFacts';
 import { useToast } from './Toasts';
 import { QuickViewSave } from './ListPicker';
 import { shareLink } from '../lib/share';
@@ -114,7 +115,11 @@ export function ProductOverlays({ quick, onCloseQuick, outbound, from, surprise 
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                   <SectionLabel className="text-muted-fg">{quick.category}</SectionLabel>
                   {quick.badge && <span className="chip !bg-red !border-red !text-white">{quick.badge}</span>}
+                  {quick.tier && <span className="chip">{TIER_LABELS[quick.tier]}</span>}
                 </div>
+                {(quick.brand || quick.productType) && (
+                  <p className="mt-3 text-sm text-muted-fg">{[quick.brand, quick.productType].filter(Boolean).join(' · ')}</p>
+                )}
                 {quick.pickNote && (
                   <figure className="pick-note">
                     <figcaption className="eyebrow text-red">Why we picked it</figcaption>

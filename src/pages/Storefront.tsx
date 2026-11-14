@@ -16,6 +16,7 @@ import { Blurb, CharacterStagger, FilmStrip, HERO_CUES, HeroBlackout, HeroDisc, 
 import { Cutout, PicksSection, StorySection } from '../components/StorefrontSections';
 import { CATEGORIES, type PublicProduct } from '../../shared/types';
 import { formatProductCopy } from '../../shared/productCopy';
+import { TIERS, TIER_LABELS, isTier } from '../../shared/productFacts';
 import { ProductOverlays } from '../components/ProductOverlays';
 import { useToast } from '../components/Toasts';
 import { DailyFind } from '../components/DailyFind';
@@ -31,6 +32,8 @@ const withCopy = (list: PublicProduct[] | null) => list?.map(p => ({ ...p, ...fo
 export function Storefront() {
   const [params, setParams] = useSearchParams();
   const category = params.get('category') ?? 'All';
+  const tierParam = params.get('tier');
+  const tier = isTier(tierParam) ? tierParam : null;
   const [search, setSearch] = useState(params.get('q') ?? '');
   const [sort, setSort] = useState<Sort>('curated');
   // The visitor's saved lists (this browser only). Ids of finds that are no longer published simply match nothing.
@@ -100,6 +103,19 @@ export function Storefront() {
     if (c === 'All') next.delete('category'); else next.set('category', c);
     setParams(next, { replace: true });
   };
+  const setTier = (t: string | null) => {
+    const next = new URLSearchParams(params);
+    if (t) next.set('tier', t); else next.delete('tier');
+    setParams(next, { replace: true, preventScrollReset: true });
+  };
+  // One update for both, so the second does not overwrite the first with stale parameters.
+  const clearFilters = () => {
+    setSearch('');
+    const next = new URLSearchParams(params);
+    next.delete('category');
+    next.delete('tier');
+    setParams(next, { replace: true, preventScrollReset: true });
+  };
 
   // On phones the category pills are one sideways-scrolling row: keep the chosen one in view (e.g. picked in the hero or footer).
   const categoryRow = useRef<HTMLDivElement>(null);
@@ -124,12 +140,15 @@ export function Storefront() {
     const q = search.trim().toLowerCase();
     const list = products.filter(p =>
       (category === 'All' || p.category.toLowerCase() === category.toLowerCase()) &&
-      (!q || `${p.title} ${p.description} ${p.category}`.toLowerCase().includes(q)));
+      (!tier || p.tier === tier) &&
+      (!q || `${p.title} ${p.description} ${p.category} ${p.brand ?? ''} ${p.productType ?? ''}`.toLowerCase().includes(q)));
     if (sort === 'popular') return [...list].sort((a, b) => b.reviewCount - a.reviewCount);
     if (sort === 'recent') return [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     if (sort === 'title') return [...list].sort((a, b) => a.title.localeCompare(b.title));
     return list; // curated order from the owner (featured, sort order, newest)
-  }, [products, category, search, sort]);
+  }, [products, category, tier, search, sort]);
+  // The tier pills only appear once the owner has given at least one find a tier.
+  const hasTiers = useMemo(() => (products ?? []).some(p => p.tier), [products]);
   // Screen readers hear the result count once typing pauses, not after every key.
   const announcedCount = useSettled(error ? 'Catalog unavailable' : products ? `${visible.length} ${visible.length === 1 ? 'find' : 'finds'}` : '', 600);
 
@@ -292,10 +311,18 @@ export function Storefront() {
               </button>
             ))}
           </div>
-          {(search || category !== 'All') && (
+          {(hasTiers || tier) && (
+            <div className="category-row tier-row pb-5 flex flex-wrap items-center gap-2" role="group" aria-label="Filter by tier">
+              <button type="button" aria-pressed={!tier} onClick={() => setTier(null)} className={`btn ${tier ? '' : 'btn-mint'}`}>Any tier</button>
+              {TIERS.map(t => (
+                <button key={t} type="button" aria-pressed={tier === t} onClick={() => setTier(tier === t ? null : t)} className={`btn ${tier === t ? 'btn-mint' : ''}`}>{TIER_LABELS[t]}</button>
+              ))}
+            </div>
+          )}
+          {(search || category !== 'All' || tier) && (
             <div className="flex flex-wrap items-center gap-3 pb-5 text-sm">
-              <p className="text-muted-fg">Filters: {category}{search && ` · “${search}”`}</p>
-              <button type="button" className="btn btn-ghost !text-lg !px-2" onClick={() => { setSearch(''); setCategory('All'); }}>Clear filters</button>
+              <p className="text-muted-fg">Filters: {category}{tier && ` · ${TIER_LABELS[tier]}`}{search && ` · “${search}”`}</p>
+              <button type="button" className="btn btn-ghost !text-lg !px-2" onClick={clearFilters}>Clear filters</button>
             </div>
           )}
 

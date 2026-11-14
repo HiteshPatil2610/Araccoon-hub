@@ -5,7 +5,7 @@ import type { PublicProduct } from '../../shared/types';
 
 const product = (id: string, overrides: Partial<PublicProduct> = {}): PublicProduct => ({
   id, title: id, description: '', category: 'Desk & Office', rating: 0, reviewCount: 0,
-  imageUrl: 'https://example.test/product.jpg', featured: true, badge: null, pickNote: null,
+  imageUrl: 'https://example.test/product.jpg', featured: true, badge: null, pickNote: null, brand: null, productType: null, tier: null, specs: [],
   store: 'amazon.in', createdAt: '2026-10-03T00:00:00Z', ...overrides,
 });
 test('featured board excludes unfeatured and missing-image records without filling empty slots', () => {

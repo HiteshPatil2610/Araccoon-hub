@@ -1044,6 +1044,40 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .category-row::-webkit-scrollbar { display: none; }
   .category-row > .btn { flex: none; white-space: nowrap; scroll-snap-align: start; }
 }
+/* Compare (collection pages): pick pills, then a table that scrolls sideways inside its panel. */
+.compare { margin-top: 2.5rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--line); }
+.compare__pick { display: block; max-width: 16rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compare__scroll { overflow-x: auto; overscroll-behavior-x: contain; }
+.compare__scroll:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.compare__table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: .9375rem; line-height: 1.4; }
+.compare__table th, .compare__table td { padding: .75rem 1rem; text-align: left; vertical-align: top; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.compare__table thead th, .compare__table thead td { border-top: 0; vertical-align: bottom; }
+/* The row names stay in view while the finds scroll under them. */
+.compare__table tbody th, .compare__corner { position: sticky; left: 0; z-index: 1; width: 8rem; background: var(--card); font-weight: 700; }
+.compare__table tbody th { box-shadow: 1px 0 0 var(--line); overflow-wrap: break-word; }
+.compare__table tbody th { padding-left: 1.9rem; }
+/* Placed in the padding, so a long row name wraps under itself, not under the mark. */
+.compare__table tr.is-different th[scope="row"]::before { content: ""; position: absolute; left: .85rem; top: calc(.75rem + .7em - 3.5px); width: 7px; height: 7px; border-radius: 50%; background: var(--primary); }
+.compare__table tr:not(.is-different) td { color: var(--muted-text); }
+.compare__find { position: relative; display: flex; flex-direction: column; gap: .5rem; padding-right: 2rem; }
+.compare__image { display: block; width: 5.5rem; height: 5.5rem; border-radius: var(--radius-m); background: #fff; overflow: hidden; }
+.compare__title { font-family: var(--font-display); font-size: 1.375rem; line-height: 1; letter-spacing: .01em; text-transform: uppercase; text-align: left; font-weight: 400;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.compare__title:focus-visible, .compare__remove:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.compare__remove { position: absolute; top: 0; right: -.5rem; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; color: var(--muted-text); }
+@media (hover: hover) {
+  .compare__title:hover { color: var(--primary); }
+  .compare__remove:hover { color: var(--foreground); background: var(--muted); }
+}
+@media (max-width: 639.98px) {
+  .compare__table { font-size: .875rem; }
+  .compare__table th, .compare__table td { padding: .6rem .75rem; }
+  .compare__table tbody th, .compare__corner { width: 7.75rem; }
+  .compare__table tbody th { padding-left: 1.5rem; }
+  .compare__table tr.is-different th[scope="row"]::before { left: .55rem; top: calc(.6rem + .7em - 3.5px); }
+  .compare__image { width: 4.5rem; height: 4.5rem; }
+  .compare__title { font-size: 1.125rem; }
+}
 /* The sort pill wraps a native select whose own outline is off: ring the pill on keyboard focus. */
 .sort-pill:has(select:focus-visible) { outline: 2px solid var(--primary); outline-offset: 3px; }
 /* The catalog search has its own Clear button, so hide the browser's built-in one. */

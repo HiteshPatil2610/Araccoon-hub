@@ -4,6 +4,17 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Added (compare in collections, 14 November 2026)
+
+- **Compare on collection pages:** when a collection has at least two finds with specs, visitors can pick two to four of them and see brand, tier and specs side by side. Rows that differ are marked, "Only show what differs" hides the rest, and the choice is kept in the address (`?compare=`), so a comparison can be shared. A collection such as "Mice" is how the owner decides what can be compared.
+- `npm run db:seed` adds nine invented sample finds (mice, keyboards, headphones, one per tier) and a sample collection for each type to dev databases.
+
+### Added (product facts, 14 November 2026)
+
+- **Brand, product type, tier and specs** on each find (all optional; migration 10). The tier (Budget, Value for money, Premium) is the owner's judgement, not a price. Specs are name and value rows, with the usual row names offered for common product types so finds of one type can be lined up later.
+- **Tier filter** on the storefront (shown once any find has a tier, kept in the address as `?tier=`), and the tier, brand and product type shown in Quick View. Search also matches brand and product type.
+- The product editor has a **Compare details** section, and can add specification rows fetched from an Amazon page.
+
 ### Changed (UI/UX polish, 13 November 2026)
 
 - **Phones:** finds show two to a row in compact cards, and the category filters are one row you can swipe sideways, so the first finds appear much sooner.
