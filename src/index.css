@@ -323,7 +323,7 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
   .cd-nav--intro-shown::before,
   .cd-nav--intro-shown :is(.cd-nav__inner > a, .cd-nav__center, .cd-nav__inner > div > button),
   .cd-hero__meta--shown {
-    animation: hero-nav-arrive 1400ms var(--ease-hero, var(--ease-cine)) var(--nav-entry-delay) backwards;
+    animation: hero-nav-arrive 1000ms var(--ease-hero, var(--ease-cine)) var(--nav-entry-delay) backwards;
   }
 }
 @keyframes hero-nav-arrive {
@@ -387,10 +387,34 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 .cd-tag[aria-pressed="true"] { color: var(--stage-fg); }
 .cd-hero__composition { position: relative; }
 .cd-hero__stage { position: relative; z-index: 0; isolation: isolate; height: var(--hero-stage-height); max-width: var(--page-max); margin: 0 auto; }
-.cd-hero__disc-mask { position: absolute; inset: 0; overflow: hidden; z-index: 1; pointer-events: none; }
+/* Only the disc's lower arc is cut by the stage; the top stays open so the dot can fall in from above the viewport. */
+.cd-hero__disc-mask { position: absolute; inset: 0; clip-path: inset(-100svh 0 0 0); z-index: 1; pointer-events: none; }
 .cd-hero__disc { position: absolute; left: 50%; top: 58%; width: min(90vw, calc(var(--hero-stage-used, var(--hero-stage-height)) * 1.05)); aspect-ratio: 1; transform: translate(-50%, -50%); }
-.cd-hero__disc-fill { width: 100%; height: 100%; border-radius: 50%; background: var(--cd-red-500); opacity: 0; transform: scale(.09); transform-origin: 50% 60%; transition: transform 1800ms var(--ease-hero, var(--ease-cine)) var(--disc-delay), opacity 1500ms var(--ease-hero, var(--ease-cine)) var(--disc-delay); }
-.cd-hero__disc-fill--expanded { opacity: 1; transform: scale(1); }
+/* One element is both the dot and the disc, so the dot always lands on the disc's centre. */
+.cd-hero__disc-fill { --dot-scale: .032; width: 100%; height: 100%; border-radius: 50%; background: var(--cd-red-500); transform: translateY(-100svh) scale(var(--dot-scale)); }
+.cd-hero__disc-fill--expanded {
+  transform: none;
+  animation: hero-dot-drop var(--dot-drop) cubic-bezier(.25, .5, .3, 1) var(--dot-delay) both,
+    hero-disc-grow var(--disc-grow) cubic-bezier(.55, 0, .2, 1) var(--disc-delay) forwards;
+}
+@keyframes hero-dot-drop { from { transform: translateY(-100svh) scale(var(--dot-scale)); } to { transform: scale(var(--dot-scale)); } }
+@keyframes hero-disc-grow { from { transform: scale(var(--dot-scale)); } to { transform: none; } }
+/* The dot's ambient light: behind the mascot like the disc, so it rims the silhouette's outline as the dot passes behind it. */
+.cd-hero__glow { position: absolute; left: 50%; top: 58%; z-index: 1; width: calc(min(90vw, var(--hero-stage-used, var(--hero-stage-height)) * 1.05) * 1.5); aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; }
+.cd-hero__glow-light { width: 100%; height: 100%; border-radius: 50%; opacity: 0; background: radial-gradient(closest-side, rgba(200, 32, 47, .6), rgba(200, 32, 47, .34) 22%, rgba(200, 32, 47, .15) 46%, transparent 72%); }
+.cd-hero__glow-light--on {
+  animation: hero-glow-drop var(--dot-drop) cubic-bezier(.25, .5, .3, 1) var(--dot-delay) both,
+    hero-glow-out 900ms cubic-bezier(.45, 0, .55, 1) var(--glow-out) forwards;
+}
+@keyframes hero-glow-drop { from { opacity: 0; transform: translateY(-100svh); } 35% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes hero-glow-out { from { opacity: 1; } to { opacity: 0; } }
+/* Black opening. It sits above the hero's themed background and ambient light, below every hero element. */
+.cd-hero__blackout { position: absolute; inset: 0; z-index: 0; background: var(--cd-black); pointer-events: none; }
+.cd-hero__blackout--lifted { opacity: 0; visibility: hidden; transition: opacity 900ms cubic-bezier(.45, 0, .55, 1) var(--lights-delay), visibility 0s linear calc(var(--lights-delay) + 900ms); }
+/* Before React paints, theme.js marks the home page so a light-theme visitor never sees a white page ahead of the black opening.
+   The hold expires by itself if the app never mounts. */
+html.hero-opening body { animation: hero-opening-hold 4s step-end; }
+@keyframes hero-opening-hold { from { background: var(--cd-black); } }
 .cd-hero__numeral { position: absolute; left: 0; right: 0; top: 0; z-index: 2; display: flex; justify-content: center; font-family: var(--font-display); font-size: clamp(36px, 4vw, 82px); line-height: .8; }
 .character-stagger { display: inline-flex; }
 .character-stagger__letter { display: block; opacity: 0; transform: translateX(.65em) scaleX(.25); transform-origin: left center; transition: transform 1300ms var(--ease-hero, var(--ease-cine)) var(--character-delay), opacity 1050ms var(--ease-hero, var(--ease-cine)) var(--character-delay); }
@@ -403,7 +427,7 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 .cd-hero__title h1 { margin: 0; font-size: 30.5vw; line-height: .8; color: var(--stage-fg); scale: 1 var(--poster-stretch, 1); transform-origin: center top; }
 .poster-title__letters { display: flex; }
 .poster-title__letter { position: relative; display: block; }
-.poster-title__reveal { display: block; opacity: 0; transform: scaleX(.10); transform-origin: left center; transition: transform 1800ms var(--ease-hero, var(--ease-cine)) var(--letter-delay), opacity 1500ms var(--ease-hero, var(--ease-cine)) var(--letter-delay); }
+.poster-title__reveal { display: block; opacity: 0; transform: scaleX(.10); transform-origin: left center; transition: transform 1400ms var(--ease-hero, var(--ease-cine)) var(--letter-delay), opacity 1100ms var(--ease-hero, var(--ease-cine)) var(--letter-delay); }
 .poster-title--shown .poster-title__reveal { opacity: 1; transform: scaleX(1); }
 .poster-title__glyph { display: block; transform-origin: center bottom; }
 .character-stagger--follow {
@@ -437,8 +461,27 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
 /* One permanent foreground plane; fade/grow/rise only the inner art as in the reference.
    The stage stays in a separate background context throughout the entrance. */
 .cd-hero__raccoon { top: var(--hero-art-top); bottom: -6px; z-index: 10; overflow: hidden; }
-.cd-hero__art { display: flex; justify-content: center; width: 100%; height: 100%; opacity: 0; transform: translateY(6%) scale(.72); transform-origin: center bottom; }
-.cd-hero__art--shown { opacity: 1; transform: none; transition: transform 2000ms var(--ease-hero, var(--ease-cine)) var(--mascot-delay), opacity 1700ms var(--ease-hero, var(--ease-cine)) var(--mascot-delay); }
+.cd-hero__art { display: flex; justify-content: center; width: 100%; height: 100%; }
+/* Night reveal: the figure box has the artwork's proportions (1200 x 1280), so the eye mask below stays on the eyes at every size. */
+.cd-hero__figure { position: relative; flex: none; height: 100%; aspect-ratio: 1200 / 1280; }
+/* The silhouette is the black opening's own colour (#0A0A0A), so it only shows where the dot and disc pass behind it. */
+.cd-hero__figure > img { opacity: 0; filter: brightness(0) invert(.04); }
+.cd-hero__art--shown .cd-hero__figure > img { opacity: 1; filter: brightness(1) invert(0); transition: opacity 200ms linear var(--mascot-delay), filter var(--colour-fill) cubic-bezier(.45, 0, .55, 1) var(--colour-delay); }
+/* A second copy of the artwork, masked to the two eyes: lit from the first frame, gone once the face has its colour. */
+.cd-hero__eyes { position: absolute; inset: 0; filter: drop-shadow(0 0 .5em rgba(232, 146, 42, .55)); }
+.cd-hero__eyes img {
+  --eye-ry: 2.7%;
+  position: absolute; inset: 0; filter: brightness(1.15);
+  /* The fade-in lives on the image so it cannot hold back the wrapper's fade-out transition. */
+  animation: hero-eyes-in 400ms ease-out backwards;
+  -webkit-mask-image: radial-gradient(ellipse 4% var(--eye-ry) at 41.4% 27.6%, #000 70%, transparent), radial-gradient(ellipse 4% var(--eye-ry) at 58.3% 24.5%, #000 70%, transparent);
+  mask-image: radial-gradient(ellipse 4% var(--eye-ry) at 41.4% 27.6%, #000 70%, transparent), radial-gradient(ellipse 4% var(--eye-ry) at 58.3% 24.5%, #000 70%, transparent);
+}
+.cd-hero__art--shown .cd-hero__eyes { opacity: 0; visibility: hidden; transition: opacity 500ms linear var(--eyes-out-delay), visibility 0s linear calc(var(--eyes-out-delay) + 500ms); }
+.cd-hero__art--shown .cd-hero__eyes img { animation: hero-eyes-in 400ms ease-out backwards, hero-eyes-blink 140ms ease-in-out var(--blink-delay); }
+@keyframes hero-eyes-in { from { opacity: 0; } }
+@property --eye-ry { syntax: '<percentage>'; inherits: false; initial-value: 2.7%; }
+@keyframes hero-eyes-blink { 50% { --eye-ry: .3%; } }
 .cd-hero__foot { position: relative; z-index: 8; min-height: 190px; max-width: var(--page-max); margin: 0 auto; padding: 56px var(--page-gutter) 40px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 28px; pointer-events: none; }
 .cd-hero__foot > :first-child { max-width: min(480px, 22vw); }
 .cd-hero__foot > :last-child { gap: clamp(16px, 1.8vw, 36px); }
@@ -467,7 +510,7 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
   :root { --type-mega: 27vw; }
   .cd-hero__flank { display: none; }
   .cd-hero { --hero-stage-height: clamp(320px, 96vw, 430px); }
-  .cd-hero__disc-fill { transform-origin: 50% 66%; }
+  .cd-hero__disc-fill { --dot-scale: .042; }
   .cd-hero__raccoon { top: calc(var(--hero-stage-height) * .21 + 6px); height: calc(var(--hero-stage-height) * .79); }
   .cd-hero__foot { align-items: flex-start; padding-top: 56px; }
 }
@@ -728,6 +771,9 @@ html.theme-transitioning .cd-nav::before { transition: none !important; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; transition-delay: 0ms !important; scroll-behavior: auto !important; }
   .btn:active:not(:disabled) { transform: none; }
   .poster-title__reveal, .character-stagger__letter, .cd-hero__disc-fill, .cd-hero__art { opacity: 1 !important; transform: none !important; }
+  .cd-hero__figure > img { opacity: 1 !important; filter: none !important; }
+  .cd-hero__eyes, .cd-hero__blackout, .cd-hero__glow { display: none; }
+  .cd-hero__disc-fill { animation: none !important; }
   .poster-title__glyph { animation: none !important; }
   .cd-story { --story-entry: 1 !important; }
   .cd-unfold__letter, .cd-unfold__glyph, .cd-story__by, .cd-story__index { opacity: 1; transform: none; translate: none; }

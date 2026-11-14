@@ -12,7 +12,7 @@ import { useLayoutMorph } from '../lib/useLayoutMorph';
 import { useHeroHandoff } from '../lib/useHeroHandoff';
 import { Navbar, Footer, Announcement } from '../components/SiteChrome';
 import { ProductCard } from '../components/ProductCard';
-import { Blurb, CharacterStagger, FilmStrip, HERO_CUES, HeroDisc, HeroEntrance, HeroMetadata, PosterTitle, Reveal, SectionLabel, Sticker, TrackingReveal, Viewfinder, usePrefersReducedMotion } from '../components/cine';
+import { Blurb, CharacterStagger, FilmStrip, HERO_CUES, HeroBlackout, HeroDisc, HeroEntrance, HeroMetadata, PosterTitle, Reveal, SectionLabel, Sticker, TrackingReveal, Viewfinder, usePrefersReducedMotion } from '../components/cine';
 import { Cutout, PicksSection, StorySection } from '../components/StorefrontSections';
 import { CATEGORIES, type PublicProduct } from '../../shared/types';
 import { formatProductCopy } from '../../shared/productCopy';
@@ -144,6 +144,7 @@ export function Storefront() {
         <div className="cd-dark">
           <div className="cd-dark__inner cd-handoff" ref={handoffRef}>
             <section id="top" className="cd-hero" data-nav-tone="dark" data-morph-root aria-labelledby="hero-title">
+              <HeroBlackout />
               <HeroMetadata>
                 <div className="cd-hero__tags" role="group" aria-label="Jump to a category" data-morph="move">
                   {CATEGORIES.map(c => (
@@ -165,7 +166,7 @@ export function Storefront() {
                   <div className="cd-hero__title" data-morph="type">
                     <PosterTitle id="hero-title" text="Raccoon" label="Raccoon Hub: small finds, big everyday upgrades." />
                   </div>
-                  <Reveal hero effect="fade" delay={HERO_CUES.strip} duration={1000} once className="cd-hero__year" morph="move"><span aria-hidden="true">[{new Date().getFullYear()}]</span></Reveal>
+                  <Reveal hero effect="fade" delay={HERO_CUES.year} duration={900} once className="cd-hero__year" morph="move"><span aria-hidden="true">[{new Date().getFullYear()}]</span></Reveal>
                   <div className="cd-hero__strip">
                     <FilmStrip tilt={-1} entrance />
                   </div>
@@ -177,10 +178,10 @@ export function Storefront() {
                     <Blurb part="A">{text.heroBlurb}</Blurb>
                   </Reveal>
                   <div className="flex items-center gap-6 sm:gap-9">
-                    <Reveal hero effect="grow-rise" distance={12} delay={HERO_CUES.cta} duration={1000} once className="cd-hero__action" style={{ transformOrigin: 'center bottom' }} morph="move">
+                    <Reveal hero effect="grow-rise" distance={12} delay={HERO_CUES.cta} duration={800} once className="cd-hero__action" style={{ transformOrigin: 'center bottom' }} morph="move">
                       <button type="button" className="btn !px-6" onClick={toCatalog}>Browse the finds <ArrowDown className="w-4 h-4" aria-hidden="true" /></button>
                     </Reveal>
-                    <Reveal hero effect="grow-rise" distance={12} delay={HERO_CUES.badge} duration={950} once className="hidden sm:block" style={{ transformOrigin: 'center bottom' }} morph><Sticker text="New" /></Reveal>
+                    <Reveal hero effect="grow-rise" distance={12} delay={HERO_CUES.badge} duration={800} once className="hidden sm:block" style={{ transformOrigin: 'center bottom' }} morph><Sticker text="New" /></Reveal>
                   </div>
                 </div>
                 <Cutout name="hero" className="cd-hero__raccoon" />

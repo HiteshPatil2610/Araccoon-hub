@@ -21,21 +21,32 @@ const MASCOT_ART = {
   heart: 'raccoon-closing-heart',
 } as const;
 
-/** Keep the placement fixed while the artwork grows upward from its bottom anchor. */
-function HeroArt({ children }: { children: ReactNode }) {
+/** Night reveal: only the eyes are lit at first; the mascot then appears in place as a silhouette
+    against the growing disc and fills with colour while the eye layer fades. */
+function HeroArt({ src }: { src: string }) {
   const ready = useHeroEntrance();
-  return <div className={`cd-hero__art ${ready !== false ? 'cd-hero__art--shown' : ''}`}
-    style={{ '--mascot-delay': `${HERO_CUES.mascot}ms` } as CSSProperties}>{children}</div>;
+  const img = () => <img src={src} alt="" decoding="async" loading="eager" fetchPriority="high" draggable={false} />;
+  return <div className={`cd-hero__art ${ready !== false ? 'cd-hero__art--shown' : ''}`} style={{
+    '--mascot-delay': `${HERO_CUES.mascot}ms`, '--colour-delay': `${HERO_CUES.colour}ms`, '--colour-fill': `${HERO_CUES.colourFill}ms`,
+    '--eyes-out-delay': `${HERO_CUES.eyesOut}ms`, '--blink-delay': `${HERO_CUES.blink}ms`,
+  } as CSSProperties}>
+    <div className="cd-hero__figure">
+      {img()}
+      {/* Outside the entrance clock the mascot is shown at once, so there is nothing for the eyes to precede. */}
+      {ready !== null && <div className="cd-hero__eyes" aria-hidden="true">{img()}</div>}
+    </div>
+  </div>;
 }
 
 /** Pose-specific decorative cutouts; the live product card remains a separate interactive layer. */
 export function Cutout({ name, className, delay = 200, distance = 56, scroll = false }: { name: keyof typeof MASCOT_ART; className: string; delay?: number; distance?: number; scroll?: boolean }) {
-  const art = <img src={`/art/video-concept/${MASCOT_ART[name]}.webp`} alt="" decoding="async" loading={name === 'hero' ? 'eager' : 'lazy'} fetchPriority={name === 'hero' ? 'high' : 'auto'} draggable={false} />;
+  const src = `/art/video-concept/${MASCOT_ART[name]}.webp`;
   if (name === 'hero') return (
     <div className={`cd-cutout ${className}`} data-morph="type">
-      <HeroArt>{art}</HeroArt>
+      <HeroArt src={src} />
     </div>
   );
+  const art = <img src={src} alt="" decoding="async" loading="lazy" draggable={false} />;
   return (
     scroll ? <div className={`cd-cutout ${className}`}><div className="cd-picks__art">{art}</div></div> :
     <Reveal effect="rise" distance={distance} delay={delay} duration={850} once className={`cd-cutout ${className}`} morph="type">

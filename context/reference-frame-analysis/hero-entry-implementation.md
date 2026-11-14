@@ -49,3 +49,36 @@ The hero mascot now has a static z-index of 10 at every breakpoint, above the st
 ## Reference image entrance restored
 
 The bottom-to-top clip reveal was removed following feedback that it did not match the analyzed image entrance. The entire raccoon now starts hidden at 72% scale and 6% below its final position, then grows/rises over 2000ms and fades over 1700ms, beginning at the shared 180ms cue. Transitions are enabled on the shown state so mounting establishes a clean hidden pose without animating toward it. The permanent foreground z-index of 10 and isolated background stage are retained at every breakpoint. No z-index or depth animation occurs. This supersedes the opaque reveal in the preceding correction; reduced motion still resolves immediately to the final image.
+
+## Night eyes (14 November 2026)
+
+Supersedes the image fade described above; the 2000ms grow and rise from the shared 180ms cue are unchanged.
+
+| Element | Starts | Behavior / duration |
+|---|---:|---|
+| Eye layer | 0ms | Fades in over about 250ms, holds, fades out from about 1300ms and is hidden at 1800ms. One blink at 380ms (140ms). |
+| Raccoon image | 180ms | Fades in over 600ms as a silhouette (`brightness(0)`). |
+| Colour fill | 800ms | Silhouette to full colour over 900ms, ease-in-out. |
+| Browse CTA | 900ms | Was 1250ms; same motion. |
+| New badge | 1020ms | Was 1370ms; same motion. |
+
+The opacity now sits on the image rather than the art wrapper, so the eye layer can be visible before the image is. Outside the entrance context the eye layer is not rendered. Reduced motion shows the finished image and removes the eye layer.
+
+## Night reveal (14 November 2026)
+
+Supersedes the shared cue sheet at the top of this file and the Night eyes section above. The start signal, its 1200ms asset deadline and the two-frame hidden state are unchanged. All values live in `src/lib/heroCues.ts`.
+
+| Element | Starts | Behavior / duration |
+|---|---:|---|
+| Black opening | before the clock | Covers the hero background in both themes; lifts over 900ms from 1750ms. |
+| Eyes | before the clock | Lit from mount (400ms fade-in); blink at 150ms; fade out 1750–2250ms. |
+| Crimson dot | 350ms | Falls 100svh to the disc centre in 650ms, rests 150ms. |
+| Dot light | 350ms | Soft crimson glow that falls with the dot behind the mascot and outlines the silhouette; fades out 1350–2250ms. |
+| Disc | 1150ms | The dot grows from its landing point to the full disc over 1300ms. |
+| Mascot | 100ms | Silhouette in place (200ms fade) in the opening's black, ahead of the dot so the dot passes behind it; colour fill 1550–2450ms. No scale or rise. |
+| RACCOON | 1750ms, 90ms per letter | Same widen-and-fade letters, 1400ms / 1100ms. |
+| HUB / taglines / year | 2150 / 2450 (+80 each) / 2550ms | Unchanged treatments. |
+| Header, category row, film strip | 2750ms | 1000ms arrival; focus or scrolling still completes the header at once. |
+| Description / Browse / New badge | 3100 / 3250 / 3400ms | Rise and fade, 900 / 800 / 800ms. |
+| Recurring title wave | 4400ms | Unchanged. |
+
