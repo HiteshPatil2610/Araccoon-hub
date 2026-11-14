@@ -9,3 +9,10 @@ try {
     if (m) m.setAttribute('content', '#FFFFFF');
   }
 } catch (e) {}
+// The home hero opens on black; hold the page black until it has painted (see .hero-opening in index.css).
+try {
+  var p = location.pathname;
+  if ((p === '/' || p.indexOf('/find/') === 0) && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.documentElement.classList.add('hero-opening');
+  }
+} catch (e) {}

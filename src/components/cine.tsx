@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ElementType, type ReactNode } from 'react';
 import { Play } from 'lucide-react';
 import { heroPosterScale } from '../lib/heroTypography';
+import { HERO_CUES } from '../lib/heroCues';
 
 /* Cine Daily primitives: scroll-choreographed entrances and the small editorial pieces of the design system. */
 
@@ -36,11 +37,7 @@ export function useReveal<T extends Element>(ref: React.RefObject<T | null>, { o
   return reducedMotion || inView;
 }
 
-// These are chosen timings for our adaptation; the reference JPEGs do not contain timestamps.
-export const HERO_CUES = {
-  title: 60, letterStep: 100, wave: 2900, waveStep: 120, waveAnchor: 3, mascot: 180, disc: 320, hub: 360,
-  nav: 450, strip: 680, captions: 320, story: 1150, cta: 1250, badge: 1370,
-} as const;
+export { HERO_CUES };
 const HeroEntranceContext = createContext<boolean | null>(null);
 export const useHeroEntrance = () => useContext(HeroEntranceContext);
 
@@ -48,6 +45,8 @@ export const useHeroEntrance = () => useContext(HeroEntranceContext);
 export function HeroEntrance({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const reducedMotion = usePrefersReducedMotion();
+  // theme.js blacks out the page until the hero's own black opening has been painted.
+  useLayoutEffect(() => { document.documentElement.classList.remove('hero-opening'); }, []);
   useEffect(() => {
     let cancelled = false, firstFrame = 0, secondFrame = 0;
     const start = () => {
@@ -150,15 +149,34 @@ export function CharacterStagger({ text, delay = 180, stagger = 110, followWave 
   </span>;
 }
 
-/** Grow the hero backdrop from the mascot's chest; the stage masks its lower arc. */
+/** The crimson dot drops from above the viewport to the disc's centre, rests, then grows into the disc. */
 export function HeroDisc() {
   const ref = useRef<HTMLDivElement>(null);
   const shown = useEntrance(ref, { hero: true, once: true });
-  return <div ref={ref} className="cd-hero__disc-mask" aria-hidden="true">
-    <div className="cd-hero__disc">
-      <div className={`cd-hero__disc-fill ${shown ? 'cd-hero__disc-fill--expanded' : ''}`} style={{ '--disc-delay': `${HERO_CUES.disc}ms` } as CSSProperties} />
+  const timing = {
+    '--dot-delay': `${HERO_CUES.dot}ms`, '--dot-drop': `${HERO_CUES.dotDrop}ms`,
+    '--disc-delay': `${HERO_CUES.disc}ms`, '--disc-grow': `${HERO_CUES.discGrow}ms`, '--glow-out': `${HERO_CUES.glowOut}ms`,
+  } as CSSProperties;
+  return <>
+    {/* Outside the mask: the light must not be cut off at the stage's lower edge. */}
+    <div className="cd-hero__glow" aria-hidden="true" style={timing}>
+      <div className={`cd-hero__glow-light ${shown ? 'cd-hero__glow-light--on' : ''}`} />
     </div>
-  </div>;
+    <div ref={ref} className="cd-hero__disc-mask" aria-hidden="true" style={timing}>
+      <div className="cd-hero__disc">
+        <div className={`cd-hero__disc-fill ${shown ? 'cd-hero__disc-fill--expanded' : ''}`} />
+      </div>
+    </div>
+  </>;
+}
+
+/** Black opening: covers the hero's themed background until the title begins, then lifts to reveal it. */
+export function HeroBlackout() {
+  const ready = useHeroEntrance();
+  const reducedMotion = usePrefersReducedMotion();
+  if (ready === null || reducedMotion) return null;
+  return <div className={`cd-hero__blackout ${ready ? 'cd-hero__blackout--lifted' : ''}`} aria-hidden="true"
+    style={{ '--lights-delay': `${HERO_CUES.lights}ms` } as CSSProperties} />;
 }
 
 export function Reveal({ effect = 'rise', delay = 0, duration = 900, distance = 60, once = false, hero = false, as: T = 'div', className, style, morph, children }: {
