@@ -5,13 +5,15 @@
 [![Art: CC BY-NC 4.0](https://img.shields.io/badge/art-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE-ART.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-![Araccoon Hub: the raccoon mascot on the near-black Cine Daily storefront](public/og-image.jpg)
+**Live site: [araccoon-hub.raccoon-26-io-2oo5.workers.dev](https://araccoon-hub.raccoon-26-io-2oo5.workers.dev/)**
+
+[![Araccoon Hub: the raccoon mascot on the near-black Cine Daily storefront](public/og-image.jpg)](https://araccoon-hub.raccoon-26-io-2oo5.workers.dev/)
 
 A curated Amazon affiliate storefront ("Small finds. Big everyday upgrades.") with a private owner hub for products, analytics and security. The Cine Daily interface (near-black, white and one crimson; Bebas Neue + Archivo) uses real featured catalog records, Bento and Classic layouts, and email + password or passkey sign-in.
 
 **Source-available, non-commercial:** the code is under the [PolyForm Noncommercial 1.0.0](LICENSE) and the raccoon mascot and artwork under [CC BY-NC 4.0](LICENSE-ART.md). You may read, run, study and modify it for personal, educational and non-profit use; **commercial use needs a licence from the author**. Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 
-**Status:** version 0.1.0. Feature-complete and tested locally; first production deployment in progress. Changes are listed in the [changelog](CHANGELOG.md).
+**Status:** version 0.1.0. Feature-complete and [live](https://araccoon-hub.raccoon-26-io-2oo5.workers.dev/). Changes are listed in the [changelog](CHANGELOG.md).
 
 **Contents:** [Quick start](#quick-start-for-contributors) · [Local development](#local-development) · [Editing content](#editing-content) · [Pages, search and sharing](#pages-search-and-sharing) · [First deployment](#first-deployment) · [Security design](#security-design-summary) · [Project layout](#project-layout) · [Running your own copy](#running-your-own-copy) · [Contributing](#contributing-and-security) · [License](#license)
 

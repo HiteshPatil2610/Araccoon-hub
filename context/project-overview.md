@@ -48,4 +48,4 @@ Cloudflare Workers (static React assets + Hono API), Neon Postgres via Hyperdriv
 
 ## Status
 
-Built and tested locally; not yet confirmed deployed (the Hyperdrive id in `wrangler.jsonc` is still a placeholder). See [progress-tracker.md](progress-tracker.md).
+Live at https://araccoon-hub.raccoon-26-io-2oo5.workers.dev/ (Cloudflare Workers; the address answered with HTTP 200 on 14 November 2026). See [progress-tracker.md](progress-tracker.md).

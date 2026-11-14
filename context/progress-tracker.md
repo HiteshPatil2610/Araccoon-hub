@@ -47,6 +47,8 @@ Feature-complete for the public (source-available) release; preparing first prod
 
 | 14 Nov 2026 | **Night reveal: ambient light on the dot** (owner request). A soft crimson radial glow (`.cd-hero__glow`, 1.5x the disc's width, behind the mascot like the disc but outside the disc mask) falls with the dot on the same curve and timing, so when the dot goes behind the head the light rims the silhouette's ears, head and shoulders. It fades out over 900ms from 1350ms as the disc grows and takes over (`glowOut` in `src/lib/heroCues.ts`). Hidden under reduced motion | Typecheck clean; 173/173 tests (hand-over of the light to the disc added to the cue test); build clean. Dev site, dark theme at 739 px, timeline paused: at 600ms the dot and its light are above the head with the ears outlined, at 760ms and 1100ms the dot is hidden and the head and shoulders are outlined, at 1750ms the disc has taken over, settled glow opacity 0, no horizontal overflow. Not checked: full speed, light theme and phone width for this change |
 
+| 14 Nov 2026 | **Live site address published.** README shows the live site link (and the share image links to it), the status line says live, `project-overview.md` status updated, and the GitHub repository's website field is set to https://araccoon-hub.raccoon-26-io-2oo5.workers.dev/ | The address returned HTTP 200. Docs only; no code change |
+
 ### Local database troubleshooting (Windows)
 
 - `pg_ctl not found` → add `C:\Program Files\PostgreSQL\18\bin` to the user PATH, or set `PG_BIN`.
