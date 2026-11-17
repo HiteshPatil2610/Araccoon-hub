@@ -10,6 +10,7 @@ import { useOutbound, type OutboundSource } from '../lib/outbound';
 import { usePageMeta } from '../lib/pageMeta';
 import { ProductCard } from '../components/ProductCard';
 import { ProductOverlays } from '../components/ProductOverlays';
+import { CompareFinds } from '../components/CompareFinds';
 import { SectionLabel } from '../components/cine';
 import { PublicPage } from './Articles';
 import { NotFound } from './NotFound';
@@ -71,6 +72,7 @@ function CollectionView({ slug }: { slug: string }) {
             {loaded.description && <p className="mt-4 text-lg text-muted-fg max-w-[60ch]">{loaded.description}</p>}
             <p className="mt-4 font-display text-2xl leading-none">[{String(products.length).padStart(2, '0')} {products.length === 1 ? 'find' : 'finds'}]</p>
           </header>
+          <CompareFinds finds={products} onOpen={setQuick} />
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5 mt-10">
             {products.map((p, i) => (
               <ProductCard key={p.id} product={p} index={i} onQuickView={setQuick} />

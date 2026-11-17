@@ -230,6 +230,16 @@ ALTER TABLE product_content_sources ADD CONSTRAINT product_content_sources_provi
       ADD COLUMN link_status text CHECK (link_status IN ('ok', 'gone', 'unknown')),
       ADD COLUMN link_checked_at timestamptz;`,
   },
+  {
+    version: 10,
+    name: 'product_facts',
+    // Structured facts for filtering and comparing finds. The tier is the owner's judgement, not a price.
+    sql: `ALTER TABLE products
+      ADD COLUMN brand text CHECK (brand IS NULL OR char_length(brand) BETWEEN 1 AND 60),
+      ADD COLUMN product_type text CHECK (product_type IS NULL OR char_length(product_type) BETWEEN 1 AND 40),
+      ADD COLUMN tier text CHECK (tier IN ('budget', 'value', 'premium')),
+      ADD COLUMN specs jsonb NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(specs) = 'array');`,
+  },
 ];
 
 const LOCK_KEY = 4_204_201_337;

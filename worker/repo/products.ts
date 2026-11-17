@@ -1,12 +1,15 @@
 import type { Db } from '../db/db';
 import type { ListingStatus, Product, PublicProduct, ProductStatus } from '../../shared/types';
 import type { ProductInput } from '../../shared/schemas';
+import type { ProductSpec } from '../../shared/productCopy';
+import type { Tier } from '../../shared/productFacts';
 import { normalizeAffiliateUrl } from '../../shared/urlPolicy';
 
 interface Row {
   id: string; title: string; description: string; category: string; rating: string; review_count: number;
   image_url: string; image_public_id: string | null; affiliate_url: string; affiliate_tag: string | null;
   sub_id: string | null; badge: string | null; pick_note: string | null; featured: boolean; status: ProductStatus; sort_order: number;
+  brand: string | null; product_type: string | null; tier: Tier | null; specs: ProductSpec[];
   created_at: Date; updated_at: Date; link_status: ListingStatus | null; link_checked_at: Date | null;
 }
 
@@ -23,7 +26,8 @@ export function toPublic(r: Row): PublicProduct {
   return {
     id: r.id, title: r.title, description: r.description, category: r.category,
     rating: Number(r.rating), reviewCount: r.review_count, imageUrl: r.image_url,
-    badge: r.badge, pickNote: r.pick_note, featured: r.featured, store: storeOf(r.affiliate_url), createdAt: r.created_at.toISOString(),
+    badge: r.badge, pickNote: r.pick_note, brand: r.brand, productType: r.product_type, tier: r.tier, specs: r.specs,
+    featured: r.featured, store: storeOf(r.affiliate_url), createdAt: r.created_at.toISOString(),
   };
 }
 
@@ -54,7 +58,7 @@ export async function listProducts(db: Db, f: { statuses: ProductStatus[]; categ
   if (f.search) {
     values.push(`%${escapeLike(f.search)}%`);
     const p = `$${values.length}`;
-    where.push(`(title ILIKE ${p} ESCAPE '\\' OR description ILIKE ${p} ESCAPE '\\' OR category ILIKE ${p} ESCAPE '\\')`);
+    where.push(`(title ILIKE ${p} ESCAPE '\\' OR description ILIKE ${p} ESCAPE '\\' OR category ILIKE ${p} ESCAPE '\\' OR brand ILIKE ${p} ESCAPE '\\' OR product_type ILIKE ${p} ESCAPE '\\')`);
   }
   values.push(Math.min(f.limit ?? 1000, 1000));
   const { rows } = await db.query<Row>(`SELECT * FROM products WHERE ${where.join(' AND ')} ${ORDER} LIMIT $${values.length}`, values);
@@ -71,14 +75,18 @@ const COLUMNS: Record<keyof ProductInput, string> = {
   title: 'title', description: 'description', category: 'category', rating: 'rating', reviewCount: 'review_count',
   imageUrl: 'image_url', imagePublicId: 'image_public_id', affiliateUrl: 'affiliate_url', affiliateTag: 'affiliate_tag',
   subId: 'sub_id', badge: 'badge', pickNote: 'pick_note', featured: 'featured', status: 'status', sortOrder: 'sort_order',
+  brand: 'brand', productType: 'product_type', tier: 'tier', specs: 'specs',
 };
+
+// node-postgres would send a JS array as a Postgres array; the specs column is jsonb.
+const param = (key: keyof ProductInput, value: unknown) => (key === 'specs' && value !== undefined ? JSON.stringify(value) : value);
 
 export async function insertProduct(db: Db, input: ProductInput): Promise<Row> {
   const keys = Object.keys(COLUMNS) as (keyof ProductInput)[];
   const cols = keys.map(k => COLUMNS[k]);
   const { rows } = await db.query<Row>(
     `INSERT INTO products (${cols.join(', ')}) VALUES (${cols.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING *`,
-    keys.map(k => input[k] ?? null)
+    keys.map(k => param(k, input[k] ?? (k === 'specs' ? [] : null)))
   );
   return rows[0]!;
 }
@@ -91,7 +99,7 @@ export async function updateProduct(db: Db, id: string, patch: Partial<ProductIn
   if (keys.includes('affiliateUrl')) sets.push('link_status = NULL', 'link_checked_at = NULL');
   const { rows } = await db.query<Row>(
     `UPDATE products SET ${sets.join(', ')}, updated_at = now() WHERE id = $1 RETURNING *`,
-    [id, ...keys.map(k => patch[k])]
+    [id, ...keys.map(k => param(k, patch[k]))]
   );
   return rows[0];
 }

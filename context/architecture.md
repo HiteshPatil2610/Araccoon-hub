@@ -15,7 +15,7 @@ Updated 3 November 2026 (pages, site text and articles added; earlier sections f
 
 | Data | Source of truth | Notes |
 | --- | --- | --- |
-| Products, affiliate links | Postgres `products` | Edited in the owner hub; visitors get `toPublic` fields only (including the optional `pick_note`, migration 7) |
+| Products, affiliate links | Postgres `products` | Edited in the owner hub; visitors get `toPublic` fields only (including the optional `pick_note`, migration 7, and the product facts `brand`, `product_type`, `tier` and `specs`, migration 10) |
 | Clicks, conversions | Postgres `clicks`, `conversions` | Product snapshot kept; 90-day click retention (daily cron) |
 | Owners, passwords, passkeys, sessions, recovery codes, invites, audit log | Postgres | Passwords (migration 6), session and recovery secrets stored only as hashes |
 | Collections | Postgres `collections`, `collection_products` (migration 8) | Slug is set from the title at creation and never changes; finds are ordered by `position`; deleting a product removes it from its collections |
@@ -37,6 +37,14 @@ Each published find has an address `/find/<title-slug>-<first 8 id characters>` 
 ## Listing check
 
 `worker/lib/linkCheck.ts` asks Amazon whether a find's listing still exists. It requests only the clean product page built from a validated marketplace and ASIN (never the tagged affiliate URL, so no click is attributed), follows at most two redirects and only to the same product, and records `ok` (page loads), `gone` (HTTP 404) or `unknown` (short links, bot checks, errors, timeouts, redirects elsewhere) in `products.link_status` / `link_checked_at` (migration 9). It runs after the daily maintenance for the 10 published finds checked longest ago, and on demand from `POST /api/admin/products/check-links` (owner, 6 runs an hour, audited). Changing a product's Amazon link clears the result. The result is owner-only (`Product.listing`), shown as a chip in Products and a banner on the Overview; nothing is unpublished automatically.
+
+## Product facts
+
+Each find can carry four optional facts (`shared/productFacts.ts`, migration 10): `brand` (60 characters), `productType` (40, narrower than the category, e.g. "Mouse"), `tier` (`budget`, `value` or `premium`: the owner's judgement, never a price) and `specs` (a `jsonb` array of at most 24 `{ name, value }` rows, 60 and 200 characters, each name used once). They are part of `productInputSchema`, public (`PublicProduct`), copied on duplicate and searched by the owner's product search (brand and type). Spec names are compared through `specKey` (case, spacing and punctuation ignored), so "Max DPI" and "max-dpi" are the same row; this is the key the planned compare and alternatives features will match on. `SPEC_TEMPLATES` lists the usual row names for common product types and `mergeSpecs` adds rows without changing or repeating existing ones; the editor uses both ("Add the usual rows for Mouse", "Add n fetched specs" from the Amazon import's specification table, which is never added unasked). The product type is free text, with the template names offered as suggestions. `worker/repo/products.ts` sends `specs` as JSON text because node-postgres would otherwise send a JavaScript array as a Postgres array. The API keys an error inside a spec row by its path (`specs.0.value`); the editor shows it under the specs field. The storefront filters by tier in the browser (`?tier=`), and collection pages compare finds by them (below).
+
+## Compare (collection pages)
+
+The owner groups finds to compare by putting them in a collection (e.g. "Mice"); there is no separate compare setting. `CompareFinds` (`src/components/CompareFinds.tsx`, rendered by `src/pages/Collection.tsx` between the header and the cards) appears when at least two of the collection's finds have specs. The visitor picks up to four (`MAX_COMPARE`); the choice lives in the address as `?compare=<8-character id prefixes joined by dots>` (the same short ids as `/find/` and shared stash lists; `replace` navigation, scroll kept), so it survives a reload and can be shared. `src/lib/compare.ts` is pure: `parseCompare` keeps the address's order and drops unknown, repeated, malformed and spec-less finds; `compareRows` returns Brand and Tier (only when some find has one), then one row per spec name across the picked finds, matched through `specKey`, with rows every find fills first; a row `differs` when the values are not all equal (case and outer spaces ignored, a missing value counts). Everything is computed in the browser from the collection the page already has; no API, no storage, nothing reported. The Worker serves the same page for any `?compare=` value (the query is not part of the rendered content).
 
 ## Visitor extras
 

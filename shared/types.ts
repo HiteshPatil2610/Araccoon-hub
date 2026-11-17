@@ -1,5 +1,8 @@
 // Shapes exchanged between the API and the React app.
 
+import type { ProductSpec } from './productCopy';
+import type { Tier } from './productFacts';
+
 export type ProductStatus = 'draft' | 'published' | 'archived';
 export type Device = 'Mobile' | 'Desktop' | 'Tablet';
 
@@ -22,6 +25,10 @@ export interface PublicProduct {
   imageUrl: string;
   badge: string | null;
   pickNote: string | null; // the owner's reason for choosing it, in their own words
+  brand: string | null;
+  productType: string | null; // narrower than category, e.g. "Mouse"; finds of one type can be compared
+  tier: Tier | null; // the owner's judgement (budget / value for money / premium), never a price
+  specs: ProductSpec[]; // comparable rows such as { name: 'Weight', value: '99 g' }
   featured: boolean;
   store: string; // e.g. "amazon.in", for the "View on Amazon.in" label
   createdAt: string;
