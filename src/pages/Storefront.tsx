@@ -6,14 +6,14 @@ import { api } from '../lib/api';
 import { initialData, takeInitialProducts } from '../lib/initialData';
 import { useSiteText } from '../lib/siteText';
 import { usePageMeta } from '../lib/pageMeta';
-import { featuredProducts, findOfTheDay, pickSurprise, siteDay } from '../lib/catalog';
+import { findOfTheDay, pickSurprise, siteDay } from '../lib/catalog';
 import { useOutbound } from '../lib/outbound';
 import { useLayoutMorph } from '../lib/useLayoutMorph';
 import { useHeroHandoff } from '../lib/useHeroHandoff';
 import { Navbar, Footer, Announcement } from '../components/SiteChrome';
 import { ProductCard } from '../components/ProductCard';
 import { Blurb, CharacterStagger, FilmStrip, HERO_CUES, HeroBlackout, HeroDisc, HeroEntrance, HeroMetadata, PosterTitle, Reveal, SectionLabel, Sticker, TrackingReveal, Viewfinder, usePrefersReducedMotion } from '../components/cine';
-import { Cutout, PicksSection, StorySection } from '../components/StorefrontSections';
+import { HeroMascot } from '../components/HeroMascot';
 import { CATEGORIES, type PublicProduct } from '../../shared/types';
 import { formatProductCopy } from '../../shared/productCopy';
 import { TIERS, TIER_LABELS, isTier } from '../../shared/productFacts';
@@ -170,22 +170,13 @@ export function Storefront() {
     navigate({ pathname: findPath(p), search: location.search }, { state: { inApp }, replace: true, preventScrollReset: true });
   }, [navigate, location.state, location.search]);
 
-  // Picks and Story share one carousel: the owner's featured finds, else the first few in curated order.
-  const picks = useMemo(() => {
-    const featured = featuredProducts(products ?? []);
-    return featured.length ? featured : (products ?? []).slice(0, 3);
-  }, [products]);
-  const [pickIndex, setPickIndex] = useState(0);
-  useEffect(() => { if (pickIndex >= picks.length) setPickIndex(0); }, [picks.length, pickIndex]);
-
   return (
     <HeroEntrance>
     <div className="cd-storefront relative min-h-screen flex flex-col">
       <Navbar />
 
       <main className="relative flex-1" id="main" tabIndex={-1}>
-        {/* Dark block: hero + picks curtain. Its rounded bottom and pink seam overlap the story section.
-            Entrance delays follow the design system's hero cue sheet. */}
+        {/* Dark hero block. Entrance delays follow the design system's hero cue sheet. */}
         <div className="cd-dark">
           <div className="cd-dark__inner cd-handoff" ref={handoffRef}>
             <section id="top" className="cd-hero" data-nav-tone="dark" data-morph-root aria-labelledby="hero-title">
@@ -218,7 +209,7 @@ export function Storefront() {
                 </div>
 
                 <div className="cd-hero__foot">
-                  <Reveal hero effect="rise" distance={18} delay={HERO_CUES.story} duration={900} once className="flex flex-col gap-4 max-w-[320px]" morph="move">
+                  <Reveal hero effect="rise" distance={18} delay={HERO_CUES.blurb} duration={900} once className="flex flex-col gap-4 max-w-[320px]" morph="move">
                     <SectionLabel trail={false}>The Raccoon story</SectionLabel>
                     <Blurb part="A">{text.heroBlurb}</Blurb>
                   </Reveal>
@@ -229,15 +220,12 @@ export function Storefront() {
                     <Reveal hero effect="grow-rise" distance={12} delay={HERO_CUES.badge} duration={800} once className="hidden sm:block" style={{ transformOrigin: 'center bottom' }} morph><Sticker text="New" /></Reveal>
                   </div>
                 </div>
-                <Cutout name="hero" className="cd-hero__raccoon" />
+                <HeroMascot className="cd-hero__raccoon" />
               </div>
             </section>
 
-            <PicksSection total={products ? products.length : null} picks={picks} index={pickIndex} onIndex={setPickIndex} onQuick={setQuick} />
           </div>
         </div>
-
-        <StorySection picks={picks} index={pickIndex} onIndex={setPickIndex} onQuick={setQuick} onOpen={outbound.open} pending={outbound.state?.status === 'opening'} />
 
         <section id="finds" data-nav-tone="light" data-morph-root className="cd-catalog relative max-w-[var(--page-max)] mx-auto px-[var(--page-gutter)] pt-16 sm:pt-24 pb-20 scroll-mt-20">
           <Reveal effect="rise" distance={24} once morph="move"><SectionLabel>The current stash</SectionLabel></Reveal>

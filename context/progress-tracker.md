@@ -8,6 +8,7 @@ Feature-complete for the public (source-available) release; preparing first prod
 
 | Date | Change | Verification |
 | --- | --- | --- |
+| 17 Nov 2026 | Removed the Picks and Story storefront sections and their carousel, story reveal, styles and dead section links; renamed the remaining hero mascot component; retained the hero-to-catalog scroll effect | Typecheck and production build clean; 14 focused hero/cue/catalog tests pass; local storefront checked at 622px: only `top` and `finds` sections remain, the hero leads directly into the catalog, nav links are Home and Browse, no browser console errors |
 | 31 Oct 2026 | Open-sourced: MIT code, CC BY-NC 4.0 art, CONTRIBUTING and SECURITY; third-party media removed from history; repo public; private vulnerability reporting on | Typecheck, build, 127 tests |
 | 3 Nov 2026 | Editable site text (table, API, owner hub page); Markdown articles with journal pages; Worker-rendered pages with embedded data, share tags, JSON-LD and noscript fallback; robots.txt, sitemap, share image (commit 59cfe17) | Typecheck, build, 142 tests; dev-site check of home, journal, article with product cards, phone width, robots and sitemap; site text read from the database onto the page |
 | 3 Nov 2026 | Added `CLAUDE.md` and context files `project-overview.md`, `code-standards.md`, `ai-workflow-rules.md`; architecture updated | Docs only |

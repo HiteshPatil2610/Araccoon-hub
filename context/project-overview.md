@@ -1,6 +1,6 @@
 # Project overview — Araccoon Hub
 
-Updated 3 November 2026.
+Updated 17 November 2026.
 
 ## What it is
 
@@ -26,7 +26,7 @@ The project is public and source-available: code under PolyForm Noncommercial 1.
 
 | Area | Features |
 | --- | --- |
-| Storefront (`/`) | Hero, featured picks carousel, story section, catalog with search, category filter, tier filter (Budget / Value for money / Premium, the owner's judgement) and sort, quick view with the owner's optional "Why we picked it" note, outbound notice |
+| Storefront (`/`) | Hero, catalog with search, category filter, tier filter (Budget / Value for money / Premium, the owner's judgement) and sort, quick view with the owner's optional "Why we picked it" note, outbound notice |
 | Journal (`/articles`, `/articles/<slug>`) | Markdown articles with cover image, reading time, and cards for listed products |
 | Outbound links | `/r/:id` redirect and `/api/track` beacon; Associates tag rules; trusted Amazon hosts only |
 | Owner hub (`/admin`) | Email + password or passkey sign-in, recovery codes, invites; Products (create, import from an Amazon link, edit, bulk, duplicate, images, and optional brand, product type, tier and comparable specs); Collections (create, order finds, publish); listing check (daily and on demand: flags finds whose Amazon listing returns "not found"); Site text; Analytics, CSV export, conversions; Activity log; Account and sessions |

@@ -10,11 +10,10 @@ import { useSiteText } from '../lib/siteText';
 import { StashNavButton } from './StashNavButton';
 import { playStashFlaps, useStashFlaps } from '../lib/useStashFlaps';
 import { stashDirection } from '../lib/stashFlaps';
+import { BrandLogo } from './BrandLogo';
 
 const LINKS = [
-  { id: 'top', label: 'Featured' },
-  { id: 'picks', label: 'Picks' },
-  { id: 'story', label: 'Story' },
+  { id: 'top', label: 'Home' },
   { id: 'finds', label: 'Browse' },
 ] as const;
 
@@ -58,7 +57,7 @@ export function SectionLink({ section: id, className, children }: { section: str
 }
 
 /**
- * Fixed nav. Sections marked data-nav-tone="dark" (the black hero and picks curtain) get a dark
+ * Fixed nav. Sections marked data-nav-tone="dark" (the black hero) get a dark
  * nav with white type; everything else follows the page theme. The link for the section under the nav is current.
  */
 export function Navbar() {
@@ -104,8 +103,8 @@ export function Navbar() {
       onFocusCapture={() => setIntroDone(true)} onAnimationEnd={e => { if (e.animationName === 'hero-nav-arrive') setIntroDone(true); }} data-morph-root>
       <a href="#main" className="skip-link">Skip to content</a>
       <div className="cd-nav__inner">
-        <Link to="/" className="inline-flex items-center min-h-11 font-display text-[26px] sm:text-[32px] leading-none pt-1 justify-self-start" aria-label="Raccoon Hub home" data-morph="type">
-          Raccoon<span className="text-red"> Hub</span>
+        <Link to="/" className="inline-flex items-center min-h-11 pt-1 justify-self-start" aria-label="Raccoon Hub home" data-morph="type">
+          <BrandLogo textClassName="text-[22px] sm:text-[32px]" />
         </Link>
         <nav aria-label="Site" className="cd-nav__center" data-morph="move">
           <ul className="cd-nav__links eyebrow">
@@ -183,7 +182,7 @@ function MenuButton({ current }: { current: string }) {
             exit={{ clipPath: `circle(0px at ${origin})` }}
             transition={{ duration: 0.7, ease: EASE }}>
             <div className="cd-menu__top">
-              <span className="font-display text-[26px] sm:text-[32px] leading-none pt-1">Raccoon<span className="text-red"> Hub</span></span>
+              <BrandLogo textClassName="text-[24px] sm:text-[32px]" />
               <motion.button type="button" className="cd-menu-btn cd-menu-btn--close" onClick={() => setOpen(false)} aria-label="Close menu" data-initial-focus
                 initial={{ backgroundColor: from.bg, color: from.fg }} animate={{ backgroundColor: '#FFFFFF', color: '#0A0A0A' }} exit={{ backgroundColor: from.bg, color: from.fg }}
                 transition={{ duration: 0.45, ease: EASE }}>

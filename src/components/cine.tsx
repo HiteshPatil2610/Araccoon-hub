@@ -194,14 +194,6 @@ export function Reveal({ effect = 'rise', delay = 0, duration = 900, distance = 
   return <T ref={ref} className={className} style={{ ...style, ...s }} {...morphAttr(morph)}>{children}</T>;
 }
 
-/** Letter faces unfold and close their spacing without reflowing the surrounding layout. */
-export function UnfoldText({ text, start = 0, end = .86, className = '' }: { text: string; start?: number; end?: number; className?: string }) {
-  const letters = Array.from(text);
-  return <span aria-hidden="true" className={`cd-unfold ${className}`}>
-    {letters.map((letter, index) => <span key={index} className="cd-unfold__letter" style={{ '--unfold-start': start + (end - .5 - start) * index / Math.max(letters.length - 1, 1), '--unfold-offset': `${.42 + index * .16}em` } as CSSProperties}><span className="cd-unfold__glyph">{letter === ' ' ? '\u00a0' : letter}</span></span>)}
-  </span>;
-}
-
 /** Signature move: wide, faded tracking collapses to tight Bebas spacing while brightening. */
 export function TrackingReveal({ from = '0.45em', to = 'var(--ls-display)', fromOpacity = 0.3, delay = 0, duration = 1300, once = false, as: T = 'div', className, style, morph, children }: {
   from?: string; to?: string; fromOpacity?: number; delay?: number; duration?: number; once?: boolean; as?: ElementType; className?: string; style?: CSSProperties; morph?: Morph; children?: ReactNode;
@@ -297,16 +289,6 @@ export function FilmStrip({ red = false, tilt = -1, holes = 160, entrance = fals
         </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-/** Round stat: small tilted label over a big value. */
-export function StatDisc({ label, value, tone = 'light' }: { label: string; value: ReactNode; tone?: 'light' | 'accent' | 'dark' }) {
-  return (
-    <div className={`stat-disc stat-disc--${tone}`}>
-      <span className="stat-disc__label">{label}</span>
-      <span className="stat-disc__value">{value}</span>
     </div>
   );
 }
