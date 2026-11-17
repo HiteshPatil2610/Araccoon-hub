@@ -7,7 +7,7 @@ Updated 3 November 2026 (pages, site text and articles added; earlier sections f
 - React 19, React Router, Vite 8, Tailwind 4; Bebas Neue and Archivo are bundled locally via @fontsource.
 - Cloudflare Worker serves static assets and the Hono API, and renders the public pages (see below). PostgreSQL is reached through Hyperdrive. The owner bundle and Recharts load on owner routes.
 - `src/lib/api.ts` is the HTTP boundary; shared types and Zod schemas live in `shared/`. The server remains authoritative for validation and authorization.
-- `src/pages/Storefront.tsx` owns discovery and quick view. `src/components/ProductCard.tsx` is the catalog card; `ProductImage.tsx` provides stable image fallbacks. The featured board uses `src/lib/catalog.ts`.
+- `src/pages/Storefront.tsx` owns discovery and quick view. `src/components/ProductCard.tsx` is the catalog card; `ProductImage.tsx` provides stable image fallbacks.
 - `src/admin/` contains password and passkey sign-in, products/editor, reporting, overview, account/security and audit activity. Existing draft, archive, duplication, bulk operations, account invitations and conversion recording remain supported.
 - `Dialog.tsx` and `useDialog.ts` provide labelled modals, initial focus, keyboard containment, inert background, Escape, scroll lock and focus return. Pending writes disable dismissal. Confirmations initially focus Cancel.
 

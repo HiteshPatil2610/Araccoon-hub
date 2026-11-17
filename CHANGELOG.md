@@ -4,6 +4,11 @@ Notable changes to Araccoon Hub. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Changed (storefront simplification, 17 November 2026)
+
+- Removed the Picks carousel and Story sections so the hero now leads directly into the catalog.
+- Removed their section links, carousel and story-only reveal code, and section-specific styles while keeping the hero scroll effect and catalog discovery features.
+
 ### Added (compare in collections, 14 November 2026)
 
 - **Compare on collection pages:** when a collection has at least two finds with specs, visitors can pick two to four of them and see brand, tier and specs side by side. Rows that differ are marked, "Only show what differs" hides the rest, and the choice is kept in the address (`?compare=`), so a comparison can be shared. A collection such as "Mice" is how the owner decides what can be compared.

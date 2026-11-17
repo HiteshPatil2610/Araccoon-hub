@@ -19,7 +19,7 @@ test('the eyes are alone before the dot, and gone before the face is fully colou
 });
 
 test('the reveal follows the intended order', () => {
-  const order = [C.dot, C.disc, C.colour, C.title, C.hub, C.captions, C.year, C.nav, C.story, C.cta, C.badge, C.wave];
+  const order = [C.dot, C.disc, C.colour, C.title, C.hub, C.captions, C.year, C.nav, C.blurb, C.cta, C.badge, C.wave];
   for (let i = 1; i < order.length; i++) assert.ok(order[i]! >= order[i - 1]!, `cue ${i} starts before cue ${i - 1}`);
   assert.ok(C.mascot + 200 <= C.dot, 'the silhouette is solid before the dot enters, so the dot passes behind it');
   assert.ok(C.title > C.disc && C.title < C.disc + C.discGrow, 'title starts while the disc is still growing');

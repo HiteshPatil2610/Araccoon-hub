@@ -8,6 +8,7 @@ import { useTheme } from '../lib/theme';
 import { Turnstile } from '../components/Turnstile';
 import { SectionLabel, TrackingReveal, Viewfinder } from '../components/cine';
 import { RecoveryCodes } from './RecoveryCodes';
+import { BrandLogo } from '../components/BrandLogo';
 
 function friendly(err: unknown): string {
   if (err instanceof HttpError) return err.message;
@@ -23,7 +24,7 @@ function Shell({ children, title, subtitle }: { children: React.ReactNode; title
       <section className="hidden lg:flex relative overflow-hidden flex-col justify-between bg-ink text-white p-14">
         <Viewfinder size={620} top="52%" />
         <div aria-hidden="true" className="absolute left-1/2 top-[52%] w-[340px] h-[340px] -ml-[170px] -mt-[170px] rounded-full bg-red" />
-        <Link to="/" className="relative font-display text-[34px] leading-none">Raccoon<span className="text-red"> Hub</span></Link>
+        <Link to="/" className="relative inline-flex items-center" aria-label="Raccoon Hub home"><BrandLogo textClassName="text-[34px]" /></Link>
         <div className="relative">
           <SectionLabel>Owner hub</SectionLabel>
           <TrackingReveal from="0.3em" once><h2 className="text-[clamp(88px,9vw,140px)] leading-[.82] mt-5">Curate.<br />Track.<br />Repeat.</h2></TrackingReveal>

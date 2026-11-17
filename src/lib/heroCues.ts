@@ -15,6 +15,6 @@ export const HERO_CUES = {
   title: 1750, letterStep: 90,
   hub: 2150, captions: 2450, year: 2550,
   nav: 2750, strip: 2750,
-  story: 3100, cta: 3250, badge: 3400,
+  blurb: 3100, cta: 3250, badge: 3400,
   wave: 4400, waveStep: 120, waveAnchor: 3,
 } as const;

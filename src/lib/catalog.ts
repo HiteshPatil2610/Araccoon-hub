@@ -1,10 +1,3 @@
-import type { PublicProduct } from '../../shared/types';
-
-/** The board shows only explicit featured records, newest first with a stable tie-break. */
-export function featuredProducts(products: readonly PublicProduct[]): PublicProduct[] {
-  return products.filter(p => p.featured && p.imageUrl.trim()).sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id)).slice(0, 3);
-}
-
 /**
  * A random find for "Surprise me": never the one already open, and none twice until
  * every other find has had its turn. `seen` is updated in place.

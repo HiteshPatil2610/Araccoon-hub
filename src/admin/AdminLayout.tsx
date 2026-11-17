@@ -2,6 +2,7 @@ import { NavLink, Navigate, Outlet, useLocation } from 'react-router';
 import { Activity, BarChart3, ExternalLink, Gauge, Layers, LogOut, Moon, Package, Settings, Sun, Type } from 'lucide-react';
 import { useAuth } from './auth';
 import { useTheme } from '../lib/theme';
+import { BrandLogo } from '../components/BrandLogo';
 
 const NAV = [
   { to: '/admin', label: 'Overview', icon: Gauge, end: true },
@@ -41,7 +42,7 @@ export function AdminLayout() {
       <a href="#owner-main" className="skip-link">Skip to workspace</a>
       <aside className="hidden lg:flex flex-col bg-ink text-white p-4 gap-1 sticky top-0 h-screen border-r border-white/10">
         <NavLink to="/" className="px-3 pt-3 mb-8">
-          <span className="block font-display text-[34px] leading-none">Raccoon<span className="text-red"> Hub</span></span>
+          <BrandLogo textClassName="text-[24px]" iconClassName="h-8 w-8" />
           <span className="eyebrow text-white/60">Owner hub .</span>
         </NavLink>
         {NAV.map(({ to, label, icon: Icon, end }) => (
@@ -67,7 +68,7 @@ export function AdminLayout() {
 
       <div className="min-w-0 pb-0">
         <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-16 border-b border-line bg-[var(--nav-bg)] backdrop-blur">
-          <NavLink to="/" className="inline-flex items-center min-h-11 font-display text-2xl leading-none pt-1">← Raccoon<span className="text-red"> Hub</span></NavLink>
+          <NavLink to="/" className="inline-flex items-center min-h-11 gap-2 font-display leading-none pt-1"><span aria-hidden="true">←</span><BrandLogo textClassName="text-xl" iconClassName="h-8 w-8" /></NavLink>
           <div className="flex gap-2">
             <button type="button" className="icon-btn" onClick={toggle} aria-label={dark ? 'Light mode' : 'Dark mode'}>{dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}</button>
             <button type="button" className="icon-btn" onClick={signOut} aria-label="Sign out"><LogOut className="w-4 h-4" /></button>
